@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+  db:
+    container_name: spotlight_db
+    image: postgres:latest
+    restart: always
+    volumes:
+    - db-data:/var/lib/postgresql/data
+    env_file:
+    - .env
+    ports:
+    - '5433:5432'
+
+  api:
+    container_name: spotlight_api
+    build: .
+    volumes:
+    - .:/app
+    environment:
+      FLASK_ENV: development
+    env_file:
+    - .env
+    depends_on:
+    - db
+    ports:
+    - '5000:5000'
+
+volumes:
+  db-data:
