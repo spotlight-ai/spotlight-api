@@ -5,7 +5,7 @@ from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import UnmappedInstanceError
 from models.user import UserModel
-from flask_login import login_required
+from core.decorators import authenticate_token
 from db import db
 
 user_schema = UserSchema()
@@ -13,8 +13,9 @@ user_schema = UserSchema()
 
 class UserCollection(Resource):
 
-    @login_required
+    @authenticate_token
     def get(self):
+        print("Running function", flush=True)
         users = UserModel.query.all()
         return user_schema.dump(users, many=True)
 
@@ -32,12 +33,10 @@ class UserCollection(Resource):
 
 
 class User(Resource):
-    @login_required
     def get(self, user_id):
         user = UserModel.query.filter_by(user_id=user_id).first()
         return user_schema.dump(user)
 
-    @login_required
     def delete(self, user_id):
         try:
             user = UserModel.query.filter_by(user_id=user_id).first()

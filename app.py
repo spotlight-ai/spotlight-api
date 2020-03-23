@@ -5,7 +5,6 @@ from flask_migrate import Migrate
 from flask_restful import Api
 
 from db import db
-from db import login_manager
 from resources.auth.login import Login
 from resources.auth.logout import Logout
 from resources.datasets.base import DatasetCollection
@@ -23,7 +22,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{os.environ.get("POSTGRES
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET')
 db.init_app(app)
-login_manager.init_app(app)
 migrate = Migrate(app, db)
 
 api = Api(app)
