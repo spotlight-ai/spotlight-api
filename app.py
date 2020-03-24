@@ -6,7 +6,6 @@ from flask_restful import Api
 
 from db import db
 from resources.auth.login import Login
-from resources.auth.logout import Logout
 from resources.datasets.base import DatasetCollection
 from resources.datasets.flat_file import FlatFileCollection
 from resources.job import JobCollection, Job
@@ -38,7 +37,6 @@ api.add_resource(Job, '/job/<int:job_id>')
 api.add_resource(UserCollection, '/user')
 api.add_resource(User, '/user/<int:user_id>')
 api.add_resource(Login, '/login')
-api.add_resource(Logout, '/logout')
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0')

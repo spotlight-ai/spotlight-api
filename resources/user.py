@@ -15,7 +15,6 @@ class UserCollection(Resource):
 
     @authenticate_token
     def get(self):
-        print("Running function", flush=True)
         users = UserModel.query.all()
         return user_schema.dump(users, many=True)
 
@@ -33,10 +32,12 @@ class UserCollection(Resource):
 
 
 class User(Resource):
+    @authenticate_token
     def get(self, user_id):
         user = UserModel.query.filter_by(user_id=user_id).first()
         return user_schema.dump(user)
 
+    @authenticate_token
     def delete(self, user_id):
         try:
             user = UserModel.query.filter_by(user_id=user_id).first()
