@@ -1,5 +1,6 @@
 from flask_restful import Resource
 from schemas.login import LoginSchema
+from schemas.user import UserSchema
 from flask import request, abort
 from marshmallow import ValidationError
 from models.user import UserModel
@@ -7,6 +8,7 @@ import datetime
 from db import db
 
 login_schema = LoginSchema()
+user_schema = UserSchema()
 
 
 class Login(Resource):
@@ -21,7 +23,7 @@ class Login(Resource):
                 user.last_login = datetime.datetime.now()
                 token = user.generate_auth_token()
                 db.session.commit()
-                return {'token': token.decode('ascii')}
+                return {'token': token.decode('ascii'), 'user': user_schema.dump(user)}
             else:
                 abort(500, "Credentials incorrect.")
         except ValidationError as err:
