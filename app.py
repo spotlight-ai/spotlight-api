@@ -13,6 +13,7 @@ from resources.roles.role import RoleCollection, Role
 from resources.roles.role_member import RoleMemberCollection, RoleMember
 from resources.roles.role_permission import RolePermissionCollection
 from resources.user import UserCollection, User
+from resources.redact.text import RedactText
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{os.environ.get("POSTGRES_USER")}:' \
@@ -37,6 +38,7 @@ api.add_resource(Job, '/job/<int:job_id>')
 api.add_resource(UserCollection, '/user')
 api.add_resource(User, '/user/<int:user_id>')
 api.add_resource(Login, '/login')
+api.add_resource(RedactText, '/redact/text')
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0')
