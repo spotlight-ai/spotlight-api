@@ -3,7 +3,6 @@ from flask import request, abort
 from schemas.roles.role_member import RoleMemberSchema
 from models.roles.role_member import RoleMemberModel
 from sqlalchemy.orm.exc import UnmappedInstanceError
-from flask_login import login_required
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 from db import db
@@ -12,7 +11,6 @@ role_member_schema = RoleMemberSchema()
 
 
 class RoleMemberCollection(Resource):
-    @login_required
     def post(self, role_id):
         try:
             data = request.get_json(force=True)
@@ -31,7 +29,6 @@ class RoleMemberCollection(Resource):
 
 
 class RoleMember(Resource):
-    @login_required
     def delete(self, role_id, user_id):
         try:
             member = RoleMemberModel.query.filter_by(role_id=role_id).filter_by(user_id=user_id).first()

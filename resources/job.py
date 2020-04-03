@@ -4,7 +4,6 @@ from schemas.job import JobSchema
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 from models.job import JobModel
-from flask_login import login_required
 from db import db
 
 job_schema = JobSchema()
