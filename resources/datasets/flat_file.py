@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import UnmappedInstanceError
 
 from db import db
+from core.decorators import authenticate_token
 
 flat_file_schema = FlatFileDatasetSchema()
 
@@ -16,10 +17,14 @@ class FlatFileCollection(Resource):
         datasets = FlatFileDatasetModel.query.all()
         return flat_file_schema.dump(datasets, many=True)
 
-    def post(self):
+    @authenticate_token
+    def post(self, user_id):
         try:
-            data = flat_file_schema.load(request.get_json(force=True))
-            db.session.add(data)
+            request_body = request.get_json(force=True)
+            request_body['uploader'] = user_id
+
+            dataset = flat_file_schema.load(request_body)
+            db.session.add(dataset)
             db.session.commit()
             return
         except ValidationError as err:
