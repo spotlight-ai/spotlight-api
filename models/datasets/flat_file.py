@@ -12,9 +12,9 @@ class FlatFileDatasetModel(DatasetModel):
         'polymorphic_identity': 'FLAT_FILE'
     }
 
-    def __init__(self, dataset_name, location, uploader):
+    def __init__(self, dataset_name, uploader, location):
         super().__init__(dataset_name=dataset_name, dataset_type='FLAT_FILE', uploader=uploader)
-        self.location = location
+        self.location = f's3://uploaded-datasets.s3.amazonaws.com/{location}'
 
     def __repr__(self):
         return f"<FlatFileDataset {self.location}>"

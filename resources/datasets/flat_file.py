@@ -8,6 +8,7 @@ from sqlalchemy.orm.exc import UnmappedInstanceError
 
 from db import db
 from core.decorators import authenticate_token
+from core.aws import generate_presigned_link
 
 flat_file_schema = FlatFileDatasetSchema()
 
@@ -24,9 +25,10 @@ class FlatFileCollection(Resource):
             request_body['uploader'] = user_id
 
             dataset = flat_file_schema.load(request_body)
+
             db.session.add(dataset)
             db.session.commit()
-            return
+            return generate_presigned_link(bucket_name='uploaded-datasets', object_name=request_body['location'])
         except ValidationError as err:
             abort(422, err.messages)
         except IntegrityError as err:

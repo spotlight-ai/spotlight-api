@@ -10,6 +10,7 @@ class DatasetModel(db.Model):
     dataset_type = db.Column(db.String, nullable=False)
     uploader = db.Column(db.Integer, foreign_key='user.user_id')
     created_ts = db.Column(db.DateTime)
+    verified = db.Column(db.Boolean, default=False, nullable=True)
 
     __mapper_args__ = {
         'polymorphic_identity': 'dataset',
@@ -21,6 +22,7 @@ class DatasetModel(db.Model):
         self.dataset_type = dataset_type
         self.uploader = uploader
         self.created_ts = datetime.datetime.now()
+        self.verified = False
 
     def __repr__(self):
         return f"<Dataset {self.dataset_name}>"
