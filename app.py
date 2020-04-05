@@ -6,7 +6,7 @@ from flask_restful import Api
 
 from db import db
 from resources.auth.login import Login
-from resources.datasets.base import DatasetCollection
+from resources.datasets.base import DatasetCollection, DatasetVerification
 from resources.datasets.flat_file import FlatFileCollection
 from resources.job import JobCollection, Job
 from resources.roles.role import RoleCollection, Role
@@ -39,6 +39,7 @@ api.add_resource(UserCollection, '/user')
 api.add_resource(User, '/user/<int:user_id>')
 api.add_resource(Login, '/login')
 api.add_resource(RedactText, '/redact/text')
+api.add_resource(DatasetVerification, '/dataset/verification')
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0')
