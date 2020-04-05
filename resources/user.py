@@ -14,7 +14,7 @@ user_schema = UserSchema()
 class UserCollection(Resource):
 
     @authenticate_token
-    def get(self):
+    def get(self, user_id):
         users = UserModel.query.all()
         return user_schema.dump(users, many=True)
 

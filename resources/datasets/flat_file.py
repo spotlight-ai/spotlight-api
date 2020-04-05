@@ -14,7 +14,8 @@ flat_file_schema = FlatFileDatasetSchema()
 
 
 class FlatFileCollection(Resource):
-    def get(self):
+    @authenticate_token
+    def get(self, user_id):
         datasets = FlatFileDatasetModel.query.all()
         return flat_file_schema.dump(datasets, many=True)
 
