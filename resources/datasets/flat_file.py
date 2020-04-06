@@ -4,7 +4,6 @@ from schemas.datasets.flat_file import FlatFileDatasetSchema
 from models.datasets.flat_file import FlatFileDatasetModel
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.exc import UnmappedInstanceError
 
 from db import db
 from core.decorators import authenticate_token
@@ -21,6 +20,14 @@ class FlatFileCollection(Resource):
 
     @authenticate_token
     def post(self, user_id):
+        """
+        Generates a request to upload a new flat file. Returns a pre-signed S3 link for upload that is valid for
+        a pre-determined amount of time.
+
+        Note: This upload needs to be verified using the /dataset/verification endpoint.
+        :param user_id: Currently logged in user ID
+        :return: AWS S3 pre-signed upload link
+        """
         try:
             request_body = request.get_json(force=True)
             request_body['uploader'] = user_id
