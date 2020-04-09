@@ -40,13 +40,17 @@ class FlatFileCollection(Resource):
             db.session.flush()
             db.session.refresh(dataset)
 
-            #insert into DatasetOWner table
+            # Create a record in the DatasetOwner table
             dataset_id_data = {'dataset_id': dataset.dataset_id, 'owner_id': user_id}
             dataset_owner = dataset_owner_schema.load(dataset_id_data, session=db.session)
             db.session.add(dataset_owner)
 
             db.session.commit()
-            return generate_presigned_link(bucket_name='uploaded-datasets', object_name=request_body['location'])
+
+            response = generate_presigned_link(bucket_name='uploaded-datasets',
+                                                     object_name=request_body['location'])
+            response['dataset_id'] = dataset.dataset_id
+            return response
         except ValidationError as err:
             abort(422, err.messages)
         except IntegrityError as err:
