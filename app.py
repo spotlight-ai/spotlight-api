@@ -6,15 +6,15 @@ from flask_restful import Api
 
 from db import db
 from resources.auth.login import Login
-from resources.datasets.base import DatasetCollection, DatasetVerification
-from resources.datasets.flat_file import FlatFileCollection
-from resources.job import JobCollection, Job
-from resources.roles.role import RoleCollection, Role
-from resources.roles.role_member import RoleMemberCollection, RoleMember
-from resources.roles.role_permission import RolePermissionCollection
-from resources.user import UserCollection, User
-from resources.redact.text import RedactText
+from resources.datasets.base import Dataset, DatasetCollection, DatasetVerification
 from resources.datasets.dataset_owner import DatasetOwnerCollection
+from resources.datasets.flat_file import FlatFileCollection
+from resources.job import Job, JobCollection
+from resources.redact.text import RedactText
+from resources.roles.role import Role, RoleCollection
+from resources.roles.role_member import RoleMember, RoleMemberCollection
+from resources.roles.role_permission import RolePermissionCollection
+from resources.user import User, UserCollection
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{os.environ.get("POSTGRES_USER")}:' \
@@ -33,6 +33,7 @@ api.add_resource(RolePermissionCollection, '/role/permission')
 api.add_resource(RoleMemberCollection, '/role/<int:role_id>/member')
 api.add_resource(RoleMember, '/role/<int:role_id>/member/<int:user_id>')
 api.add_resource(DatasetCollection, '/dataset')
+api.add_resource(Dataset, '/dataset/<int:dataset_id>')
 api.add_resource(FlatFileCollection, '/dataset/flat_file')
 api.add_resource(JobCollection, '/job')
 api.add_resource(Job, '/job/<int:job_id>')
@@ -42,7 +43,7 @@ api.add_resource(Login, '/login')
 api.add_resource(RedactText, '/redact/text')
 api.add_resource(DatasetVerification, '/dataset/verification')
 
-#anita
+# anita
 api.add_resource(DatasetOwnerCollection, '/dataset/dataset_owner')
 
 if __name__ == "__main__":

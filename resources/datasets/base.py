@@ -1,13 +1,16 @@
-from flask_restful import Resource
-from flask import request, abort
-from schemas.datasets.base import DatasetSchema
-from models.datasets.base import DatasetModel
 from distutils.util import strtobool
 
-from db import db
+from flask import request
+from flask_restful import Resource
+
 from core.decorators import authenticate_token
+from db import db
+from models.datasets.base import DatasetModel
+from schemas.datasets.base import DatasetSchema
+from schemas.job import JobSchema
 
 dataset_schema = DatasetSchema()
+job_schema = JobSchema()
 
 
 class DatasetCollection(Resource):
@@ -37,9 +40,16 @@ class DatasetCollection(Resource):
             shared = strtobool(shared)
         else:
             shared = False
-
+        
         datasets = DatasetModel.query.filter_by(verified=True).all()
         return dataset_schema.dump(datasets, many=True)
+
+
+class Dataset(Resource):
+    @authenticate_token
+    def get(self, user_id, dataset_id):
+        dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
+        return dataset_schema.dump(dataset)
 
 
 class DatasetVerification(Resource):
@@ -54,12 +64,17 @@ class DatasetVerification(Resource):
         """
         request_body = request.get_json(force=True)
         dataset_ids = request_body['dataset_ids']
-
+        
         datasets = DatasetModel.query.filter(DatasetModel.dataset_id.in_(dataset_ids)).all()
-
+        
         for dataset in datasets:
-            # TODO: Add S3 verification.
-            dataset.verified = True
-
+            if not dataset.verified:
+                # TODO: Add S3 verification.
+                # TODO: Add API call to model API to run job that is created.
+                # TODO: Add Kafka messaging queue implementation for job queueing.
+                job = job_schema.load({ 'dataset_id': dataset.dataset_id })
+                db.session.add(job)
+                dataset.verified = True
+        
         db.session.commit()
         return

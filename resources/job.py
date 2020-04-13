@@ -4,6 +4,7 @@ from schemas.job import JobSchema
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 from models.job import JobModel
+from core.decorators import authenticate_token
 from db import db
 
 job_schema = JobSchema()
@@ -18,6 +19,7 @@ class JobCollection(Resource):
             jobs = JobModel.query.order_by(JobModel.job_created_ts).all()
         return job_schema.dump(jobs, many=True)
 
+    @authenticate_token
     def post(self):
         try:
             data = job_schema.load(request.get_json(force=True))

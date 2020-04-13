@@ -48,7 +48,7 @@ class FlatFileCollection(Resource):
             db.session.commit()
 
             response = generate_presigned_link(bucket_name='uploaded-datasets',
-                                                     object_name=request_body['location'])
+                                               object_name=request_body['location'])
             response['dataset_id'] = dataset.dataset_id
             return response
         except ValidationError as err:
