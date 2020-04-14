@@ -1,14 +1,17 @@
 from distutils.util import strtobool
 
-from flask import request
+from flask import abort, request
 from flask_restful import Resource
 
 from core.decorators import authenticate_token
 from db import db
 from models.datasets.base import DatasetModel
+from models.datasets.flat_file import FlatFileDatasetModel
 from schemas.datasets.base import DatasetSchema
+from schemas.datasets.flat_file import FlatFileDatasetSchema
 from schemas.job import JobSchema
 
+flat_file_dataset_schema = FlatFileDatasetSchema()
 dataset_schema = DatasetSchema()
 job_schema = JobSchema()
 
@@ -48,8 +51,11 @@ class DatasetCollection(Resource):
 class Dataset(Resource):
     @authenticate_token
     def get(self, user_id, dataset_id):
-        dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
-        return dataset_schema.dump(dataset)
+        base_dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
+        if base_dataset.dataset_type == "FLAT_FILE":
+            dataset = FlatFileDatasetModel.query.filter_by(dataset_id=dataset_id).first()
+            return flat_file_dataset_schema.dump(dataset)
+        abort(404, "Dataset not found")
 
 
 class DatasetVerification(Resource):
@@ -72,7 +78,7 @@ class DatasetVerification(Resource):
                 # TODO: Add S3 verification.
                 # TODO: Add API call to model API to run job that is created.
                 # TODO: Add Kafka messaging queue implementation for job queueing.
-                job = job_schema.load({ 'dataset_id': dataset.dataset_id })
+                job = job_schema.load({'dataset_id': dataset.dataset_id})
                 db.session.add(job)
                 dataset.verified = True
         

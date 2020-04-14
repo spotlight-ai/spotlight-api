@@ -1,5 +1,8 @@
+import os
+
+from flask import abort, request
+
 from models.user import UserModel
-from flask import request, abort
 
 
 def authenticate_token(func):
@@ -8,11 +11,13 @@ def authenticate_token(func):
     :param func: Endpoint function
     :return: None
     """
+    
     def wrapper(*args, **kwargs):
         bearer_token = request.headers['authorization'].split(' ')[1]  # Extracts the token directly from the header
         is_authenticated, message = UserModel.verify_auth_token(bearer_token)
-        if is_authenticated:
+        if is_authenticated or os.getenv("MODEL_KEY") == bearer_token:
             return func(user_id=message, *args, **kwargs)
         else:
             abort(500, message)
+    
     return wrapper

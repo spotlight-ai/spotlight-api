@@ -10,6 +10,7 @@ from resources.datasets.base import Dataset, DatasetCollection, DatasetVerificat
 from resources.datasets.dataset_owner import DatasetOwnerCollection
 from resources.datasets.flat_file import FlatFileCollection
 from resources.job import Job, JobCollection
+from resources.pii.text_file import TextFilePIICollection
 from resources.redact.text import RedactText
 from resources.roles.role import Role, RoleCollection
 from resources.roles.role_member import RoleMember, RoleMemberCollection
@@ -42,8 +43,7 @@ api.add_resource(User, '/user/<int:user_id>')
 api.add_resource(Login, '/login')
 api.add_resource(RedactText, '/redact/text')
 api.add_resource(DatasetVerification, '/dataset/verification')
-
-# anita
+api.add_resource(TextFilePIICollection, '/pii/text_file')
 api.add_resource(DatasetOwnerCollection, '/dataset/dataset_owner')
 
 if __name__ == "__main__":
