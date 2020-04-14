@@ -75,6 +75,8 @@ class DatasetVerification(Resource):
         
         datasets = DatasetModel.query.filter(DatasetModel.dataset_id.in_(dataset_ids)).all()
         
+        job_ids = []
+        
         for dataset in datasets:
             if not dataset.verified:
                 # TODO: Add S3 verification.
@@ -89,7 +91,8 @@ class DatasetVerification(Resource):
                 
                 url = f'http://{os.getenv("MODEL_HOST")}:{os.getenv("MODEL_PORT")}/predict/file'
                 payload = {'job_id': job.job_id}
+                job_ids.append(job.job_id)
                 requests.post(url, json=payload)
         
         db.session.commit()
-        return
+        return {'job_ids': job_ids}
