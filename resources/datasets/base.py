@@ -88,7 +88,7 @@ class DatasetVerification(Resource):
                 db.session.refresh(job)
                 
                 url = f'http://{os.getenv("MODEL_HOST")}:{os.getenv("MODEL_PORT")}/predict/file'
-                payload = {'job_id': job.id}
+                payload = {'job_id': job.job_id}
                 requests.post(url, json=payload)
         
         db.session.commit()
