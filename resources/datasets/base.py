@@ -1,5 +1,7 @@
+import os
 from distutils.util import strtobool
 
+import requests
 from flask import abort, request
 from flask_restful import Resource
 
@@ -81,6 +83,13 @@ class DatasetVerification(Resource):
                 job = job_schema.load({'dataset_id': dataset.dataset_id})
                 db.session.add(job)
                 dataset.verified = True
+                
+                db.session.flush()
+                db.session.refresh(job)
+                
+                url = f'http://{os.getenv("MODEL_HOST")}:{os.getenv("MODEL_PORT")}/predict/file'
+                payload = {'job_id': job.id}
+                requests.post(url, json=payload)
         
         db.session.commit()
         return
