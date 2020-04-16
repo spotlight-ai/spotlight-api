@@ -1,6 +1,7 @@
 import datetime
 
 from db import db
+from models.associations import DatasetOwner
 from models.job import JobModel
 
 
@@ -11,10 +12,12 @@ class DatasetModel(db.Model):
     dataset_name = db.Column(db.String, nullable=False)
     dataset_type = db.Column(db.String, nullable=False)
     uploader = db.Column(db.Integer, foreign_key='user.user_id')
-    created_ts = db.Column(db.DateTime)
+    created_ts = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now())
     verified = db.Column(db.Boolean, default=False, nullable=True)
     
     jobs = db.relationship(JobModel, backref='dataset', lazy=True)
+    owners = db.relationship("UserModel", secondary=DatasetOwner, backref='dataset')
+    
     __mapper_args__ = {
         'polymorphic_identity': 'dataset',
         'polymorphic_on': dataset_type

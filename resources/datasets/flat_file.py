@@ -7,11 +7,10 @@ from core.aws import generate_presigned_link
 from core.decorators import authenticate_token
 from db import db
 from models.datasets.flat_file import FlatFileDatasetModel
-from schemas.datasets.dataset_owner import DatasetOwnerSchema
+from models.user import UserModel
 from schemas.datasets.flat_file import FlatFileDatasetSchema
 
 flat_file_schema = FlatFileDatasetSchema()
-dataset_owner_schema = DatasetOwnerSchema()
 
 
 class FlatFileCollection(Resource):
@@ -35,14 +34,10 @@ class FlatFileCollection(Resource):
             request_body['uploader'] = user_id
             
             dataset = flat_file_schema.load(request_body)
-            db.session.add(dataset)
-            db.session.flush()
-            db.session.refresh(dataset)
+            owner = UserModel.query.get(user_id)
             
-            # Create a record in the DatasetOwner table
-            dataset_id_data = {'dataset_id': dataset.dataset_id, 'owner_id': user_id}
-            dataset_owner = dataset_owner_schema.load(dataset_id_data, session=db.session)
-            db.session.add(dataset_owner)
+            dataset.owners.append(owner)
+            db.session.add(dataset)
             
             db.session.commit()
             

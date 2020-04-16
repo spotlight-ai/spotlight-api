@@ -7,7 +7,6 @@ from flask_restful import Api
 from db import db
 from resources.auth.login import Login
 from resources.datasets.base import Dataset, DatasetCollection, DatasetVerification
-from resources.datasets.dataset_owner import DatasetOwnerCollection
 from resources.datasets.flat_file import FlatFileCollection
 from resources.job import Job, JobCollection
 from resources.pii.text_file import TextFilePIICollection
@@ -44,7 +43,6 @@ api.add_resource(Login, '/login')
 api.add_resource(RedactText, '/redact/text')
 api.add_resource(DatasetVerification, '/dataset/verification')
 api.add_resource(TextFilePIICollection, '/pii/text_file')
-api.add_resource(DatasetOwnerCollection, '/dataset/dataset_owner')
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0')
