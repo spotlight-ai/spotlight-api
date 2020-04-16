@@ -12,7 +12,6 @@ from resources.job import Job, JobCollection
 from resources.pii.text_file import TextFilePIICollection
 from resources.redact.text import RedactText
 from resources.roles.role import Role, RoleCollection
-from resources.roles.role_member import RoleMember, RoleMemberCollection
 from resources.roles.role_permission import RolePermissionCollection
 from resources.user import User, UserCollection
 
@@ -30,8 +29,6 @@ api = Api(app)
 api.add_resource(RoleCollection, '/role')
 api.add_resource(Role, '/role/<int:role_id>')
 api.add_resource(RolePermissionCollection, '/role/permission')
-api.add_resource(RoleMemberCollection, '/role/<int:role_id>/member')
-api.add_resource(RoleMember, '/role/<int:role_id>/member/<int:user_id>')
 api.add_resource(DatasetCollection, '/dataset')
 api.add_resource(Dataset, '/dataset/<int:dataset_id>')
 api.add_resource(FlatFileCollection, '/dataset/flat_file')

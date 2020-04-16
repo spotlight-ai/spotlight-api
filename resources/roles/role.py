@@ -1,27 +1,26 @@
+from flask import abort, request
 from flask_restful import Resource
-from flask import request, abort
-from schemas.roles.role import RoleSchema
-from schemas.roles.role_member import RoleMemberSchema
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import UnmappedInstanceError
-from models.roles.role import RoleModel
+
 from db import db
+from models.roles.role import RoleModel
+from schemas.roles.role import RoleSchema
 
 role_schema = RoleSchema()
-role_member_schema = RoleMemberSchema()
 
 
 class RoleCollection(Resource):
-
+    
     def get(self):
         roles = RoleModel.query.all()
         return role_schema.dump(roles, many=True)
-
+    
     def post(self):
         try:
             data = request.get_json(force=True)
-
+            
             role = role_schema.load(data)
             db.session.add(role)
             db.session.commit()
@@ -36,7 +35,7 @@ class Role(Resource):
     def get(self, role_id):
         role = RoleModel.query.filter_by(role_id=role_id).first()
         return role_schema.dump(role)
-
+    
     def delete(self, role_id):
         try:
             role = RoleModel.query.filter_by(role_id=role_id).first()
@@ -45,6 +44,3 @@ class Role(Resource):
         except UnmappedInstanceError as err:
             db.session.rollback()
             abort(404, err)
-
-
-

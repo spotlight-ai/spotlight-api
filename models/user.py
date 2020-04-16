@@ -5,8 +5,9 @@ import bcrypt
 from itsdangerous import (BadSignature, SignatureExpired, TimedJSONWebSignatureSerializer as Serializer)
 
 from db import db
-from models.associations import DatasetOwner
+from models.associations import DatasetOwner, RoleMember
 from models.datasets.base import DatasetModel
+from models.roles.role import RoleModel
 
 
 class UserModel(db.Model):
@@ -21,6 +22,7 @@ class UserModel(db.Model):
     created_ts = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now())
     
     datasets_owned = db.relationship(DatasetModel, secondary=DatasetOwner, backref='user')
+    roles = db.relationship(RoleModel, secondary=RoleMember, backref='user')
     
     def __init__(self, email, password, first_name, last_name):
         self.first_name = first_name
