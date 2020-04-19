@@ -13,6 +13,7 @@ flask-marshmallow==0.11.0
 Flask-Migrate==2.5.3
 Flask-RESTful==0.3.8
 Flask-SQLAlchemy==2.4.1
+Flask-Testing==0.8.0
 idna==2.9
 itsdangerous==1.1.0
 Jinja2==2.11.1
