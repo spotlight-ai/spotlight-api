@@ -2,11 +2,11 @@ name: Building and pushing a docker image to Amazon ECR
 
 on:
   pull_request:
-    branches:         
+    branches:
     - develop
   push:
-    branches:         
-    - develop   
+    branches:
+    - develop
 
 env:
   AWS_DEFAULT_REGION: us-east-1
@@ -23,7 +23,7 @@ jobs:
     steps:
 
     - name: Checkout
-      uses: actions/checkout@develop
+      uses: actions/checkout@master
 
     - name: Setup ECR
       run: |
