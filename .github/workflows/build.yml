@@ -40,16 +40,13 @@ jobs:
       run: |
         docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$CONTAINER_IMAGE
 
-  deploy:
-    name: Deploying image from ECR to Kubernetes cluster
-    runs-on: ubuntu-latest
-    steps:
-
     - name: Download kube-ctl
       run: |
-        aws eks --region us-east-1 update-kubeconfig --name spotlight_ai
+        aws eks --region us-east-2 update-kubeconfig --name spotlight_ai
 
     - name: Update images
       run: |
         kubectl set image $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$CONTAINER_IMAGE \
         spotlight_api --record
+
+
