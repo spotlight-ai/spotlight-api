@@ -46,7 +46,6 @@ jobs:
 
     - name: Update images
       run: |
-        kubectl set image $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$CONTAINER_IMAGE \
-        spotlight_api --record
+        kubectl set image deployments/spotlight-ai-api $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$CONTAINER_IMAGE
 
 
