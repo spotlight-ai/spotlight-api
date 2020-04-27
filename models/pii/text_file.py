@@ -8,7 +8,7 @@ class TextFilePIIModel(db.Model):
     __tableargs__ = db.UniqueConstraint("pii_id", "dataset_id", "start_location", "end_location")
     
     pii_id = db.Column(db.Integer, primary_key=True)
-    dataset_id = db.Column(db.Integer, foreign_key='dataset.dataset_id')
+    dataset_id = db.Column(db.Integer, db.ForeignKey('dataset.dataset_id'))
     pii_type = db.Column(db.String, nullable=False)
     start_location = db.Column(db.Integer, nullable=False)
     end_location = db.Column(db.Integer, nullable=False)

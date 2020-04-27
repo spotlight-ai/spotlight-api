@@ -3,6 +3,7 @@ import datetime
 from db import db
 from models.associations import DatasetOwner
 from models.job import JobModel
+from models.pii.text_file import TextFilePIIModel
 
 
 class DatasetModel(db.Model):
@@ -17,6 +18,7 @@ class DatasetModel(db.Model):
     
     jobs = db.relationship(JobModel, backref='dataset', lazy=True)
     owners = db.relationship("UserModel", secondary=DatasetOwner, backref='dataset')
+    markers = db.relationship(TextFilePIIModel, backref='dataset', lazy=True)
     
     __mapper_args__ = {
         'polymorphic_identity': 'dataset',
