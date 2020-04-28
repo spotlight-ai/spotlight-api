@@ -61,6 +61,12 @@ class User(Resource):
 
     @authenticate_token
     def patch(self, user_id, user_query_id):
+        """
+        Edits a single user.
+        :param user_id: Currently logged in user ID.
+        :param user_query_id: User ID to be edited.
+        :return: None
+        """
         loadable_fields = ["first_name", "last_name"]
         try:
             user = UserModel.query.filter_by(user_id=user_query_id).first()
