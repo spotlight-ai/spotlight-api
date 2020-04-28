@@ -15,15 +15,29 @@ class UserCollection(Resource):
 
     @authenticate_token
     def get(self, user_id):
+        """
+        Return all users.
+        :param user_id: Logged in user ID.
+        :return: List of User objects.
+        """
         users = UserModel.query.all()
         return user_schema.dump(users, many=True)
 
     def post(self):
+        """
+        Register a new user.
+        :return: None.
+        """
         try:
             data = user_schema.load(request.get_json(force=True))
+
+            # Check if user already exists
+            if UserModel.query.filter_by(email=data.email).first():
+                abort(400, "User already exists.")
+
             db.session.add(data)
             db.session.commit()
-            return
+            return None, 201
         except ValidationError as err:
             abort(422, err.messages)
         except IntegrityError as err:
@@ -33,16 +47,56 @@ class UserCollection(Resource):
 
 class User(Resource):
     @authenticate_token
-    def get(self, user_id):
-        user = UserModel.query.filter_by(user_id=user_id).first()
+    def get(self, user_id, user_query_id):
+        """
+        Retrieves a single user.
+        :param user_id: Currently logged in user ID.
+        :param user_query_id: User ID to be retrieved.
+        :return: User object.
+        """
+        user = UserModel.query.filter_by(user_id=user_query_id).first()
+        if not user:
+            abort(404, "User not found.")
         return user_schema.dump(user)
 
     @authenticate_token
-    def delete(self, user_id):
+    def patch(self, user_id, user_query_id):
+        loadable_fields = ["first_name", "last_name"]
         try:
-            user = UserModel.query.filter_by(user_id=user_id).first()
+            user = UserModel.query.filter_by(user_id=user_query_id).first()
+            if not user:
+                abort(404, "User not found.")
+
+            data = request.get_json(force=True)
+
+            for k, v in data.items():
+                if k in loadable_fields:
+                    user.__setattr__(k, v)
+
+            db.session.commit()
+            return
+        except ValidationError as err:
+            abort(422, err.messages)
+        except IntegrityError as err:
+            abort(400, err)
+
+    @authenticate_token
+    def delete(self, user_id, user_query_id):
+        """
+        Deletes a user.
+        :param user_id: Currently logged in user ID.
+        :param user_query_id: User ID to be deleted.
+        :return: None
+        """
+        try:
+            user = UserModel.query.filter_by(user_id=user_query_id).first()
+
+            if not user:
+                abort(404, "User not found.")
+
             db.session.delete(user)
             db.session.commit()
+            return
         except UnmappedInstanceError as err:
             db.session.rollback()
             abort(404, err)

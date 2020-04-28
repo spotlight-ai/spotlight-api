@@ -41,7 +41,7 @@ api.add_resource(RedactText, '/redact/text')
 api.add_resource(DatasetVerification, '/dataset/verification')
 api.add_resource(TextFilePIICollection, '/pii/text_file')
 api.add_resource(UserCollection, '/user')
-api.add_resource(User, '/user/<int:user_id>')
+api.add_resource(User, '/user/<int:user_query_id>')
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0')
