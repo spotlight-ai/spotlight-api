@@ -21,15 +21,36 @@ Check if it worked:
 - Create a POST request. URL: `localhost:5000/login`
 - It should fail since the login credentials are not setup yet but it should recognize the request.
 
-### Setup database
+## Database Setup
+We are using Alembic migrations for the database, which requires an up-to-date migrations folder to be 
+generated and applied to your local database. To do this:
 
-- View all docker containers: `docker ps`
-- Init: `docker exec spotlight_api flask db init`
-- Migrate: `docker exec spotlight_api flask db migrate`
-- Upgrade: `docker exec spotlight_api flask db upgrade`
+If you don't have a `migrations` folder in your root directory, verify that
+both the `spotlight_api` and `spotlight_db` containers are both running.
 
-Check if it worked:
+Once this is complete, perform the following:
+1. Run `docker exec spotlight_api flask db init`. This creates the `migrations` directory.
+2. Run `docker exec spotlight_api flask db migrate`. This uses the `models` module to create
+the necessary migrations.
+3. Run `docker exec spotlight_api flask db upgrade`. This pushes the migrations to the database.
 
-- Open Postman
-- Create user using a POST request. URL: `localhost:5000/user` with body: `{"password":"<enter password>","first_name":"<name>","last_name":"<last name>","email":"<@gmail.com>"}`
-- Login using newly created credentials. URL: `localhost:5000/login` with body: `{"password":"<enter password>", "email":"<@gmail.com>"}`. This should return a token which will be used in authentication.
+To verify that the setup worked correctly, use a database viewer or verify using cURL or an API request
+tool like Postman.
+
+Create user using a POST request. URL: `localhost:5000/user` with body: 
+```
+{
+    "password":"<enter password>",
+    "first_name":"<name>",
+    "last_name":"<last name>",
+    "email":"<@gmail.com>"
+}
+```
+Login using newly created credentials. URL: `localhost:5000/login` with body: 
+```
+{
+    "password":"<enter password>", 
+    "email":"<@gmail.com>"
+}
+``` 
+This should return a token which will be used in authentication.
