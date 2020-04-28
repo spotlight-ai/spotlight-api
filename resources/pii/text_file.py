@@ -31,3 +31,10 @@ class TextFilePIICollection(Resource):
             db.session.rollback()
             abort(400, err)
         return
+
+
+class TextFilePII(Resource):
+    @authenticate_token
+    def get(self, user_id, dataset_id):
+        pii = TextFilePIIModel.query.filter_by(dataset_id=dataset_id).all()
+        pass

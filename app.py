@@ -7,7 +7,7 @@ from resources.auth.login import Login
 from resources.datasets.base import Dataset, DatasetCollection, DatasetVerification
 from resources.datasets.flat_file import FlatFileCollection
 from resources.job import Job, JobCollection
-from resources.pii.text_file import TextFilePIICollection
+from resources.pii.text_file import TextFilePII, TextFilePIICollection
 from resources.redact.text import RedactText
 from resources.roles.role import Role, RoleCollection
 from resources.roles.role_permission import RolePermissionCollection
@@ -40,6 +40,7 @@ api.add_resource(Login, '/login')
 api.add_resource(RedactText, '/redact/text')
 api.add_resource(DatasetVerification, '/dataset/verification')
 api.add_resource(TextFilePIICollection, '/pii/text_file')
+api.add_resource(TextFilePII, '/pii/text_file/<int:dataset_id>')
 api.add_resource(UserCollection, '/user')
 api.add_resource(User, '/user/<int:user_query_id>')
 

@@ -18,6 +18,6 @@ def authenticate_token(func):
         if is_authenticated or os.getenv("MODEL_KEY") == bearer_token:
             return func(user_id=message, *args, **kwargs)
         else:
-            abort(500, message)
+            abort(401, message)
     
     return wrapper
