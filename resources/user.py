@@ -46,6 +46,8 @@ class UserCollection(Resource):
 
 
 class User(Resource):
+    loadable_fields = ["first_name", "last_name"]
+
     @authenticate_token
     def get(self, user_id, user_query_id):
         """
@@ -67,7 +69,6 @@ class User(Resource):
         :param user_query_id: User ID to be edited.
         :return: None
         """
-        loadable_fields = ["first_name", "last_name"]
         try:
             user = UserModel.query.filter_by(user_id=user_query_id).first()
             if not user:
@@ -76,7 +77,7 @@ class User(Resource):
             data = request.get_json(force=True)
 
             for k, v in data.items():
-                if k in loadable_fields:
+                if k in self.loadable_fields:
                     user.__setattr__(k, v)
 
             db.session.commit()

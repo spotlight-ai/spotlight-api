@@ -13,6 +13,10 @@ user_schema = UserSchema()
 
 class Login(Resource):
     def post(self):
+        """
+        Logs in a user and returns an authentication token.
+        :return: Token and User object.
+        """
         try:
             data = login_schema.load(request.get_json(force=True))
             user = UserModel.query.filter_by(email=data.get('email')).first()

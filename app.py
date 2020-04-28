@@ -12,6 +12,7 @@ from resources.redact.text import RedactText
 from resources.roles.role import Role, RoleCollection
 from resources.roles.role_permission import RolePermissionCollection
 from resources.user import User, UserCollection
+import os
 
 
 def create_app(config):
@@ -22,7 +23,7 @@ def create_app(config):
     return app
 
 
-app = create_app(config='config.DevelopmentConfig')
+app = create_app(config=os.getenv("ENV"))
 
 migrate = Migrate(app, db)
 

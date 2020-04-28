@@ -13,11 +13,14 @@ def authenticate_token(func):
     """
     
     def wrapper(*args, **kwargs):
-        bearer_token = request.headers['authorization'].split(' ')[1]  # Extracts the token directly from the header
-        is_authenticated, message = UserModel.verify_auth_token(bearer_token)
-        if is_authenticated or os.getenv("MODEL_KEY") == bearer_token:
-            return func(user_id=message, *args, **kwargs)
-        else:
-            abort(401, message)
+        try:
+            bearer_token = request.headers['authorization'].split(' ')[1]  # Extracts the token directly from the header
+            is_authenticated, message = UserModel.verify_auth_token(bearer_token)
+            if is_authenticated or os.getenv("MODEL_KEY") == bearer_token:
+                return func(user_id=message, *args, **kwargs)
+            else:
+                abort(401, message)
+        except KeyError:
+            abort(400, "Missing authorization header")
     
     return wrapper
