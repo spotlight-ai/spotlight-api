@@ -8,9 +8,10 @@ from core.decorators import authenticate_token
 from db import db
 from models.roles.role import RoleModel
 from schemas.roles.role import RoleSchema
+from schemas.roles.role_member import RoleMemberSchema
 
 role_schema = RoleSchema()
-
+role_member_schema = RoleMemberSchema()
 
 class RoleCollection(Resource):
 
@@ -34,10 +35,14 @@ class RoleCollection(Resource):
             data = request.get_json(force=True)
             data['owner_id'] = user_id
 
-            print(user_id, flush=True)
-
             role = role_schema.load(data)
+
             db.session.add(role)
+            db.session.flush()
+
+            owner = role_member_schema.load({'role_id': role.role_id, 'user_id': user_id, 'is_owner': True})
+            db.session.add(owner)
+
             db.session.commit()
             return None, 201
         except ValidationError as err:
