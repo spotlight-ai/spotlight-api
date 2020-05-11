@@ -5,6 +5,7 @@ import requests
 from flask import abort, request
 from flask_restful import Resource
 
+from core.aws import generate_presigned_download_link
 from core.decorators import authenticate_token
 from db import db
 from models.datasets.base import DatasetModel
@@ -56,6 +57,8 @@ class Dataset(Resource):
         base_dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
         if base_dataset.dataset_type == "FLAT_FILE":
             dataset = FlatFileDatasetModel.query.filter_by(dataset_id=dataset_id).first()
+            s3_object_key = dataset.location.split('/')[-1]
+            dataset.download_link = generate_presigned_download_link('uploaded-datasets', s3_object_key)
             return flat_file_dataset_schema.dump(dataset)
         abort(404, "Dataset not found")
 
