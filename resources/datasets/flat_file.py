@@ -31,7 +31,14 @@ class FlatFileCollection(Resource):
         """
         try:
             request_body = request.get_json(force=True)
+            
+            # s3://{bucket}/{user_id}_{dataset}/{object_name}
+            dataset_name = request_body['dataset_name']
+            key = request_body['location']
+            object_name = f'{user_id}_{dataset_name}/{key}'
+            
             request_body['uploader'] = user_id
+            request_body['location'] = object_name
             
             dataset = flat_file_schema.load(request_body)
             owner = UserModel.query.get(user_id)
@@ -42,7 +49,7 @@ class FlatFileCollection(Resource):
             db.session.commit()
             
             response = generate_presigned_link(bucket_name='uploaded-datasets',
-                                               object_name=request_body['location'])
+                                               object_name=object_name)
             response['dataset_id'] = dataset.dataset_id
             return response
         except ValidationError as err:
