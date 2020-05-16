@@ -1,14 +1,15 @@
 import os
-from distutils.util import strtobool
 
 import requests
 from flask import abort, request
 from flask_restful import Resource
+from sqlalchemy.sql.expression import true
 
 from core.decorators import authenticate_token
 from db import db
 from models.datasets.base import DatasetModel
 from models.datasets.flat_file import FlatFileDatasetModel
+from models.user import UserModel
 from schemas.datasets.base import DatasetSchema
 from schemas.datasets.flat_file import FlatFileDatasetSchema
 from schemas.job import JobSchema
@@ -22,32 +23,18 @@ class DatasetCollection(Resource):
     @authenticate_token
     def get(self, user_id):
         """
-        Returns a list of datasets. There are two optional boolean query parameters: owned and shared. If 'owned' is
-        True, a list of datasets owned by the requesting user will be returned. 'Shared' will return a list of
-        datasets that have been shared with the requesting user. The parameters can be used together. If neither is
-        true, a list of all datasets will be returned.
+        Returns a list of datasets that are owned by and shared with the currently logged in user.
 
         Note: This will only return datasets that have been verified.
 
         :param user_id: Currently logged in user ID
         :return: List of datasets
         """
-        args = request.args
-        owned = args.get('owned')
-        shared = args.get('shared')
-        if owned:
-            # TODO: Add correct querying for owned dataset once table is complete.
-            owned = strtobool(owned)
-        else:
-            owned = False
-        if shared:
-            # TODO: Add correct querying for datasets shared with this user once the table is complete.
-            shared = strtobool(shared)
-        else:
-            shared = False
-        
-        datasets = DatasetModel.query.filter_by(verified=True).all()
-        return dataset_schema.dump(datasets, many=True)
+        logged_in_user = UserModel.query.filter_by(user_id=user_id).first()
+        owned_datasets = DatasetModel.query.filter(DatasetModel.verified == true(),
+                                                   DatasetModel.owners.contains(logged_in_user)).all()
+        # TODO: Add shared datasets once the sharing functionality is completed
+        return dataset_schema.dump(owned_datasets, many=True)
 
 
 class Dataset(Resource):
