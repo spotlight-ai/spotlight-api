@@ -8,7 +8,7 @@ class RoleSchema(ma.ModelSchema):
     class Meta:
         include_fk = True
         model = RoleModel
-        exclude = ('creator_id',)
+        load_only = ('creator_id',)
     
     members = ma.List(ma.Nested(RoleMemberSchema))
     creator = ma.Nested(UserSchema, exclude=['created_ts', 'last_login', 'datasets_owned'])

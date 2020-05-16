@@ -34,9 +34,11 @@ class RoleCollection(Resource):
         """
         try:
             data = request.get_json(force=True)
-            data['owner_id'] = user_id
+            data['creator_id'] = user_id
             
             role = role_schema.load(data)
+            
+            role.role_datasets = []
             
             db.session.add(role)
             db.session.flush()

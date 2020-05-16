@@ -1,6 +1,7 @@
 import datetime
 
 from db import db
+from models.associations import RoleDataset
 from models.roles.role_member import RoleMemberModel
 from models.user import UserModel
 
@@ -19,6 +20,7 @@ class RoleModel(db.Model):
     
     members = db.relationship(RoleMemberModel, backref='role')
     creator = db.relationship(UserModel, backref='role')
+    datasets = db.relationship("DatasetModel", secondary=RoleDataset, back_populates='roles')
     
     def __init__(self, creator_id, role_name):
         self.creator_id = creator_id

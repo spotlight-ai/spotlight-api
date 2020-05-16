@@ -1,9 +1,10 @@
 import datetime
 
 from db import db
-from models.associations import DatasetOwner
+from models.associations import RoleDataset
 from models.job import JobModel
 from models.pii.text_file import TextFilePIIModel
+from models.roles.role import RoleModel
 
 
 class DatasetModel(db.Model):
@@ -17,8 +18,8 @@ class DatasetModel(db.Model):
     verified = db.Column(db.Boolean, default=False, nullable=True)
     
     jobs = db.relationship(JobModel, backref='dataset', lazy=True)
-    owners = db.relationship("UserModel", secondary=DatasetOwner, backref='dataset')
     markers = db.relationship(TextFilePIIModel, backref='dataset', lazy=True)
+    roles = db.relationship(RoleModel, secondary=RoleDataset, back_populates='datasets')
     
     __mapper_args__ = {
         'polymorphic_identity': 'dataset',
