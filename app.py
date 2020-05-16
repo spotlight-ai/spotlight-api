@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask
 from flask_migrate import Migrate
 from flask_restful import Api
@@ -10,9 +12,9 @@ from resources.job import Job, JobCollection
 from resources.pii.text_file import TextFilePII, TextFilePIICollection
 from resources.redact.text import RedactText
 from resources.roles.role import Role, RoleCollection
+from resources.roles.role_member import RoleMemberCollection
 from resources.roles.role_permission import RolePermissionCollection
 from resources.user import User, UserCollection
-import os
 
 
 def create_app(config):
@@ -31,7 +33,8 @@ api = Api(app)
 
 api.add_resource(RoleCollection, '/role')
 api.add_resource(Role, '/role/<int:role_id>')
-api.add_resource(RolePermissionCollection, '/role/permission')
+api.add_resource(RoleMemberCollection, '/role/<int:role_id>/member')
+api.add_resource(RolePermissionCollection, '/role/<int:role_id>/permission')
 api.add_resource(DatasetCollection, '/dataset')
 api.add_resource(Dataset, '/dataset/<int:dataset_id>')
 api.add_resource(FlatFileCollection, '/dataset/flat_file')

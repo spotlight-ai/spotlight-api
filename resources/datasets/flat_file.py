@@ -32,7 +32,7 @@ class FlatFileCollection(Resource):
         try:
             request_body = request.get_json(force=True)
             
-            # s3://{bucket}/{user_id}_{dataset}/{object_name}
+            # Upload Format: s3://{bucket}/{user_id}_{dataset}/{object_name}
             dataset_name = request_body['dataset_name']
             key = request_body['location']
             object_name = f'{user_id}_{dataset_name}/{key}'

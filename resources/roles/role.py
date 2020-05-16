@@ -13,8 +13,9 @@ from schemas.roles.role_member import RoleMemberSchema
 role_schema = RoleSchema()
 role_member_schema = RoleMemberSchema()
 
-class RoleCollection(Resource):
 
+class RoleCollection(Resource):
+    
     @authenticate_token
     def get(self, user_id):
         """
@@ -23,7 +24,7 @@ class RoleCollection(Resource):
         """
         roles = RoleModel.query.all()
         return role_schema.dump(roles, many=True)
-
+    
     @authenticate_token
     def post(self, user_id):
         """
@@ -34,15 +35,15 @@ class RoleCollection(Resource):
         try:
             data = request.get_json(force=True)
             data['owner_id'] = user_id
-
+            
             role = role_schema.load(data)
-
+            
             db.session.add(role)
             db.session.flush()
-
+            
             owner = role_member_schema.load({'role_id': role.role_id, 'user_id': user_id, 'is_owner': True})
             db.session.add(owner)
-
+            
             db.session.commit()
             return None, 201
         except ValidationError as err:
@@ -62,11 +63,11 @@ class Role(Resource):
         :return: Role object.
         """
         role = RoleModel.query.filter_by(role_id=role_id).first()
-
+        
         if not role:
             abort(404, "Role not found.")
         return role_schema.dump(role)
-
+    
     @authenticate_token
     def delete(self, user_id, role_id):
         """
