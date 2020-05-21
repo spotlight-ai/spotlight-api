@@ -13,11 +13,6 @@ text_file_pii_schema = TextFilePIISchema()
 
 class TextFilePIICollection(Resource):
     @authenticate_token
-    def get(self, user_id):
-        pii = TextFilePIIModel.query.all()
-        return text_file_pii_schema.load(pii, many=True)
-    
-    @authenticate_token
     def post(self, user_id):
         try:
             data = request.get_json(force=True)
@@ -37,4 +32,4 @@ class TextFilePII(Resource):
     @authenticate_token
     def get(self, user_id, dataset_id):
         pii = TextFilePIIModel.query.filter_by(dataset_id=dataset_id).all()
-        pass
+        return text_file_pii_schema.dump(pii, many=True)
