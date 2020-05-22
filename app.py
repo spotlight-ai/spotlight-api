@@ -49,4 +49,4 @@ api.add_resource(UserCollection, '/user')
 api.add_resource(User, '/user/<int:user_query_id>')
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', port=5000)

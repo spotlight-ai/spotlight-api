@@ -16,3 +16,9 @@ RoleDataset = db.Table('role_dataset',
                        db.Column('id', db.Integer, primary_key=True),
                        db.Column('role_id', db.Integer, db.ForeignKey('role.role_id')),
                        db.Column('dataset_id', db.Integer, db.ForeignKey('dataset.dataset_id')))
+
+# Dataset Owners
+DatasetOwner = db.Table('dataset_owner',
+                        db.Column('id', db.Integer, primary_key=True),
+                        db.Column('dataset_id', db.Integer, db.ForeignKey('dataset.dataset_id')),
+                        db.Column('owner_id', db.Integer, db.ForeignKey('user.user_id')))

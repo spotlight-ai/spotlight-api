@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-deployment
+  labels:
+    app: spotlight-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spotlight-api
+  template:
+    metadata:
+      labels:
+        app: spotlight-api
+    spec:
+      containers:
+      - name: spotlight-api
+        image: 553443767398.dkr.ecr.us-east-1.amazonaws.com/spotlight-api:latest
+        ports:
+        - containerPort: 5000

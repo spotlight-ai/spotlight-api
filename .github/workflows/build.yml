@@ -14,7 +14,7 @@ env:
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  CONTAINER_IMAGE: spotlight_api:${{ github.sha }}
+  CONTAINER_IMAGE: spotlight-api:${{ github.sha }}
 
 jobs:
   build-and-push:
@@ -40,13 +40,13 @@ jobs:
       run: |
         docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$CONTAINER_IMAGE
 
-    - name: Download kube-ctl
+    - name: Update kubeconfig with dev cluster
       run: |
-        aws eks --region us-east-2 update-kubeconfig --name spotlight_ai
+        aws eks --region us-east-1 update-kubeconfig --name spotlight-dev-cluster
 
     - name: Update images
       run: |
-        kubectl set image deployments/spotlight-ai-api \
-        spotlight-ai-api=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$CONTAINER_IMAGE --record
+        kubectl set image deployments/api-deployment \
+        spotlight-api=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$CONTAINER_IMAGE
 
 

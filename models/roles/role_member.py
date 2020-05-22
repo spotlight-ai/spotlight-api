@@ -1,5 +1,4 @@
 from db import db
-from models.user import UserModel
 
 
 class RoleMemberModel(db.Model):
@@ -13,7 +12,7 @@ class RoleMemberModel(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
     is_owner = db.Column(db.Boolean, default=False, nullable=False)
     
-    user = db.relationship(UserModel, backref='role_member')
+    user = db.relationship("UserModel", backref='role_member')
     
     def __init__(self, role_id, user_id, is_owner=False):
         self.role_id = role_id
