@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urlparse
 
 import requests
 from flask import abort, request
@@ -44,7 +45,8 @@ class Dataset(Resource):
         base_dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
         if base_dataset.dataset_type == "FLAT_FILE":
             dataset = FlatFileDatasetModel.query.filter_by(dataset_id=dataset_id).first()
-            s3_object_key = dataset.location.split('/')[-1]
+            parsed_path = urlparse(dataset.location)
+            s3_object_key = parsed_path.path[1:]
             dataset.download_link = generate_presigned_download_link('uploaded-datasets', s3_object_key)
             return flat_file_dataset_schema.dump(dataset)
         abort(404, "Dataset not found")
