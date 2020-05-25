@@ -8,6 +8,7 @@ RUN pip install -r requirements.txt
 
 ENTRYPOINT ["python"]
 
+RUN flask db init
 RUN flask db migrate
 RUN flask db upgrade
 
