@@ -8,8 +8,7 @@ RUN pip install -r requirements.txt
 
 ENTRYPOINT ["python"]
 
-CMD ["flask", "db", "init"]
-CMD ["flask", "db", "migrate"]
-CMD ["flask", "db", "upgrade"]
+RUN flask db migrate
+RUN flask db upgrade
 
 CMD ["app.py"]
