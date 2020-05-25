@@ -7,6 +7,5 @@ class RoleMemberSchema(ma.ModelSchema):
     class Meta:
         include_fk = True
         model = RoleMemberModel
-        # exclude = ('user_id', 'role', 'role_member_id', 'role_id')
     
     user = ma.Nested(UserSchema, exclude=['last_login', 'created_ts'])

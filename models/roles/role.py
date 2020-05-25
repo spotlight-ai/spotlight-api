@@ -17,9 +17,9 @@ class RoleModel(db.Model):
     created_ts = db.Column(db.DateTime)
     updated_ts = db.Column(db.DateTime)
     
-    members = db.relationship(RoleMemberModel, backref='role')
+    members = db.relationship(RoleMemberModel, cascade="all, delete", backref='role')
     creator = db.relationship("UserModel", backref='role')
-    datasets = db.relationship("DatasetModel", secondary=RoleDataset, back_populates='roles')
+    datasets = db.relationship("DatasetModel", secondary=RoleDataset, cascade="all, delete", back_populates='roles')
     
     def __init__(self, creator_id, role_name):
         self.creator_id = creator_id

@@ -34,20 +34,22 @@ class RoleCollection(Resource):
         """
         try:
             data = request.get_json(force=True)
-            data['creator_id'] = user_id
             
-            role = role_schema.load(data)
+            role = role_schema.load({'role_name': data['role_name'], 'creator_id': user_id})
             
             role.role_datasets = []
             
             db.session.add(role)
             db.session.flush()
             
-            owner = role_member_schema.load({'role_id': role.role_id, 'user_id': user_id, 'is_owner': True})
-            db.session.add(owner)
+            owner_ids = data['owners'] if data['owners'] else [user_id]
+            
+            for owner_id in owner_ids:
+                owner = role_member_schema.load({'role_id': role.role_id, 'user_id': owner_id, 'is_owner': True})
+                db.session.add(owner)
             
             db.session.commit()
-            return None, 201
+            return role_schema.dump(role), 201
         except ValidationError as err:
             abort(422, err.messages)
         except IntegrityError as err:
@@ -82,6 +84,7 @@ class Role(Resource):
             role = RoleModel.query.filter_by(role_id=role_id).first()
             if not role:
                 abort(404, "Role not found.")
+            
             db.session.delete(role)
             db.session.commit()
             return
