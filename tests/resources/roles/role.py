@@ -30,4 +30,5 @@ class RoleResourceTest(unittest.TestCase):
     
     def test_create_role(self):
         self.client().post(self.user_route, json=self.user)
+        # another thing
         pass
