@@ -31,7 +31,7 @@ class UserModel(db.Model):
         self.created_ts = datetime.datetime.now()
     
     def generate_auth_token(self, ttl=604800):
-        s = Serializer(os.environ.get('SECRET'), expires_in=ttl)
+        s = Serializer(os.environ.get('SECRET', 'default_secret'), expires_in=ttl)
         return s.dumps({'id': self.user_id})
     
     def check_password(self, password):
@@ -40,7 +40,7 @@ class UserModel(db.Model):
     
     @staticmethod
     def verify_auth_token(token):
-        s = Serializer(os.environ.get('SECRET'))
+        s = Serializer(os.environ.get('SECRET', 'default_secret'))
         
         try:
             data = s.loads(token)

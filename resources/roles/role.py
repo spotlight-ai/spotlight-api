@@ -42,7 +42,7 @@ class RoleCollection(Resource):
             db.session.add(role)
             db.session.flush()
             
-            owner_ids = data['owners'] if data['owners'] else [user_id]
+            owner_ids = data['owners'] if 'owners' in data else [user_id]
             
             for owner_id in owner_ids:
                 owner = role_member_schema.load({'role_id': role.role_id, 'user_id': owner_id, 'is_owner': True})
