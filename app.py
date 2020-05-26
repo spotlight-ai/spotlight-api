@@ -22,31 +22,31 @@ def create_app(config):
     app.config.from_object(config)
     db.init_app(app)
     
+    api = Api(app)
+    
+    api.add_resource(RoleCollection, '/role')
+    api.add_resource(Role, '/role/<int:role_id>')
+    api.add_resource(RoleMemberCollection, '/role/<int:role_id>/member')
+    api.add_resource(RolePermissionCollection, '/role/<int:role_id>/permission')
+    api.add_resource(DatasetCollection, '/dataset')
+    api.add_resource(Dataset, '/dataset/<int:dataset_id>')
+    api.add_resource(FlatFileCollection, '/dataset/flat_file')
+    api.add_resource(JobCollection, '/job')
+    api.add_resource(Job, '/job/<int:job_id>')
+    api.add_resource(Login, '/login')
+    api.add_resource(RedactText, '/redact/text')
+    api.add_resource(DatasetVerification, '/dataset/verification')
+    api.add_resource(TextFilePIICollection, '/pii/text_file')
+    api.add_resource(TextFilePII, '/pii/text_file/<int:dataset_id>')
+    api.add_resource(UserCollection, '/user')
+    api.add_resource(User, '/user/<int:user_query_id>')
+    
     return app
 
 
 app = create_app(config=os.getenv("ENV"))
 
 migrate = Migrate(app, db)
-
-api = Api(app)
-
-api.add_resource(RoleCollection, '/role')
-api.add_resource(Role, '/role/<int:role_id>')
-api.add_resource(RoleMemberCollection, '/role/<int:role_id>/member')
-api.add_resource(RolePermissionCollection, '/role/<int:role_id>/permission')
-api.add_resource(DatasetCollection, '/dataset')
-api.add_resource(Dataset, '/dataset/<int:dataset_id>')
-api.add_resource(FlatFileCollection, '/dataset/flat_file')
-api.add_resource(JobCollection, '/job')
-api.add_resource(Job, '/job/<int:job_id>')
-api.add_resource(Login, '/login')
-api.add_resource(RedactText, '/redact/text')
-api.add_resource(DatasetVerification, '/dataset/verification')
-api.add_resource(TextFilePIICollection, '/pii/text_file')
-api.add_resource(TextFilePII, '/pii/text_file/<int:dataset_id>')
-api.add_resource(UserCollection, '/user')
-api.add_resource(User, '/user/<int:user_query_id>')
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
