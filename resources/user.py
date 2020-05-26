@@ -21,13 +21,16 @@ class UserCollection(Resource):
         :param user_id: Logged in user ID.
         :return: List of User objects.
         """
-        # TODO: Add query param for user search
         args = request.args
         query = f'%{args.get("query", None)}%'
         
-        users = UserModel.query.filter((UserModel.first_name.ilike(query) |
-                                        (UserModel.last_name.ilike(query) |
-                                         (UserModel.email.ilike(query))))).all()
+        if args.get('query'):
+            users = UserModel.query.filter((UserModel.first_name.ilike(query) |
+                                            (UserModel.last_name.ilike(query) |
+                                             (UserModel.email.ilike(query))))).all()
+        else:
+            users = UserModel.query.all()
+        
         return user_schema.dump(users, many=True)
     
     def post(self):
