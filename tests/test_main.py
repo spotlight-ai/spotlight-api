@@ -33,6 +33,7 @@ class BaseTest(unittest.TestCase):
             from models.user import UserModel
             from models.roles.role import RoleModel
             from models.roles.role_member import RoleMemberModel
+            from models.associations import RolePermission, pii_marker_base
             
             db.create_all()
             
@@ -86,6 +87,8 @@ class BaseTest(unittest.TestCase):
             role_1_owner_1 = RoleMemberModel(role_id=1, user_id=4, is_owner=True)
             role_1_owner_2 = RoleMemberModel(role_id=1, user_id=3, is_owner=True)
             role_1_user_1 = RoleMemberModel(role_id=1, user_id=1)
+            role_1.permissions.add()
+            role_1_perm_1 = RolePermission(role_id=1, pii_id=3)
             
             role_2_owner_1 = RoleMemberModel(role_id=2, user_id=4, is_owner=True)
             role_2_user_1 = RoleMemberModel(role_id=2, user_id=2)
@@ -95,11 +98,18 @@ class BaseTest(unittest.TestCase):
                     UserModel(first_name=user.get('first_name'), last_name=user.get('last_name'),
                               email=user.get('email'), password=user.get('password')))
             
+            db.session.add(pii_marker_base(1, 'email'))
+            db.session.add(pii_marker_base(2, 'ein'))
+            db.session.add(pii_marker_base(3, 'ssn'))
+            db.session.add(pii_marker_base(4, 'cc_number'))
+            db.session.add(pii_marker_base(5, 'usa_phone'))
+            
             db.session.add(role_1)
             db.session.add(role_2)
             db.session.add(role_1_owner_1)
             db.session.add(role_1_owner_2)
             db.session.add(role_1_user_1)
+            db.session.add(role_1_perm_1)
             db.session.add(role_2_owner_1)
             db.session.add(role_2_user_1)
             

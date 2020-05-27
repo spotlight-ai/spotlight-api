@@ -1,10 +1,6 @@
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema
 
 
-class RolePermission(Schema):
+class RolePermissionSchema(Schema):
     class Meta:
-        strict = True
-
-    role_id = fields.Int(required=True)
-    dataset_id = fields.Int(required=True)
-    allowed_fields = fields.List(fields.Str(), required=True)
+        fields = ('role_id', 'pii_id')
