@@ -61,3 +61,25 @@ class RolePermissionResourceTest(BaseTest):
                                  json={'permissions': ['ssn', 'name']})
         
         self.assertEqual(res.status_code, 400)
+    
+    def test_update_role_permissions(self):
+        """Owners should be able to overwrite role permissions."""
+        headers = self.generate_auth_headers(user_id=4)
+        
+        res = self.client().put(f'{self.role_route}/1/permission', json={'permissions': ['address']}, headers=headers)
+        
+        self.assertEqual(res.status_code, 200)
+        permissions = json.loads(res.data.decode()).get('permissions')
+        
+        self.assertEqual(len(permissions), 1)
+    
+    def test_remove_role_permission(self):
+        """Owners should be able to remove role permissions."""
+        headers = self.generate_auth_headers(user_id=4)
+        
+        res = self.client().delete(f'{self.role_route}/1/permission', json={'permissions': ['ssn']}, headers=headers)
+        
+        self.assertEqual(res.status_code, 200)
+        permissions = json.loads(res.data.decode()).get('permissions')
+        
+        self.assertEqual(len(permissions), 0)
