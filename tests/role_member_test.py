@@ -1,57 +1,11 @@
 import json
-import unittest
 
-from app import create_app, db
+from tests.test_main import BaseTest
 
 
-class RoleMemberResourceTest(unittest.TestCase):
-    def setUp(self):
-        self.app = create_app('config.TestingConfig')
-        self.client = self.app.test_client
-        
-        self.role = {
-            'role_name': 'Developers'
-        }
-        
-        self.user_route = '/user'
-        self.role_route = '/role'
-        
-        with self.app.app_context():
-            from models.user import UserModel
-            from models.roles.role import RoleModel
-            from models.roles.role_member import RoleMemberModel
-            
-            db.create_all()
-            
-            user_1 = UserModel(first_name='Doug', last_name='Developer', email='test@email.com',
-                               password='testpassword')
-            user_2 = UserModel(first_name='Dana', last_name='Developer', email='test_2@email.com',
-                               password='testpassword')
-            
-            role = RoleModel(creator_id=2, role_name='Developers')
-            role_member = RoleMemberModel(role_id=1, user_id=2, is_owner=True)
-            
-            db.session.add(user_1)
-            db.session.add(user_2)
-            db.session.add(role)
-            db.session.add(role_member)
-            db.session.commit()
-    
-    def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
-    
-    def generate_auth_headers(self):
-        """Logs in for user #1 and generates authentication token."""
-        creds = {'email': 'test@email.com', 'password': 'testpassword'}
-        login_route = '/login'
-        
-        login_res = self.client().post(login_route, json=creds)
-        token = json.loads(login_res.data.decode()).get('token')
-        return {'Authorization': f'Bearer {token}'}
-    
+class RoleMemberResourceTest(BaseTest):
     def test_get_role_members(self):
+        """Retrieves all members for a given role."""
         headers = self.generate_auth_headers()
         
         res = self.client().get(f'{self.role_route}/1/member', headers=headers)
@@ -59,12 +13,89 @@ class RoleMemberResourceTest(unittest.TestCase):
         members = json.loads(res.data.decode())
         
         self.assertEqual(res.status_code, 200)
-        self.assertEqual(len(members), 1)
+        self.assertEqual(len(members), 3)
     
     def test_get_role_members_missing_role(self):
+        """Verifies that an error is thrown when requested role does not exist."""
         headers = self.generate_auth_headers()
         
         res = self.client().get(f'{self.role_route}/10/member', headers=headers)
         
         self.assertEqual(res.status_code, 404)
         self.assertIn('Role not found', res.data.decode())
+    
+    def test_add_owner_to_unowned_role(self):
+        """Verifies that an error is thrown if a user tries to add an owner to a role they don't own."""
+        headers = self.generate_auth_headers()
+        
+        res = self.client().post(f'{self.role_route}/2/member', json={'owners': [2], 'users': [3]}, headers=headers)
+        
+        self.assertEqual(res.status_code, 401)
+        self.assertIn('Not allowed to add permissions to this role', res.data.decode())
+    
+    def test_add_owner(self):
+        """Adds an owner to a role."""
+        headers = self.generate_auth_headers(user_id=4)
+        
+        res = self.client().post(f'{self.role_route}/1/member', json={'owners': [2], 'users': []}, headers=headers)
+        
+        self.assertEqual(res.status_code, 201)
+        
+        res = self.client().get(f'{self.role_route}/1/member', headers=headers)
+        members = json.loads(res.data.decode())
+        
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(len(members), 4)
+    
+    def test_add_members(self):
+        """Adds multiple members to a role."""
+        headers = self.generate_auth_headers(user_id=4)
+        
+        res = self.client().post(f'{self.role_route}/1/member', json={'owners': [], 'users': [5, 6]}, headers=headers)
+        
+        self.assertEqual(res.status_code, 201)
+        
+        res = self.client().get(f'{self.role_route}/1/member', headers=headers)
+        members = json.loads(res.data.decode())
+        
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(len(members), 5)
+        
+        owner_count = 0
+        
+        for member in members:
+            if member.get('is_owner'):
+                owner_count += 1
+        
+        self.assertEqual(owner_count, 2)
+    
+    def test_add_combo(self):
+        """Adds a combination of users and owners."""
+        headers = self.generate_auth_headers(user_id=4)
+        
+        res = self.client().post(f'{self.role_route}/1/member', json={'owners': [5], 'users': [2]}, headers=headers)
+        
+        self.assertEqual(res.status_code, 201)
+        
+        res = self.client().get(f'{self.role_route}/1/member', headers=headers)
+        members = json.loads(res.data.decode())
+        
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(len(members), 5)
+        
+        owner_count = 0
+        
+        for member in members:
+            if member.get('is_owner'):
+                owner_count += 1
+        
+        self.assertEqual(owner_count, 3)
+    
+    def test_wrong_key(self):
+        """Validates that an error is thrown when the wrong key is placed in the request body."""
+        headers = self.generate_auth_headers()
+        
+        res = self.client().post(f'{self.role_route}/1/member', json={'owners': [2], 'members': [3]}, headers=headers)
+        
+        self.assertEqual(res.status_code, 422)
+        self.assertIn("Unknown key", res.data.decode())

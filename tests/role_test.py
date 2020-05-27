@@ -1,65 +1,17 @@
 import json
-import unittest
 
-from app import create_app, db
+from tests.test_main import BaseTest
 
 
-class RoleResourceTest(unittest.TestCase):
-    def setUp(self):
-        self.app = create_app('config.TestingConfig')
-        self.client = self.app.test_client
-        
-        self.role = {
-            'role_name': 'Developers'
-        }
-        
-        self.user_route = '/user'
-        self.role_route = '/role'
-        self.login_route = '/login'
-        
-        with self.app.app_context():
-            from models.user import UserModel
-            from models.roles.role import RoleModel
-            from models.roles.role_member import RoleMemberModel
-            
-            db.create_all()
-            
-            user_1 = UserModel(first_name='Doug', last_name='Developer', email='test@email.com',
-                               password='testpassword')
-            user_2 = UserModel(first_name='Dana', last_name='Developer', email='test_2@email.com',
-                               password='testpassword')
-            
-            role = RoleModel(creator_id=2, role_name='Developers')
-            role_member = RoleMemberModel(role_id=1, user_id=2, is_owner=True)
-            
-            db.session.add(user_1)
-            db.session.add(user_2)
-            db.session.add(role)
-            db.session.add(role_member)
-            db.session.commit()
-    
-    def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
-    
-    def generate_auth_headers(self):
-        """Logs in for user #1 and generates authentication token."""
-        creds = {'email': 'test@email.com', 'password': 'testpassword'}
-        
-        login_res = self.client().post(self.login_route, json=creds)
-        token = json.loads(login_res.data.decode()).get('token')
-        return {'Authorization': f'Bearer {token}'}
-    
+class RoleResourceTest(BaseTest):
     def test_create_role(self):
         """Tests functionality of creating a role with a single owner. The role should be returned."""
         headers = self.generate_auth_headers()
         
-        res = self.client().post(self.role_route, json=self.role, headers=headers)
-        print(res.data.decode())
+        res = self.client().post(self.role_route, json=self.role_object, headers=headers)
         
         self.assertEqual(201, res.status_code)
-        self.assertIn(self.role.get('role_name'), res.data.decode())
+        self.assertIn(self.role_object.get('role_name'), res.data.decode())
         
         res = self.client().get(self.role_route, headers=headers)
         members = json.loads(res.data.decode())[0].get('members')
@@ -71,7 +23,7 @@ class RoleResourceTest(unittest.TestCase):
         """Tests functionality of creating a role with more than one owner."""
         headers = self.generate_auth_headers()
         
-        new_role = self.role.copy()
+        new_role = self.role_object.copy()
         new_role['owners'] = [1, 2]
         
         res = self.client().post(self.role_route, json=new_role, headers=headers)
@@ -86,7 +38,7 @@ class RoleResourceTest(unittest.TestCase):
     
     def test_create_role_authentication(self):
         """Ensures that role endpoints require authentication."""
-        res = self.client().post(self.role_route, json=self.role)
+        res = self.client().post(self.role_route, json=self.role_object)
         self.assertEqual(res.status_code, 400)
         self.assertIn("Missing authorization header", res.data.decode())
         
@@ -112,7 +64,7 @@ class RoleResourceTest(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(len(roles), 0)
         
-        self.client().post(self.role_route, json=self.role, headers=headers)
+        self.client().post(self.role_route, json=self.role_object, headers=headers)
         res = self.client().get(self.role_route, headers=headers)
         roles = json.loads(res.data.decode())
         
@@ -126,7 +78,7 @@ class RoleResourceTest(unittest.TestCase):
         res = self.client().get(f'{self.role_route}/1', headers=headers)
         role = json.loads(res.data.decode())
         self.assertEqual(res.status_code, 200)
-        self.assertEqual(role.get('role_name'), 'Developers')
+        self.assertEqual(role.get('role_name'), 'Financial Developers')
     
     def test_get_missing_role(self):
         """Attempt to retrieve a role that doesn't exist."""
