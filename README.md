@@ -54,3 +54,11 @@ Login using newly created credentials. URL: `localhost:5000/login` with body:
 }
 ``` 
 This should return a token which will be used in authentication.
+
+## Testing
+We are using `nosetests` for test discovery and `coverage` for determining test 
+coverage. To run the test suite, either run `nosetests` or `coverage run -m nose` 
+to generate a test coverage report.
+
+Use `coverage report -m` to generate a command line report for test coverage
+and `coverage html` to generate an HTML report.
