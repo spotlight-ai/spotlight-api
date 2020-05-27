@@ -57,7 +57,7 @@ class RoleResourceTest(unittest.TestCase):
         self.assertIn(self.role.get('role_name'), res.data.decode())
         
         res = self.client().get(self.role_route, headers=headers)
-        members = json.loads(res.data.decode())[1].get('members')
+        members = json.loads(res.data.decode())[0].get('members')
         
         self.assertEqual(len(members), 1)
         self.assertTrue(members[0].get('is_owner'))
@@ -73,7 +73,7 @@ class RoleResourceTest(unittest.TestCase):
         self.assertEqual(res.status_code, 201)
         
         res = self.client().get(self.role_route, headers=headers)
-        members = json.loads(res.data.decode())[1].get('members')
+        members = json.loads(res.data.decode())[0].get('members')
         
         self.assertEqual(len(members), 2)
         self.assertTrue(members[0].get('is_owner'))
@@ -113,3 +113,35 @@ class RoleResourceTest(unittest.TestCase):
         
         self.assertEqual(res.status_code, 200)
         self.assertEqual(len(roles), 1)
+    
+    def test_get_single_role(self):
+        """Get a single, existing role."""
+        headers = self.generate_auth_headers()
+        
+        res = self.client().get(f'{self.role_route}/1', headers=headers)
+        role = json.loads(res.data.decode())
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(role.get('role_name'), 'Developers')
+    
+    def test_get_missing_role(self):
+        """Attempt to retrieve a role that doesn't exist."""
+        headers = self.generate_auth_headers()
+        
+        res = self.client().get(f'{self.role_route}/10', headers=headers)
+        self.assertEqual(res.status_code, 404)
+        self.assertIn('Role not found', res.data.decode())
+    
+    def test_delete_role(self):
+        """Attempt to retrieve a role that doesn't exist."""
+        headers = self.generate_auth_headers()
+        
+        res = self.client().delete(f'{self.role_route}/1', headers=headers)
+        self.assertEqual(res.status_code, 200)
+    
+    def test_delete_missing_role(self):
+        """Attempt to retrieve a role that doesn't exist."""
+        headers = self.generate_auth_headers()
+        
+        res = self.client().delete(f'{self.role_route}/10', headers=headers)
+        self.assertEqual(res.status_code, 404)
+        self.assertIn('Role not found', res.data.decode())
