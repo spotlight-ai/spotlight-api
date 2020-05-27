@@ -12,3 +12,6 @@ class PIIModel(db.Model):
     
     def __init__(self, description):
         self.description = description
+    
+    def __repr__(self):
+        return f'<PIIModel(ID: {self.pii_id} - {self.description})>'
