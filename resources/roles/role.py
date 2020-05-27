@@ -7,6 +7,7 @@ from sqlalchemy.orm.exc import UnmappedInstanceError
 from core.decorators import authenticate_token
 from db import db
 from models.roles.role import RoleModel
+from models.roles.role_member import RoleMemberModel
 from schemas.roles.role import RoleSchema
 from schemas.roles.role_member import RoleMemberSchema
 
@@ -22,7 +23,8 @@ class RoleCollection(Resource):
         Retrieve a list of all roles.
         :return: List of Role objects.
         """
-        roles = RoleModel.query.all()
+        roles = RoleModel.query.filter(
+            RoleModel.members.any((RoleMemberModel.user_id == user_id) & (RoleMemberModel.is_owner == True))).all()
         return role_schema.dump(roles, many=True)
     
     @authenticate_token
@@ -42,7 +44,7 @@ class RoleCollection(Resource):
             db.session.add(role)
             db.session.flush()
             
-            owner_ids = data['owners'] if data['owners'] else [user_id]
+            owner_ids = data['owners'] if 'owners' in data else [user_id]
             
             for owner_id in owner_ids:
                 owner = role_member_schema.load({'role_id': role.role_id, 'user_id': owner_id, 'is_owner': True})

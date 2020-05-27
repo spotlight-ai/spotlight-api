@@ -10,5 +10,5 @@ class RoleSchema(ma.ModelSchema):
         model = RoleModel
         load_only = ('creator_id',)
     
-    members = ma.List(ma.Nested(RoleMemberSchema))
+    members = ma.List(ma.Nested(RoleMemberSchema, exclude=['role_id', 'role', 'role_member_id', 'user_id']))
     creator = ma.Nested(UserSchema, exclude=['created_ts', 'last_login', 'datasets_owned'])
