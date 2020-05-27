@@ -20,6 +20,8 @@ class RoleResourceTest(unittest.TestCase):
         with self.app.app_context():
             from models.user import UserModel
             from models.roles.role import RoleModel
+            from models.roles.role_member import RoleMemberModel
+            
             db.create_all()
             
             user_1 = UserModel(first_name='Doug', last_name='Developer', email='test@email.com',
@@ -28,10 +30,12 @@ class RoleResourceTest(unittest.TestCase):
                                password='testpassword')
             
             role = RoleModel(creator_id=2, role_name='Developers')
+            role_member = RoleMemberModel(role_id=1, user_id=2, is_owner=True)
             
             db.session.add(user_1)
             db.session.add(user_2)
             db.session.add(role)
+            db.session.add(role_member)
             db.session.commit()
     
     def tearDown(self):
@@ -52,6 +56,7 @@ class RoleResourceTest(unittest.TestCase):
         headers = self.generate_auth_headers()
         
         res = self.client().post(self.role_route, json=self.role, headers=headers)
+        print(res.data.decode())
         
         self.assertEqual(201, res.status_code)
         self.assertIn(self.role.get('role_name'), res.data.decode())

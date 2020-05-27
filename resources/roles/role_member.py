@@ -18,6 +18,10 @@ class RoleMemberCollection(Resource):
     
     @authenticate_token
     def get(self, user_id, role_id):
+        role = RoleModel.query.filter_by(role_id=role_id).first()
+        if not role:
+            abort(404, 'Role not found')
+        
         role_members = RoleMemberModel.query.filter_by(role_id=role_id).all()
         return role_member_schema.dump(role_members, many=True)
     
