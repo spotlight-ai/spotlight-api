@@ -15,8 +15,8 @@ services:
   api:
     container_name: spotlight_api
     build: .
-    volumes:
-    - .:/app
+    #volumes:
+    #- .:/app
     environment:
       FLASK_ENV: development
     env_file:
