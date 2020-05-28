@@ -29,11 +29,9 @@ class JobResourceTest(BaseTest):
     
     def test_missing_field_job_creation(self):
         headers = self.generate_auth_headers(user_id=3)
-        res = self.client().get(self.flatfile_route, headers=headers)
-        datasets = json.loads(res.data.decode())
         
         job_object = {
-            'dataset_id': datasets[0].get('dataset_id')
+            'dataset_id': 1
         }
         
         wrong_job = job_object.copy()
@@ -46,6 +44,7 @@ class JobResourceTest(BaseTest):
     
     def test_retrieve_all_jobs(self):
         headers = self.generate_auth_headers(user_id=3)
+        
         res = self.client().get(self.flatfile_route, headers=headers)
         datasets = json.loads(res.data.decode())
         
@@ -67,5 +66,12 @@ class JobResourceTest(BaseTest):
         incorrect_header = {'authorization': 'Bearer wrong'}
         
         res = self.client().get(self.job_route, headers=incorrect_header)
+        
+        self.assertEqual(res.status_code, 401)
+    
+    def test_incorrect_user_create_job(self):
+        headers = self.generate_auth_headers(user_id=1)
+        
+        res = self.client().post(self.job_route, headers=headers, json={'dataset_id': 1})
         
         self.assertEqual(res.status_code, 401)
