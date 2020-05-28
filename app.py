@@ -8,6 +8,7 @@ from db import db
 from resources.auth.login import Login
 from resources.datasets.base import Dataset, DatasetCollection, DatasetVerification
 from resources.datasets.flat_file import FlatFileCollection
+from resources.datasets.shared_user import DatasetSharedUserCollection
 from resources.job import Job, JobCollection
 from resources.pii.text_file import TextFilePII, TextFilePIICollection
 from resources.redact.text import RedactText
@@ -32,6 +33,7 @@ def create_app(config):
     api.add_resource(RoleDatasetCollection, '/role/<int:role_id>/dataset')
     api.add_resource(DatasetCollection, '/dataset')
     api.add_resource(Dataset, '/dataset/<int:dataset_id>')
+    api.add_resource(DatasetSharedUserCollection, '/dataset/<int:dataset_id>/user')
     api.add_resource(FlatFileCollection, '/dataset/flat_file')
     api.add_resource(JobCollection, '/job')
     api.add_resource(Job, '/job/<int:job_id>')

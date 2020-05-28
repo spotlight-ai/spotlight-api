@@ -11,6 +11,7 @@ class SharedDatasetUserModel(db.Model):
     share_expires = db.Column(db.DateTime, nullable=True)
     
     permissions = db.relationship("PIIModel", secondary=UserDatasetPermission, back_populates='shared_datasets')
+    user = db.relationship("UserModel", backref='shared_datasets')
     
     def __init__(self, user_id, dataset_id, share_expires=None):
         self.user_id = user_id
