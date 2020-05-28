@@ -13,5 +13,5 @@ class RoleSchema(ma.ModelSchema):
     
     members = ma.List(
         ma.Nested(RoleMemberSchema, exclude=['role_id', 'role', 'role_member_id', 'user_id']))
-    creator = ma.Nested(UserSchema, exclude=['created_ts', 'last_login', 'datasets_owned'])
+    creator = ma.Nested(UserSchema, exclude=['created_ts', 'last_login', 'owned_datasets'])
     permissions = ma.List(ma.Nested(PIISchema))
