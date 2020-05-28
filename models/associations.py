@@ -4,12 +4,7 @@ from db import db
 RolePermission = db.Table('role_permissions',
                           db.Column('id', db.Integer, primary_key=True),
                           db.Column('role_id', db.Integer, db.ForeignKey('role.role_id')),
-                          db.Column('pii_id', db.Integer, db.ForeignKey('pii_marker_base.id')))
-
-# Master table to store PII types that are valid for role permissions.
-pii_marker_base = db.Table('pii_marker_base',
-                           db.Column('id', db.Integer, primary_key=True),
-                           db.Column('pii_description', db.String, nullable=False))
+                          db.Column('pii_id', db.Integer, db.ForeignKey('pii_marker_base.pii_id')))
 
 # Table to store Role to Dataset sharing mappings (many-to-many relationship).
 RoleDataset = db.Table('role_dataset',

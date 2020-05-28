@@ -17,4 +17,4 @@ class FlatFileDatasetModel(DatasetModel):
         self.location = f's3://uploaded-datasets.s3.amazonaws.com/{location}'
     
     def __repr__(self):
-        return f"<FlatFileDataset {self.location}>"
+        return f"<FlatFileDataset(id={self.dataset_id}, name={self.dataset_name}, location={self.location}>"

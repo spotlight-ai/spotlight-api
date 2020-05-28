@@ -18,6 +18,10 @@ class RoleMemberCollection(Resource):
     
     @authenticate_token
     def get(self, user_id, role_id):
+        role = RoleModel.query.filter_by(role_id=role_id).first()
+        if not role:
+            abort(404, 'Role not found')
+        
         role_members = RoleMemberModel.query.filter_by(role_id=role_id).all()
         return role_member_schema.dump(role_members, many=True)
     
@@ -38,7 +42,18 @@ class RoleMemberCollection(Resource):
         users = body.get('users', [])
         owners = body.get('owners', [])
         
+        for key in body.keys():
+            if key not in ['users', 'owners']:
+                abort(422, f'Unknown key: {key}. Accepted keys: ["owners", "users"]')
+        
         try:
+            has_permission = RoleMemberModel.query.filter(
+                (RoleMemberModel.user_id == user_id) & (RoleMemberModel.is_owner == True) & (
+                        RoleMemberModel.role_id == role_id)).first()
+            
+            if not has_permission:
+                abort(401, "Not allowed to add permissions to this role")
+            
             role_member_objects = []
             for user in users:
                 role_member_objects.append({'role_id': role_id, 'user_id': user})
