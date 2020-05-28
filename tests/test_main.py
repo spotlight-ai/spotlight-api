@@ -28,6 +28,8 @@ class BaseTest(unittest.TestCase):
         self.user_route = '/user'
         self.role_route = '/role'
         self.login_route = '/login'
+        self.job_route = '/job'
+        self.dataset_route = '/dataset'
         
         with self.app.app_context():
             # Pre-load database to desired state
