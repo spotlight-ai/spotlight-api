@@ -6,3 +6,4 @@ class UserSchema(ma.ModelSchema):
     class Meta:
         model = UserModel
         load_only = ('password',)
+        exclude = ('role', 'role_member')

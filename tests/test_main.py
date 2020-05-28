@@ -11,6 +11,7 @@ load_dotenv(find_dotenv())
 class BaseTest(unittest.TestCase):
     def setUp(self):
         self.app = create_app('config.TestingConfig')
+        self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
         self.client = self.app.test_client
         
         # Define common objects to use in downstream test cases
@@ -34,6 +35,7 @@ class BaseTest(unittest.TestCase):
             from models.roles.role import RoleModel
             from models.roles.role_member import RoleMemberModel
             from models.pii.pii import PIIModel
+            from models.datasets.flat_file import FlatFileDatasetModel
             
             db.create_all()
             
@@ -82,27 +84,51 @@ class BaseTest(unittest.TestCase):
                 }
             ]
             
+            # Create PII markers
+            pii_ssn = PIIModel('ssn')
+            pii_name = PIIModel('name')
+            pii_address = PIIModel('address')
+            
+            # Create datasets
+            dataset_1 = FlatFileDatasetModel(dataset_name='Call Center Transcripts', uploader=3, location='dataset.txt')
+            dataset_2 = FlatFileDatasetModel(dataset_name='Resumes', uploader=3, location='resumes.txt')
+            dataset_3 = FlatFileDatasetModel(dataset_name='Drivers Licenses', uploader=3, location='drivers.txt')
+            dataset_4 = FlatFileDatasetModel(dataset_name='Auto Loan', uploader=4, location='auto_loans.txt')
+            
+            # Create roles, owners, members and assign datasets to roles
             role_1 = RoleModel(creator_id=4, role_name='Financial Developers')
             role_2 = RoleModel(creator_id=4, role_name='Personal Developers')
             role_1_owner_1 = RoleMemberModel(role_id=1, user_id=4, is_owner=True)
             role_1_owner_2 = RoleMemberModel(role_id=1, user_id=3, is_owner=True)
             role_1_user_1 = RoleMemberModel(role_id=1, user_id=1)
+            role_1.datasets = [dataset_1]
             
             role_2_owner_1 = RoleMemberModel(role_id=2, user_id=4, is_owner=True)
             role_2_user_1 = RoleMemberModel(role_id=2, user_id=2)
             
+            # Create system users
             for user in self.users:
-                db.session.add(
-                    UserModel(first_name=user.get('first_name'), last_name=user.get('last_name'),
-                              email=user.get('email'), password=user.get('password')))
+                user = UserModel(first_name=user.get('first_name'), last_name=user.get('last_name'),
+                                 email=user.get('email'), password=user.get('password'))
+                if user.email == 'mary@spotlight.ai':
+                    dataset_1.owners = [user]
+                    dataset_2.owners = [user]
+                    dataset_3.owners = [user]
+                elif user.email == 'mark@spotlight.ai':
+                    dataset_4.owners = [user]
+                
+                db.session.add(user)
             
-            pii_ssn = PIIModel('ssn')
-            pii_name = PIIModel('name')
-            pii_address = PIIModel('address')
+            db.session.add(dataset_1)
+            db.session.add(dataset_2)
+            db.session.add(dataset_3)
+            db.session.add(dataset_4)
             
+            # Add permissions to roles
             role_1.permissions = [pii_ssn]
             role_2.permissions = [pii_name, pii_address]
             
+            # Store all objects in database
             db.session.add(role_1)
             db.session.add(role_2)
             db.session.add(role_1_owner_1)
