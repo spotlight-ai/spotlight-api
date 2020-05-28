@@ -37,7 +37,7 @@ class JobCollection(Resource):
             db.session.add(data)
             db.session.commit()
             return None, 201
-        except ValidationError as err:
+        except (TypeError, ValidationError) as err:
             abort(422, err.messages)
         except IntegrityError as err:
             db.session.rollback()
