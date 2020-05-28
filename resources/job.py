@@ -1,12 +1,13 @@
+from flask import abort, request
 from flask_restful import Resource
-from flask import request, abort
-from schemas.job import JobSchema
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
-from models.job import JobModel
+from sqlalchemy.orm.exc import UnmappedInstanceError
+
 from core.decorators import authenticate_token
 from db import db
-from sqlalchemy.orm.exc import UnmappedInstanceError
+from models.job import JobModel
+from schemas.job import JobSchema
 
 job_schema = JobSchema()
 
@@ -25,7 +26,7 @@ class JobCollection(Resource):
         else:
             jobs = JobModel.query.order_by(JobModel.job_created_ts).all()
         return job_schema.dump(jobs, many=True)
-
+    
     @authenticate_token
     def post(self, user_id):
         """
@@ -33,11 +34,13 @@ class JobCollection(Resource):
         :return: None
         """
         try:
-            data = job_schema.load(request.get_json(force=True))
-            db.session.add(data)
+            data = request.get_json(force=True)
+            job = job_schema.load(data)
+            
+            db.session.add(job)
             db.session.commit()
             return None, 201
-        except (TypeError, ValidationError) as err:
+        except ValidationError as err:
             abort(422, err.messages)
         except IntegrityError as err:
             db.session.rollback()
@@ -46,7 +49,7 @@ class JobCollection(Resource):
 
 class Job(Resource):
     loadable_fields = ['job_status', 'job_completed_ts']
-
+    
     @authenticate_token
     def get(self, user_id, job_id):
         """
@@ -57,7 +60,7 @@ class Job(Resource):
         """
         job = JobModel.query.filter_by(job_id=job_id).first()
         return job_schema.dump(job)
-
+    
     @authenticate_token
     def patch(self, user_id, job_id):
         """
@@ -67,17 +70,17 @@ class Job(Resource):
         :return: None
         """
         job = JobModel.query.filter_by(job_id=job_id).first()
-
+        
         if not job:
             abort(404, "Job not found.")
-
+        
         data = request.get_json(force=True)
         for k, v in data.items():
             if k in self.loadable_fields:
                 job.__setattr__(k, v)
         db.session.commit()
         return
-
+    
     @authenticate_token
     def delete(self, user_id, job_id):
         """
@@ -88,10 +91,10 @@ class Job(Resource):
         """
         try:
             job = job_schema.load(request.get_json(force=True))
-
+            
             if not job:
                 abort(404, "Job not found")
-
+            
             db.session.delete(job)
             db.session.commit()
             return
