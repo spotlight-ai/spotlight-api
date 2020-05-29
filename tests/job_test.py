@@ -6,6 +6,10 @@ from tests.test_main import BaseTest
 class JobResourceTest(BaseTest):
     def test_valid_job_creation(self):
         headers = self.generate_auth_headers(user_id=3)
+        res = self.client().get(self.flatfile_route, headers=headers)
+        datasets = json.loads(res.data.decode())
+
+        print(datasets)
 
         res = self.client().post(self.job_route, headers=headers, json={'dataset_id': 1})
 
