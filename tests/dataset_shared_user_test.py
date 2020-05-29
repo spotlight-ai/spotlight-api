@@ -5,6 +5,7 @@ from tests.test_main import BaseTest
 
 class DatasetSharedUserResourceTest(BaseTest):
     def test_get_dataset_shared_users(self):
+        """Verify that owners are able to retrieve a list of users that have access to a dataset that they own."""
         headers = self.generate_auth_headers(user_id=3)
         res = self.client().get(f'{self.dataset_route}/1/user', headers=headers)
         
@@ -17,12 +18,14 @@ class DatasetSharedUserResourceTest(BaseTest):
             self.assertEqual(user.get('permissions'), [])
     
     def test_get_unowned_dataset_shared_users(self):
+        """Users should not be able to view access for datasets they do not own."""
         headers = self.generate_auth_headers(user_id=1)
         res = self.client().get(f'{self.dataset_route}/1/user', headers=headers)
         
         self.assertEqual(res.status_code, 401)
     
     def test_add_dataset_shared_user(self):
+        """Owners should be able to add individual users to access their dataset."""
         headers = self.generate_auth_headers(user_id=3)
         
         res = self.client().post(f'{self.dataset_route}/1/user', headers=headers, json=[{'user_id': 5}])
