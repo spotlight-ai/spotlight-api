@@ -174,4 +174,3 @@ class JobResourceTest(BaseTest):
         res = self.client().get(f'{self.job_route}/1', headers=headers)
 
         self.assertEqual(res.status_code, 404)
-
