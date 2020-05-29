@@ -165,3 +165,12 @@ class JobResourceTest(BaseTest):
         self.assertEqual(res2.status_code, 200)
         self.assertEqual(res3.status_code, 200)
         self.assertEqual(res4.status_code, 200)
+
+    def test_access_nonexistent_job(self):
+        """Ensures that the Dataset owner will receive an error if they try to access a job that does
+        not exist"""
+        headers = self.generate_auth_headers(user_id=3)
+
+        res = self.client().get(f'{self.job_route}/1', headers=headers)
+
+        self.assertEqual(res.status_code, 404)
