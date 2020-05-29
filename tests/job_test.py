@@ -143,9 +143,9 @@ class JobResourceTest(BaseTest):
     def test_access_all_active_jobs_all_datasets_admin(self):
         """Ensures that if an administrator attempts to access all jobs for all Datasets
         (including Datasets that they don't own) they will be granted permission"""
-        header_user5 = self.generate_auth_headers(user_id=5)
         header_user3 = self.generate_auth_headers(user_id=3)
         header_user4 = self.generate_auth_headers(user_id=4)
+        header_user5 = self.generate_auth_headers(user_id=5)
 
         # User 3 posts a job for each Dataset they own
         self.client().post(self.job_route, headers=header_user3, json={'dataset_id': 1})
@@ -174,3 +174,4 @@ class JobResourceTest(BaseTest):
         res = self.client().get(f'{self.job_route}/1', headers=headers)
 
         self.assertEqual(res.status_code, 404)
+
