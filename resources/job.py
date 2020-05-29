@@ -26,14 +26,22 @@ class JobCollection(Resource):
         datasets_owned = [dataset.dataset_id for dataset in
                           DatasetModel.query.join(DatasetOwner).join(UserModel).filter(
                               (UserModel.user_id == user_id)).all()]
+        user = UserModel.query.filter_by(user_id=user_id).first()
         
         job_status = request.args.get('status')
         if job_status:
-            jobs = JobModel.query.filter(JobModel.job_status.upper() == job_status) & (
-                JobModel.dataset_id.in_(datasets_owned)).order_by(JobModel.job_created_ts).all()
+            if user.admin:
+                jobs = JobModel.query.filter((JobModel.job_status.upper() == job_status)).order_by(
+                    JobModel.job_created_ts).all()
+            else:
+                jobs = JobModel.query.filter(JobModel.job_status.upper() == job_status) & (
+                    JobModel.dataset_id.in_(datasets_owned)).order_by(JobModel.job_created_ts).all()
         else:
-            jobs = JobModel.query.filter((JobModel.dataset_id.in_(datasets_owned))).order_by(
-                JobModel.job_created_ts).all()
+            if user.admin:
+                jobs = JobModel.query.order_by(JobModel.job_created_ts).all()
+            else:
+                jobs = JobModel.query.filter((JobModel.dataset_id.in_(datasets_owned))).order_by(
+                    JobModel.job_created_ts).all()
         return job_schema.dump(jobs, many=True)
     
     @authenticate_token
@@ -85,11 +93,12 @@ class Job(Resource):
                               (UserModel.user_id == user_id)).all()]
         
         job = JobModel.query.filter_by(job_id=job_id).first()
+        user = UserModel.query.filter_by(user_id=user_id).first()
         
         if not job:
             abort(404, "Job not found.")
         
-        if job.dataset_id not in datasets_owned:
+        if not user.admin and job.dataset_id not in datasets_owned:
             abort(401, "Not authorized to view this job.")
         
         return job_schema.dump(job)
@@ -107,11 +116,12 @@ class Job(Resource):
                               (UserModel.user_id == user_id)).all()]
         
         job = JobModel.query.filter_by(job_id=job_id).first()
+        user = UserModel.query.filter_by(user_id=user_id).first()
         
         if not job:
             abort(404, "Job not found.")
         
-        if job.dataset_id not in datasets_owned:
+        if not user.admin and job.dataset_id not in datasets_owned:
             abort(401, "Not authorized to edit this job.")
         
         data = request.get_json(force=True)
@@ -135,11 +145,12 @@ class Job(Resource):
             datasets_owned = [dataset.dataset_id for dataset in
                               DatasetModel.query.join(DatasetOwner).join(UserModel).filter(
                                   (UserModel.user_id == user_id)).all()]
+            user = UserModel.query.filter_by(user_id=user_id).first()
             
             if not job:
                 abort(404, "Job not found")
             
-            if job.dataset_id not in datasets_owned:
+            if not user.admin and job.dataset_id not in datasets_owned:
                 abort(401, "Not authorized to delete this job.")
             
             db.session.delete(job)
