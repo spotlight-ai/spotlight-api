@@ -11,7 +11,6 @@ load_dotenv(find_dotenv())
 class BaseTest(unittest.TestCase):
     def setUp(self):
         self.app = create_app('config.TestingConfig')
-        self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
         self.client = self.app.test_client
 
         # Define common objects to use in downstream test cases
