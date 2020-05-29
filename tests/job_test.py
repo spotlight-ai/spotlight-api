@@ -125,7 +125,7 @@ class JobResourceTest(BaseTest):
         self.client().post(self.job_route, headers=header_user3, json={'dataset_id': 2})
         self.client().post(self.job_route, headers=header_user3, json={'dataset_id': 3})
 
-        # User 4 posts a job the Dataset they own
+        # User 4 posts a job for the Dataset they own
         self.client().post(self.job_route, headers=header_user4, json={'dataset_id': 4})
 
         # User 3 attempts to access all of the jobs pertaining to their Dataset as well
