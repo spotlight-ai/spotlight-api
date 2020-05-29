@@ -60,9 +60,4 @@ class JobResourceTest(BaseTest):
 
         self.assertEqual(res.status_code, 401)
 
-    def test_incorrect_user_create_job(self):
-        headers = self.generate_auth_headers(user_id=1)
 
-        res = self.client().post(self.job_route, headers=headers, json={'dataset_id': 1})
-
-        self.assertEqual(res.status_code, 401)
