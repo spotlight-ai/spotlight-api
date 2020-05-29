@@ -6,7 +6,10 @@ from sqlalchemy.orm.exc import UnmappedInstanceError
 
 from core.decorators import authenticate_token
 from db import db
+from models.associations import DatasetOwner
+from models.datasets.base import DatasetModel
 from models.job import JobModel
+from models.user import UserModel
 from schemas.job import JobSchema
 
 job_schema = JobSchema()
@@ -20,11 +23,17 @@ class JobCollection(Resource):
         :param user_id: Currently logged in user.
         :return: List of jobs.
         """
+        datasets_owned = [dataset.dataset_id for dataset in
+                          DatasetModel.query.join(DatasetOwner).join(UserModel).filter(
+                              (UserModel.user_id == user_id)).all()]
+        
         job_status = request.args.get('status')
         if job_status:
-            jobs = JobModel.query.filter_by(job_status=job_status.upper()).order_by(JobModel.job_created_ts).all()
+            jobs = JobModel.query.filter(JobModel.job_status.upper() == job_status) & (
+                JobModel.dataset_id.in_(datasets_owned)).order_by(JobModel.job_created_ts).all()
         else:
-            jobs = JobModel.query.order_by(JobModel.job_created_ts).all()
+            jobs = JobModel.query.filter((JobModel.dataset_id.in_(datasets_owned))).order_by(
+                JobModel.job_created_ts).all()
         return job_schema.dump(jobs, many=True)
     
     @authenticate_token
@@ -35,7 +44,20 @@ class JobCollection(Resource):
         """
         try:
             data = request.get_json(force=True)
+            
+            datasets_owned = [dataset.dataset_id for dataset in
+                              DatasetModel.query.join(DatasetOwner).join(UserModel).filter(
+                                  (UserModel.user_id == user_id)).all()]
+            
             job = job_schema.load(data)
+            
+            dataset = DatasetModel.query.filter_by(dataset_id=job.dataset_id).first()
+            
+            if not dataset:
+                abort(404, 'Dataset does not exist.')
+            
+            if job.dataset_id not in datasets_owned:
+                abort(401, 'Not authorized to create a job for this dataset.')
             
             db.session.add(job)
             db.session.commit()
@@ -58,7 +80,18 @@ class Job(Resource):
         :param job_id: Job ID to be retrieved.
         :return: Job object.
         """
+        datasets_owned = [dataset.dataset_id for dataset in
+                          DatasetModel.query.join(DatasetOwner).join(UserModel).filter(
+                              (UserModel.user_id == user_id)).all()]
+        
         job = JobModel.query.filter_by(job_id=job_id).first()
+        
+        if not job:
+            abort(404, "Job not found.")
+        
+        if job.dataset_id not in datasets_owned:
+            abort(401, "Not authorized to view this job.")
+        
         return job_schema.dump(job)
     
     @authenticate_token
@@ -69,10 +102,17 @@ class Job(Resource):
         :param job_id: Job ID to be edited.
         :return: None
         """
+        datasets_owned = [dataset.dataset_id for dataset in
+                          DatasetModel.query.join(DatasetOwner).join(UserModel).filter(
+                              (UserModel.user_id == user_id)).all()]
+        
         job = JobModel.query.filter_by(job_id=job_id).first()
         
         if not job:
             abort(404, "Job not found.")
+        
+        if job.dataset_id not in datasets_owned:
+            abort(401, "Not authorized to edit this job.")
         
         data = request.get_json(force=True)
         for k, v in data.items():
@@ -92,8 +132,15 @@ class Job(Resource):
         try:
             job = job_schema.load(request.get_json(force=True))
             
+            datasets_owned = [dataset.dataset_id for dataset in
+                              DatasetModel.query.join(DatasetOwner).join(UserModel).filter(
+                                  (UserModel.user_id == user_id)).all()]
+            
             if not job:
                 abort(404, "Job not found")
+            
+            if job.dataset_id not in datasets_owned:
+                abort(401, "Not authorized to delete this job.")
             
             db.session.delete(job)
             db.session.commit()
