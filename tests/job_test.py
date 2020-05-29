@@ -140,7 +140,7 @@ class JobResourceTest(BaseTest):
         self.assertEqual(res3.status_code, 200)
         self.assertEqual(res4.status_code, 401)
 
-    def test_access_all_active_jobs_all_datasets_non_admin(self):
+    def test_access_all_active_jobs_all_datasets_admin(self):
         """Ensures that if an administrator attempts to access all jobs for all Datasets
         (including Datasets that they don't own) they will be granted permission"""
         header_user5 = self.generate_auth_headers(user_id=5)
