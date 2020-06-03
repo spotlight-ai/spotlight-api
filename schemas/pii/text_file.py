@@ -6,4 +6,4 @@ class TextFilePIISchema(ma.ModelSchema):
     class Meta:
         model = TextFilePIIModel
         include_fk = True
-        load_only = ('last_updated_ts',)
+        dump_only = ('last_updated_ts',)
