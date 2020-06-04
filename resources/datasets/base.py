@@ -12,6 +12,7 @@ from db import db
 from models.associations import RoleDataset
 from models.datasets.base import DatasetModel
 from models.datasets.flat_file import FlatFileDatasetModel
+from models.datasets.shared_user import SharedDatasetUserModel
 from models.roles.role import RoleModel
 from models.roles.role_member import RoleMemberModel
 from models.user import UserModel
@@ -46,27 +47,22 @@ class DatasetCollection(Resource):
         owned_datasets_json = dataset_schema.dump(owned_datasets, many=True)
         for dataset in owned_datasets_json:
             dataset['permission'] = 'owned'
-        
         all_datasets.extend(owned_datasets_json)
         
         # Retrieve datasets the user may access via role permissions
         shared_by_role = DatasetModel.query.join(RoleDataset).join(RoleModel).join(RoleMemberModel).filter(
-            RoleMemberModel.user_id == user_id).all()
-        
-        shared_by_role_json = dataset_schema.dump(shared_by_role, many=True)
-        for dataset in shared_by_role_json:
-            dataset['permission'] = 'shared'
-        
-        all_datasets.extend(shared_by_role_json)
+            RoleMemberModel.user_id == user_id)
         
         # Retrieve datasets the user may access via individual permissions/sharing
-        shared_by_user = DatasetModel.query.all()
-        shared_by_user_json = dataset_schema.dump(shared_by_user, many=True)
+        shared_by_user = DatasetModel.query.join(SharedDatasetUserModel).filter(
+            SharedDatasetUserModel.user_id == user_id)
         
-        for dataset in shared_by_user_json:
+        shared = shared_by_role.union(shared_by_user).all()
+        
+        shared_json = dataset_schema.dump(shared, many=True)
+        for dataset in shared_json:
             dataset['permission'] = 'shared'
-        
-        all_datasets.extend(shared_by_user_json)
+        all_datasets.extend(shared_json)
         
         return all_datasets
 
