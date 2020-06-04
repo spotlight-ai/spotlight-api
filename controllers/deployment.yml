@@ -111,11 +111,6 @@ spec:
     spec:
       containers:
       - name: spotlight-web
-        image: 553443767398.dkr.ecr.us-east-1.amazonaws.com/spotlight_web:latest
-        env:
-        - name: REACT_APP_API_URL
-          value: a22d2755ff7db44438ed2bce2639130d-683259215.us-east-1.elb.amazonaws.com
-        - name: REACT_APP_VERSION
-          value: v1.0
+        image: 553443767398.dkr.ecr.us-east-1.amazonaws.com/spotlight_web:2e7dfb6f129995e688adc12173583bc406ac764c
         ports:
         - containerPort: 3000

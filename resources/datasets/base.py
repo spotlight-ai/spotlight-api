@@ -9,10 +9,12 @@ from sqlalchemy.sql.expression import true
 from core.aws import generate_presigned_download_link
 from core.decorators import authenticate_token
 from db import db
-from models.associations import RoleDataset
+from models.associations import RoleDataset, RolePermission, UserDatasetPermission
 from models.datasets.base import DatasetModel
 from models.datasets.flat_file import FlatFileDatasetModel
 from models.datasets.shared_user import SharedDatasetUserModel
+from models.pii.pii import PIIModel
+from models.pii.text_file import TextFilePIIModel
 from models.roles.role import RoleModel
 from models.roles.role_member import RoleMemberModel
 from models.user import UserModel
@@ -71,13 +73,48 @@ class Dataset(Resource):
     @authenticate_token
     def get(self, user_id, dataset_id):
         base_dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
+        user = UserModel.query.filter_by(user_id=user_id).first()
+        
+        if not base_dataset:
+            abort(404, "Dataset not found")
+        
+        owned = user in base_dataset.owners
+        shared = True if SharedDatasetUserModel.query.filter_by(dataset_id=dataset_id,
+                                                                user_id=user_id).first() else False
+        role_ids = []
+        
+        if not shared:  # Check for role sharing if it hasn't been shared individually
+            for role in base_dataset.roles:
+                for member in role.members:
+                    if member.user_id == user_id:
+                        shared = True
+                        role_ids.append(role.role_id)
+                        break
+        
+        if not shared and not owned:
+            abort(401, "This user is not authorized to view this dataset")
+        
+        individual_permissions = PIIModel.query.join(UserDatasetPermission).join(SharedDatasetUserModel).filter_by(
+            dataset_id=dataset_id,
+            user_id=user_id)
+        
+        role_permissions = PIIModel.query.join(RolePermission).join(RoleModel).filter(RoleModel.role_id.in_(role_ids))
+        permissions = individual_permissions.union(role_permissions).all()
+        
+        markers = TextFilePIIModel.query.filter_by(dataset_id=dataset_id).all()
+        
         if base_dataset.dataset_type == "FLAT_FILE":
             dataset = FlatFileDatasetModel.query.filter_by(dataset_id=dataset_id).first()
             parsed_path = urlparse(dataset.location)
             s3_object_key = parsed_path.path[1:]
-            dataset.download_link = generate_presigned_download_link('uploaded-datasets', s3_object_key)
+            if owned:
+                dataset.download_link = generate_presigned_download_link('uploaded-datasets', s3_object_key)
+            elif shared:
+                dataset.download_link = generate_presigned_download_link('spotlightai-redacted-copies', s3_object_key,
+                                                                         permissions=permissions, markers=markers)
             return flat_file_dataset_schema.dump(dataset)
-        abort(404, "Dataset not found")
+        
+        return
 
 
 class DatasetVerification(Resource):
