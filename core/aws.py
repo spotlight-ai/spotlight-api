@@ -46,7 +46,7 @@ def generate_presigned_download_link(bucket_name, object_name, expiration=3600, 
             file = open(object_name.replace('/', '_'), 'r+').read()
             
             for marker in markers:
-                if marker.pii_type in permission_descriptions:
+                if marker.pii_type not in permission_descriptions:
                     start = marker.start_location
                     end = marker.end_location
                     file = ('*' * (end - start)).join([file[:start], file[end:]])
