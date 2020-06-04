@@ -11,4 +11,4 @@ class DatasetSchema(ma.ModelSchema):
     
     jobs = ma.List(ma.Nested(JobSchema))
     markers = ma.List(ma.Nested(TextFilePIISchema))
-    owners = ma.List(ma.Nested(UserSchema))
+    owners = ma.List(ma.Nested(UserSchema, exclude=['owned_datasets']))

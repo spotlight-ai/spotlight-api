@@ -84,9 +84,9 @@ class BaseTest(unittest.TestCase):
             ]
             
             # Create PII markers
-            pii_ssn = PIIModel('ssn')
-            pii_name = PIIModel('name')
-            pii_address = PIIModel('address')
+            pii_ssn = PIIModel('ssn', category='', long_description='Social Security Number')
+            pii_name = PIIModel('name', category='', long_description='Name')
+            pii_address = PIIModel('address', category='', long_description='Address')
             
             # Create datasets
             dataset_1 = FlatFileDatasetModel(dataset_name='Call Center Transcripts', uploader=3, location='dataset.txt')

@@ -9,8 +9,11 @@ from sqlalchemy.sql.expression import true
 from core.aws import generate_presigned_download_link
 from core.decorators import authenticate_token
 from db import db
+from models.associations import RoleDataset
 from models.datasets.base import DatasetModel
 from models.datasets.flat_file import FlatFileDatasetModel
+from models.roles.role import RoleModel
+from models.roles.role_member import RoleMemberModel
 from models.user import UserModel
 from schemas.datasets.base import DatasetSchema
 from schemas.datasets.flat_file import FlatFileDatasetSchema
@@ -33,10 +36,39 @@ class DatasetCollection(Resource):
         :return: List of datasets
         """
         logged_in_user = UserModel.query.filter_by(user_id=user_id).first()
+        
+        all_datasets = []
+        
+        # Retrieve all datasets that the user owns
         owned_datasets = DatasetModel.query.filter(DatasetModel.verified == true(),
                                                    DatasetModel.owners.contains(logged_in_user)).all()
-        # TODO: Add shared datasets once the sharing functionality is completed
-        return dataset_schema.dump(owned_datasets, many=True)
+        
+        owned_datasets_json = dataset_schema.dump(owned_datasets, many=True)
+        for dataset in owned_datasets_json:
+            dataset['permission'] = 'owned'
+        
+        all_datasets.extend(owned_datasets_json)
+        
+        # Retrieve datasets the user may access via role permissions
+        shared_by_role = DatasetModel.query.join(RoleDataset).join(RoleModel).join(RoleMemberModel).filter(
+            RoleMemberModel.user_id == user_id).all()
+        
+        shared_by_role_json = dataset_schema.dump(shared_by_role, many=True)
+        for dataset in shared_by_role_json:
+            dataset['permission'] = 'shared'
+        
+        all_datasets.extend(shared_by_role_json)
+        
+        # Retrieve datasets the user may access via individual permissions/sharing
+        shared_by_user = DatasetModel.query.all()
+        shared_by_user_json = dataset_schema.dump(shared_by_user, many=True)
+        
+        for dataset in shared_by_user_json:
+            dataset['permission'] = 'shared'
+        
+        all_datasets.extend(shared_by_user_json)
+        
+        return all_datasets
 
 
 class Dataset(Resource):
