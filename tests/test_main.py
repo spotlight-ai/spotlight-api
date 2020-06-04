@@ -27,6 +27,7 @@ class BaseTest(unittest.TestCase):
         self.user_route = '/user'
         self.role_route = '/role'
         self.login_route = '/login'
+        self.dataset_route = '/dataset'
         
         with self.app.app_context():
             # Pre-load database to desired state
@@ -35,6 +36,7 @@ class BaseTest(unittest.TestCase):
             from models.roles.role_member import RoleMemberModel
             from models.pii.pii import PIIModel
             from models.datasets.flat_file import FlatFileDatasetModel
+            from models.datasets.shared_user import SharedDatasetUserModel
             
             db.create_all()
             
@@ -94,6 +96,9 @@ class BaseTest(unittest.TestCase):
             dataset_3 = FlatFileDatasetModel(dataset_name='Drivers Licenses', uploader=3, location='drivers.txt')
             dataset_4 = FlatFileDatasetModel(dataset_name='Auto Loan', uploader=4, location='auto_loans.txt')
             
+            dataset_1_shared_user_1 = SharedDatasetUserModel(dataset_id=1, user_id=1)
+            dataset_1_shared_user_2 = SharedDatasetUserModel(dataset_id=1, user_id=2)
+            
             # Create roles, owners, members and assign datasets to roles
             role_1 = RoleModel(creator_id=4, role_name='Financial Developers')
             role_2 = RoleModel(creator_id=4, role_name='Personal Developers')
@@ -105,7 +110,7 @@ class BaseTest(unittest.TestCase):
             role_2_owner_1 = RoleMemberModel(role_id=2, user_id=4, is_owner=True)
             role_2_user_1 = RoleMemberModel(role_id=2, user_id=2)
             
-            # Create system users
+            # Create system users and allocate dataset owners
             for user in self.users:
                 user = UserModel(first_name=user.get('first_name'), last_name=user.get('last_name'),
                                  email=user.get('email'), password=user.get('password'))
@@ -114,6 +119,7 @@ class BaseTest(unittest.TestCase):
                     dataset_2.owners = [user]
                     dataset_3.owners = [user]
                 elif user.email == 'mark@spotlight.ai':
+                    dataset_2.owners.append(user)
                     dataset_4.owners = [user]
                 
                 db.session.add(user)
@@ -122,6 +128,9 @@ class BaseTest(unittest.TestCase):
             db.session.add(dataset_2)
             db.session.add(dataset_3)
             db.session.add(dataset_4)
+            
+            db.session.add(dataset_1_shared_user_1)
+            db.session.add(dataset_1_shared_user_2)
             
             # Add permissions to roles
             role_1.permissions = [pii_ssn]

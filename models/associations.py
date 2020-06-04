@@ -12,8 +12,14 @@ RoleDataset = db.Table('role_dataset',
                        db.Column('role_id', db.Integer, db.ForeignKey('role.role_id')),
                        db.Column('dataset_id', db.Integer, db.ForeignKey('dataset.dataset_id')))
 
-# Dataset Owners
+# Table to store Dataset to Owner relationships (many-to-many relationships).
 DatasetOwner = db.Table('dataset_owner',
                         db.Column('id', db.Integer, primary_key=True),
                         db.Column('dataset_id', db.Integer, db.ForeignKey('dataset.dataset_id')),
                         db.Column('owner_id', db.Integer, db.ForeignKey('user.user_id')))
+
+# Table to store permissions for individual users on a dataset (many-to-many relationship).
+UserDatasetPermission = db.Table('shared_dataset_user_permissions',
+                                 db.Column('id', db.Integer, primary_key=True),
+                                 db.Column('dataset_user_id', db.Integer, db.ForeignKey('shared_dataset_user.id')),
+                                 db.Column('pii_id', db.Integer, db.ForeignKey('pii_marker_base.pii_id')))
