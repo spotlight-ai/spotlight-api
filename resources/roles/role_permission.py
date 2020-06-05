@@ -56,7 +56,10 @@ class RolePermissionCollection(Resource):
         data = request.get_json(force=True)
         permission_descriptions = data.get('permissions', [])
         pii_markers = PIIModel.query.filter((PIIModel.description.in_(permission_descriptions))).all()
+        print(pii_markers, flush=True)
         role.permissions = pii_markers
+        
+        db.session.commit()
         
         return role_schema.dump(role)
     
