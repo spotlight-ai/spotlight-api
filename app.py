@@ -5,6 +5,7 @@ from flask_migrate import Migrate
 from flask_restful import Api
 
 from db import db
+from resources.audit.dataset_action_history import DatasetActionHistoryCollection
 from resources.auth.login import Login
 from resources.datasets.base import Dataset, DatasetCollection, DatasetVerification
 from resources.datasets.flat_file import FlatFileCollection
@@ -34,6 +35,7 @@ def create_app(config):
     api.add_resource(DatasetCollection, '/dataset')
     api.add_resource(Dataset, '/dataset/<int:dataset_id>')
     api.add_resource(DatasetSharedUserCollection, '/dataset/<int:dataset_id>/user')
+    api.add_resource(DatasetActionHistoryCollection, '/audit/dataset')
     api.add_resource(FlatFileCollection, '/dataset/flat_file')
     api.add_resource(JobCollection, '/job')
     api.add_resource(Job, '/job/<int:job_id>')

@@ -1,7 +1,9 @@
-from db import ma
-from models.audit.dataset_action_history import DatasetActionHistoryModel
+from flask_restful import Resource
+
+from core.decorators import authenticate_token
 
 
-class DatasetActionHistorySchema(ma.Schema):
-    class Meta:
-        model = DatasetActionHistoryModel
+class DatasetActionHistoryCollection(Resource):
+    @authenticate_token
+    def get(self, user_id):
+        pass
