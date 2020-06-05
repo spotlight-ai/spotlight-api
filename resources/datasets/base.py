@@ -7,9 +7,11 @@ from flask_restful import Resource
 from sqlalchemy.sql.expression import true
 
 from core.aws import generate_presigned_download_link
+from core.constants import Audit
 from core.decorators import authenticate_token
 from db import db
 from models.associations import RoleDataset, RolePermission, UserDatasetPermission
+from models.audit.dataset_action_history import DatasetActionHistoryModel
 from models.datasets.base import DatasetModel
 from models.datasets.flat_file import FlatFileDatasetModel
 from models.datasets.shared_user import SharedDatasetUserModel
@@ -47,6 +49,7 @@ class DatasetCollection(Resource):
                                                    DatasetModel.owners.contains(logged_in_user)).all()
         
         owned_datasets_json = dataset_schema.dump(owned_datasets, many=True)
+        owned_dataset_ids = [dataset.get('dataset_id') for dataset in owned_datasets_json]
         for dataset in owned_datasets_json:
             dataset['permission'] = 'owned'
         all_datasets.extend(owned_datasets_json)
@@ -59,12 +62,13 @@ class DatasetCollection(Resource):
         shared_by_user = DatasetModel.query.join(SharedDatasetUserModel).filter(
             SharedDatasetUserModel.user_id == user_id)
         
-        shared = shared_by_role.union(shared_by_user).all()
+        shared = shared_by_role.union(shared_by_user).distinct()
         
         shared_json = dataset_schema.dump(shared, many=True)
         for dataset in shared_json:
-            dataset['permission'] = 'shared'
-        all_datasets.extend(shared_json)
+            if dataset.get('dataset_id') not in owned_dataset_ids:
+                dataset['permission'] = 'shared'
+                all_datasets.append(dataset)
         
         return all_datasets
 
@@ -73,35 +77,43 @@ class Dataset(Resource):
     @authenticate_token
     def get(self, user_id, dataset_id):
         base_dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
-        user = UserModel.query.filter_by(user_id=user_id).first()
         
-        if not base_dataset:
-            abort(404, "Dataset not found")
-        
-        owned = user in base_dataset.owners
-        shared = True if SharedDatasetUserModel.query.filter_by(dataset_id=dataset_id,
-                                                                user_id=user_id).first() else False
-        role_ids = []
-        
-        if not shared:  # Check for role sharing if it hasn't been shared individually
-            for role in base_dataset.roles:
-                for member in role.members:
-                    if member.user_id == user_id:
-                        shared = True
-                        role_ids.append(role.role_id)
-                        break
-        
-        if not shared and not owned:
-            abort(401, "This user is not authorized to view this dataset")
-        
-        individual_permissions = PIIModel.query.join(UserDatasetPermission).join(SharedDatasetUserModel).filter_by(
-            dataset_id=dataset_id,
-            user_id=user_id)
-        
-        role_permissions = PIIModel.query.join(RolePermission).join(RoleModel).filter(RoleModel.role_id.in_(role_ids))
-        permissions = individual_permissions.union(role_permissions).all()
-        
-        markers = TextFilePIIModel.query.filter_by(dataset_id=dataset_id).all()
+        if user_id != 'Bad token received':  # User is requesting
+            user = UserModel.query.filter_by(user_id=user_id).first()
+            
+            if not base_dataset:
+                abort(404, "Dataset not found")
+            
+            owned = user in base_dataset.owners
+            shared = True if SharedDatasetUserModel.query.filter_by(dataset_id=dataset_id,
+                                                                    user_id=user_id).first() else False
+            role_ids = []
+            
+            if not shared:  # Check for role sharing if it hasn't been shared individually
+                for role in base_dataset.roles:
+                    for member in role.members:
+                        if member.user_id == user_id:
+                            shared = True
+                            role_ids.append(role.role_id)
+                            break
+            
+            if not shared and not owned:
+                abort(401, "This user is not authorized to view this dataset")
+            
+            individual_permissions = PIIModel.query.join(UserDatasetPermission).join(SharedDatasetUserModel).filter_by(
+                dataset_id=dataset_id,
+                user_id=user_id)
+            
+            role_permissions = PIIModel.query.join(RolePermission).join(RoleModel).filter(
+                RoleModel.role_id.in_(role_ids))
+            permissions = individual_permissions.union(role_permissions).all()
+            
+            markers = TextFilePIIModel.query.filter_by(dataset_id=dataset_id).all()
+        else:  # Model is requesting
+            owned = True
+            shared = False
+            permissions = []
+            markers = []
         
         if base_dataset.dataset_type == "FLAT_FILE":
             dataset = FlatFileDatasetModel.query.filter_by(dataset_id=dataset_id).first()
@@ -153,6 +165,9 @@ class DatasetVerification(Resource):
                 
                 job_ids.append(job.job_id)
                 requests.post(url, json=payload)
+                db.session.add(
+                    DatasetActionHistoryModel(user_id=user_id, dataset_id=dataset.dataset_id,
+                                              action=Audit.DATASET_VERIFIED))
         
         db.session.commit()
         return {'job_ids': job_ids}

@@ -4,8 +4,10 @@ from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from core.aws import generate_presigned_link
+from core.constants import Audit
 from core.decorators import authenticate_token
 from db import db
+from models.audit.dataset_action_history import DatasetActionHistoryModel
 from models.datasets.flat_file import FlatFileDatasetModel
 from models.user import UserModel
 from schemas.datasets.flat_file import FlatFileDatasetSchema
@@ -51,6 +53,11 @@ class FlatFileCollection(Resource):
             response = generate_presigned_link(bucket_name='uploaded-datasets',
                                                object_name=object_name)
             response['dataset_id'] = dataset.dataset_id
+            
+            db.session.add(
+                DatasetActionHistoryModel(user_id=user_id, dataset_id=dataset.dataset_id, action=Audit.DATASET_CREATED))
+            db.session.commit()
+            
             return response
         except ValidationError as err:
             abort(422, err.messages)

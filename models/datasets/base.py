@@ -18,9 +18,10 @@ class DatasetModel(db.Model):
     verified = db.Column(db.Boolean, default=False, nullable=True)
     
     jobs = db.relationship(JobModel, backref='dataset', lazy=True)
-    markers = db.relationship(TextFilePIIModel, backref='dataset', lazy=True)
+    markers = db.relationship(TextFilePIIModel, backref='dataset', lazy=True, cascade="save-update, merge, delete")
     roles = db.relationship(RoleModel, secondary=RoleDataset, back_populates='datasets')
-    owners = db.relationship("UserModel", secondary=DatasetOwner, back_populates='owned_datasets')
+    owners = db.relationship("UserModel", secondary=DatasetOwner, back_populates='owned_datasets',
+                             cascade="save-update, merge, delete")
     
     __mapper_args__ = {
         'polymorphic_identity': 'dataset',
