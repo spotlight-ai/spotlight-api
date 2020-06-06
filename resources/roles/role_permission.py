@@ -1,5 +1,6 @@
 from flask import abort, request
 from flask_restful import Resource
+from sqlalchemy.sql.expression import true
 
 from core.decorators import authenticate_token
 from core.errors import Role
@@ -107,7 +108,7 @@ class RolePermissionCollection(Resource):
         :return: Role object if user is owner, otherwise None.
         """
         role = RoleModel.query.filter((RoleModel.role_id == role_id) & (RoleMemberModel.user_id == user_id) & (
-                RoleMemberModel.is_owner == True)).first()
+                RoleMemberModel.is_owner == true())).first()
         
         if not role:
             abort(401, Role.MISSING_NO_PERMISSIONS)
