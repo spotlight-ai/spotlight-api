@@ -125,7 +125,7 @@ class RoleResourceTest(BaseTest):
         """Owners should be able to update a role's name."""
         headers = self.generate_auth_headers(user_id=4)
         
-        res = self.client().put(f'{self.role_route}/1', json={'role_name': 'Updated Role Name'}, headers=headers)
+        res = self.client().patch(f'{self.role_route}/1', json={'role_name': 'Updated Role Name'}, headers=headers)
         self.assertEqual(res.status_code, 200)
         role = json.loads(res.data.decode())
         
@@ -135,7 +135,7 @@ class RoleResourceTest(BaseTest):
         """Users should not be able to update roles they do not own."""
         headers = self.generate_auth_headers(user_id=2)
         
-        res = self.client().put(f'{self.role_route}/1', json={'role_name': 'Updated Role Name'}, headers=headers)
+        res = self.client().patch(f'{self.role_route}/1', json={'role_name': 'Updated Role Name'}, headers=headers)
         self.assertEqual(res.status_code, 404)
         self.assertIn('Role either does not exist or user does not have permissions.', res.data.decode())
     
@@ -143,7 +143,7 @@ class RoleResourceTest(BaseTest):
         """Owners should be able to update owner list for roles."""
         headers = self.generate_auth_headers(user_id=4)
         
-        res = self.client().put(f'{self.role_route}/1', json={'owners': [2, 3]}, headers=headers)
+        res = self.client().patch(f'{self.role_route}/1', json={'owners': [2, 3]}, headers=headers)
         self.assertEqual(res.status_code, 200)
         role = json.loads(res.data.decode())
         
@@ -158,8 +158,8 @@ class RoleResourceTest(BaseTest):
         """Owners should be able to update multiple properties at once for roles."""
         headers = self.generate_auth_headers(user_id=4)
         
-        res = self.client().put(f'{self.role_route}/1', json={'owners': [2, 3, 4], 'role_name': 'Other Role'},
-                                headers=headers)
+        res = self.client().patch(f'{self.role_route}/1', json={'owners': [2, 3, 4], 'role_name': 'Other Role'},
+                                  headers=headers)
         self.assertEqual(res.status_code, 200)
         role = json.loads(res.data.decode())
         
@@ -176,6 +176,6 @@ class RoleResourceTest(BaseTest):
         """Owners should be able to update owner list for roles."""
         headers = self.generate_auth_headers(user_id=4)
         
-        res = self.client().put(f'{self.role_route}/1', json={'owners': []}, headers=headers)
+        res = self.client().patch(f'{self.role_route}/1', json={'owners': []}, headers=headers)
         self.assertEqual(res.status_code, 400)
         self.assertIn('Role must have at least one owner.', res.data.decode())

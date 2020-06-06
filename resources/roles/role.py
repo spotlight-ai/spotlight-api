@@ -78,7 +78,7 @@ class Role(Resource):
         return role_schema.dump(role)
     
     @authenticate_token
-    def put(self, user_id, role_id):
+    def patch(self, user_id, role_id):
         """
         Updates a role's information and returns the updated object.
         :param user_id: Currently logged in user ID.

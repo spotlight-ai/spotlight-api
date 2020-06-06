@@ -1,13 +1,11 @@
 from flask import abort, request
 from flask_restful import Resource
-from sqlalchemy.sql.expression import true
 
 from core.decorators import authenticate_token
 from core.errors import RoleErrors
 from db import db
 from models.pii.pii import PIIModel
-from models.roles.role import RoleModel
-from models.roles.role_member import RoleMemberModel
+from resources.roles.util import retrieve_role
 from schemas.pii.pii import PIISchema
 from schemas.roles.role import RoleSchema
 
@@ -25,7 +23,7 @@ class RolePermissionCollection(Resource):
         :param role_id: ID of the role requested.
         :return: List of role permissions.
         """
-        role = self.retrieve_role(role_id=role_id, user_id=user_id)
+        role = retrieve_role(role_id=role_id, user_id=user_id)
         
         return pii_schema.dump(role.permissions, many=True)
     
@@ -37,7 +35,7 @@ class RolePermissionCollection(Resource):
         :param role_id: ID of the role to add permissions to.
         :return: None
         """
-        role = self.retrieve_role(role_id=role_id, user_id=user_id)
+        role = retrieve_role(role_id=role_id, user_id=user_id)
         
         permission_descriptions = request.get_json(force=True).get('permissions', [])
         
@@ -64,7 +62,7 @@ class RolePermissionCollection(Resource):
         :param role_id: ID of the role to replace permissions.
         :return: Role object that has been updated.
         """
-        role = self.retrieve_role(role_id=role_id, user_id=user_id)
+        role = retrieve_role(role_id=role_id, user_id=user_id)
         
         permission_descriptions = request.get_json(force=True).get('permissions', [])
         
@@ -82,7 +80,7 @@ class RolePermissionCollection(Resource):
         :param role_id: ID of the role to replace permissions.
         :return: Role object that has been updated.
         """
-        role = self.retrieve_role(role_id=role_id, user_id=user_id)
+        role = retrieve_role(role_id=role_id, user_id=user_id)
         
         permission_descriptions = request.get_json(force=True).get('permissions', [])
         pii_markers = PIIModel.query.filter((PIIModel.description.in_(permission_descriptions))).all()
@@ -98,19 +96,3 @@ class RolePermissionCollection(Resource):
             role.permissions.remove(pii)
         
         return role_schema.dump(role)
-    
-    @staticmethod
-    def retrieve_role(role_id, user_id):
-        """
-        Returns a role if it is owned by the given user. If not, None is returned.
-        :param role_id: Role ID to be returned.
-        :param user_id: ID of the user to verify ownership.
-        :return: Role object if user is owner, otherwise None.
-        """
-        role = RoleModel.query.filter((RoleModel.role_id == role_id) & (RoleMemberModel.user_id == user_id) & (
-                RoleMemberModel.is_owner == true())).first()
-        
-        if not role:
-            abort(401, RoleErrors.MISSING_NO_PERMISSIONS)
-        
-        return role
