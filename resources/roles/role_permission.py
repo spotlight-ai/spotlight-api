@@ -3,7 +3,7 @@ from flask_restful import Resource
 from sqlalchemy.sql.expression import true
 
 from core.decorators import authenticate_token
-from core.errors import Role
+from core.errors import RoleErrors
 from db import db
 from models.pii.pii import PIIModel
 from models.roles.role import RoleModel
@@ -49,7 +49,7 @@ class RolePermissionCollection(Resource):
         permissions_already_existing = list(set(permission_descriptions) & set(role_marker_descriptions))
         
         if len(permissions_already_existing) > 0:
-            abort(400, f'{Role.PERMISSION_ALREADY_PRESENT}: {permissions_already_existing}')
+            abort(400, f'{RoleErrors.PERMISSION_ALREADY_PRESENT}: {permissions_already_existing}')
         
         role.permissions.extend(pii_markers)
         
@@ -92,7 +92,7 @@ class RolePermissionCollection(Resource):
         permissions_missing = list(set(permission_descriptions) - set(role_marker_descriptions))
         
         if len(permissions_missing) != 0:
-            abort(400, f'{Role.PERMISSIONS_MISSING}: {permissions_missing}')
+            abort(400, f'{RoleErrors.PERMISSIONS_MISSING}: {permissions_missing}')
         
         for pii in pii_markers:
             role.permissions.remove(pii)
@@ -111,6 +111,6 @@ class RolePermissionCollection(Resource):
                 RoleMemberModel.is_owner == true())).first()
         
         if not role:
-            abort(401, Role.MISSING_NO_PERMISSIONS)
+            abort(401, RoleErrors.MISSING_NO_PERMISSIONS)
         
         return role
