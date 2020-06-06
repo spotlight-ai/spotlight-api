@@ -23,6 +23,7 @@ class RolePermissionResourceTest(BaseTest):
         res = self.client().get(f'{self.role_route}/1/permission', headers=headers)
         
         self.assertEqual(res.status_code, 401)
+        self.assertIn('Role either does not exist or user does not have permissions.', res.data.decode())
     
     def test_add_new_role_permission(self):
         """Tests that a role owner can add an individual permission to a role."""
@@ -61,6 +62,12 @@ class RolePermissionResourceTest(BaseTest):
                                  json={'permissions': ['ssn', 'name']})
         
         self.assertEqual(res.status_code, 400)
+        self.assertIn('Permissions already present: [\'ssn\']', res.data.decode())
+        
+        res = self.client().get(f'{self.role_route}/1/permission', headers=headers)
+        permissions = json.loads(res.data.decode())
+        
+        self.assertEqual(len(permissions), 1)
     
     def test_update_role_permissions(self):
         """Owners should be able to overwrite role permissions."""
@@ -72,6 +79,7 @@ class RolePermissionResourceTest(BaseTest):
         permissions = json.loads(res.data.decode()).get('permissions')
         
         self.assertEqual(len(permissions), 1)
+        self.assertEqual(permissions[0].get('description'), 'address')
     
     def test_remove_role_permission(self):
         """Owners should be able to remove role permissions."""
@@ -83,3 +91,12 @@ class RolePermissionResourceTest(BaseTest):
         permissions = json.loads(res.data.decode()).get('permissions')
         
         self.assertEqual(len(permissions), 0)
+    
+    def test_remove_missing_permission(self):
+        """Owners should not be able to remove role permissions that do not exist."""
+        headers = self.generate_auth_headers(user_id=4)
+        
+        res = self.client().delete(f'{self.role_route}/1/permission', json={'permissions': ['name']}, headers=headers)
+        
+        self.assertEqual(res.status_code, 400)
+        self.assertIn('Permissions missing: [\'name\']', res.data.decode())
