@@ -171,3 +171,11 @@ class RoleResourceTest(BaseTest):
                 owner_ids.append(member.get('user').get('user_id'))
         
         self.assertEqual(owner_ids, [2, 3, 4])
+    
+    def test_update_empty_owners(self):
+        """Owners should be able to update owner list for roles."""
+        headers = self.generate_auth_headers(user_id=4)
+        
+        res = self.client().put(f'{self.role_route}/1', json={'owners': []}, headers=headers)
+        self.assertEqual(res.status_code, 400)
+        self.assertIn('Role must have at least one owner.', res.data.decode())
