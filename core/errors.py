@@ -6,3 +6,9 @@ class RoleErrors:
     MUST_HAVE_OWNER = 'Role must have at least one owner.'
     MEMBER_INCORRECT_FIELDS = 'Body must have only the accepted keys: [\'owners\', \'users\']'
     MEMBER_ALREADY_EXISTS = 'Role member already exists.'
+    DATASET_ALREADY_PRESENT = 'Role already has access to this dataset.'
+    DATASET_NOT_PRESENT = 'Dataset not present in the role.'
+
+
+class DatasetErrors:
+    USER_DOES_NOT_OWN = 'User does not own this dataset.'

@@ -29,7 +29,6 @@ class RoleDatasetResourceTest(BaseTest):
         headers = self.generate_auth_headers(user_id=3)
         
         res = self.client().post(f'{self.role_route}/1/dataset', headers=headers, json={'datasets': [2]})
-        print(res.data.decode())
         
         self.assertEqual(res.status_code, 201)
         
