@@ -27,7 +27,7 @@ class UserCollection(Resource):
         if args.get('query'):
             users = UserModel.query.filter((UserModel.first_name.ilike(query) |
                                             (UserModel.last_name.ilike(query) |
-                                             (UserModel.email.ilike(query))))).all()
+                                             (UserModel.email.ilike(query))))).limit(10).all()
         else:
             users = UserModel.query.all()
         
