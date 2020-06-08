@@ -19,7 +19,7 @@ class UserModel(db.Model):
     password = db.Column(db.String, nullable=False)
     admin = db.Column(db.Boolean, default=False, nullable=False)
     last_login = db.Column(db.DateTime)
-    created_ts = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now())
+    created_ts = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow())
     
     owned_datasets = db.relationship(DatasetModel, secondary=DatasetOwner, back_populates='owners')
     
@@ -29,8 +29,7 @@ class UserModel(db.Model):
         self.email = email
         self.password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
         self.admin = admin
-        self.last_login = datetime.datetime.now()
-        self.created_ts = datetime.datetime.now()
+        self.last_login = datetime.datetime.utcnow()
     
     def generate_auth_token(self, ttl=604800):
         s = Serializer(os.environ.get('SECRET', 'default_secret'), expires_in=ttl)

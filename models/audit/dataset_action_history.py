@@ -11,7 +11,7 @@ class DatasetActionHistoryModel(db.Model):
     dataset_id = db.Column(db.Integer, db.ForeignKey('dataset.dataset_id'))
     action = db.Column(db.String, nullable=False)
     notes = db.Column(db.String, nullable=True)
-    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.now())
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow())
     
     def __init__(self, user_id, dataset_id, action, notes=None):
         self.user_id = user_id

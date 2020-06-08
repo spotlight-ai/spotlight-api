@@ -21,7 +21,7 @@ class TextFilePIIModel(db.Model):
         self.start_location = start_location
         self.end_location = end_location
         self.confidence = confidence
-        self.last_updated_ts = datetime.now()
+        self.last_updated_ts = datetime.utcnow()
     
     def __repr__(self):
         return f'<TextFilePII {self.pii_type}: {self.start_location} - {self.end_location} ({self.confidence}%)'

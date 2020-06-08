@@ -13,7 +13,7 @@ class JobModel(db.Model):
     job_status = db.Column(db.String, nullable=False, default="PENDING")
     
     def __init__(self, dataset_id):
-        self.job_created_ts = datetime.now()
+        self.job_created_ts = datetime.utcnow()
         self.job_status = "PENDING"
         self.dataset_id = dataset_id
     

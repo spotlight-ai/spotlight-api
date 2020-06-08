@@ -14,7 +14,7 @@ class DatasetModel(db.Model):
     dataset_name = db.Column(db.String, nullable=False)
     dataset_type = db.Column(db.String, nullable=False)
     uploader = db.Column(db.Integer, foreign_key='user.user_id')
-    created_ts = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now())
+    created_ts = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow())
     verified = db.Column(db.Boolean, default=False, nullable=True)
     
     jobs = db.relationship(JobModel, backref='dataset', lazy=True)

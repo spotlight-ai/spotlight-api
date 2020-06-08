@@ -26,8 +26,8 @@ class RoleModel(db.Model):
     def __init__(self, creator_id, role_name):
         self.creator_id = creator_id
         self.role_name = role_name
-        self.created_ts = datetime.datetime.now()
-        self.updated_ts = datetime.datetime.now()
+        self.created_ts = datetime.datetime.utcnow()
+        self.updated_ts = datetime.datetime.utcnow()
     
     def __repr__(self):
         return f"<Role {self.role_name}>"
