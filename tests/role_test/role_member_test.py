@@ -182,3 +182,12 @@ class RoleMemberResourceTest(BaseTest):
                 owner_count += 1
         
         self.assertEqual(owner_count, 1)
+    
+    def test_put_empty_owners(self):
+        """Validates that a blank owner list is not replacing the old owner list."""
+        headers = self.generate_auth_headers(user_id=4)
+        
+        res = self.client().put(f'{self.role_route}/1/member', json={'owners': [], 'users': [4]}, headers=headers)
+        
+        self.assertEqual(res.status_code, 400)
+        self.assertIn('Role must have at least one owner.', res.data.decode())
