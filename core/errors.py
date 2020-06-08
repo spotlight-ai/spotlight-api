@@ -12,3 +12,8 @@ class RoleErrors:
 
 class DatasetErrors:
     USER_DOES_NOT_OWN = 'User does not own this dataset.'
+    MUST_HAVE_OWNER = 'Dataset must have at least one owner.'
+
+
+class UserErrors:
+    USER_NOT_FOUND = 'User or users not found.'

@@ -9,6 +9,7 @@ from sqlalchemy.sql.expression import true
 from core.aws import generate_presigned_download_link
 from core.constants import Audit
 from core.decorators import authenticate_token
+from core.errors import DatasetErrors, UserErrors
 from db import db
 from models.associations import RoleDataset, RolePermission, UserDatasetPermission
 from models.audit.dataset_action_history import DatasetActionHistoryModel
@@ -127,6 +128,30 @@ class Dataset(Resource):
             return flat_file_dataset_schema.dump(dataset)
         
         return
+    
+    @authenticate_token
+    def put(self, user_id, dataset_id):
+        data = request.get_json(force=True)
+        owner_ids = data.get('owners', [])
+        
+        if len(owner_ids) == 0:
+            abort(400, DatasetErrors.MUST_HAVE_OWNER)
+        
+        dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
+        user = UserModel.query.filter_by(user_id=user_id).first()
+        
+        if user not in dataset.owners:
+            abort(400, DatasetErrors.USER_DOES_NOT_OWN)
+        
+        owners = UserModel.query.filter(UserModel.user_id.in_(owner_ids)).all()
+        
+        if len(owners) == 0:
+            abort(400, UserErrors.USER_NOT_FOUND)
+        
+        dataset.owners = owners
+        db.session.commit()
+        
+        return flat_file_dataset_schema.dump(dataset)
 
 
 class DatasetVerification(Resource):
