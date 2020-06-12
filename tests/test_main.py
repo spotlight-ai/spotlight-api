@@ -88,19 +88,20 @@ class BaseTest(unittest.TestCase):
                     'password': 'pass123'
                 }
             ]
-            
+
             # Create PII markers
-            pii_ssn = PIIModel('ssn', category='', long_description='Social Security Number')
-            pii_name = PIIModel('name', category='', long_description='Name')
-            pii_address = PIIModel('address', category='', long_description='Address')
-            
+            pii_ssn = PIIModel('ssn', category='Identity', long_description='Social Security Number')
+            pii_name = PIIModel('name', category='Identity', long_description='Name')
+            pii_address = PIIModel('address', category='Identity', long_description='Address')
+
             # Create datasets
             dataset_1 = FlatFileDatasetModel(dataset_name='Call Center Transcripts', uploader=3, location='dataset.txt')
             dataset_2 = FlatFileDatasetModel(dataset_name='Resumes', uploader=3, location='resumes.txt')
             dataset_3 = FlatFileDatasetModel(dataset_name='Drivers Licenses', uploader=3, location='drivers.txt')
             dataset_4 = FlatFileDatasetModel(dataset_name='Auto Loan', uploader=4, location='auto_loans.txt')
-            
+
             dataset_1_shared_user_1 = SharedDatasetUserModel(dataset_id=1, user_id=1)
+            dataset_1_shared_user_1.permissions = [pii_ssn]
             dataset_1_shared_user_2 = SharedDatasetUserModel(dataset_id=1, user_id=2)
 
             # Create roles, owners, members and assign datasets to roles
