@@ -27,8 +27,10 @@ class BaseTest(unittest.TestCase):
         self.user_route = '/user'
         self.role_route = '/role'
         self.login_route = '/login'
+        self.job_route = '/job'
         self.dataset_route = '/dataset'
-        
+        self.flatfile_route = '/dataset/flat_file'
+
         with self.app.app_context():
             # Pre-load database to desired state
             from models.user import UserModel
@@ -37,7 +39,7 @@ class BaseTest(unittest.TestCase):
             from models.pii.pii import PIIModel
             from models.datasets.flat_file import FlatFileDatasetModel
             from models.datasets.shared_user import SharedDatasetUserModel
-            
+
             db.create_all()
             
             self.users = [
@@ -69,13 +71,15 @@ class BaseTest(unittest.TestCase):
                     'first_name': 'Cindy',
                     'last_name': 'Compliance',
                     'email': 'cindy@spotlight.ai',
-                    'password': 'pass123'
+                    'password': 'pass123',
+                    'admin': True
                 },
                 {
                     'first_name': 'Craig',
                     'last_name': 'Compliance',
                     'email': 'craig@spotlight.ai',
-                    'password': 'pass123'
+                    'password': 'pass123',
+                    'admin': True
                 },
                 {
                     'first_name': 'Oscar',
@@ -98,7 +102,7 @@ class BaseTest(unittest.TestCase):
             
             dataset_1_shared_user_1 = SharedDatasetUserModel(dataset_id=1, user_id=1)
             dataset_1_shared_user_2 = SharedDatasetUserModel(dataset_id=1, user_id=2)
-            
+
             # Create roles, owners, members and assign datasets to roles
             role_1 = RoleModel(creator_id=4, role_name='Financial Developers')
             role_2 = RoleModel(creator_id=4, role_name='Personal Developers')
@@ -113,7 +117,7 @@ class BaseTest(unittest.TestCase):
             # Create system users and allocate dataset owners
             for user in self.users:
                 user = UserModel(first_name=user.get('first_name'), last_name=user.get('last_name'),
-                                 email=user.get('email'), password=user.get('password'))
+                                 email=user.get('email'), password=user.get('password'), admin=user.get('admin'))
                 if user.email == 'mary@spotlight.ai':
                     dataset_1.owners = [user]
                     dataset_2.owners = [user]
@@ -131,7 +135,7 @@ class BaseTest(unittest.TestCase):
             
             db.session.add(dataset_1_shared_user_1)
             db.session.add(dataset_1_shared_user_2)
-            
+
             # Add permissions to roles
             role_1.permissions = [pii_ssn]
             role_2.permissions = [pii_name, pii_address]
