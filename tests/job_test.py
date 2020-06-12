@@ -188,7 +188,7 @@ class JobResourceTest(BaseTest):
             'job_id': 1,
             'job_status': "FAILED"
         })
-        self.assertEqual(res.status_code, 401)
+        self.assertEqual(res.status_code, 404)
     
     def test_change_job_status_model(self):
         """Ensures that the model is able to change job status"""
@@ -212,12 +212,12 @@ class JobResourceTest(BaseTest):
             'job_id': 2,
             'job_status': "COMPLETE"
         })
-        
+
         res3 = self.client().patch(f'{self.job_route}/3', headers=model_header, json={
             'user_id': 3,
             'job_id': 3,
             'job_status': "PENDING"
         })
-        self.assertEqual(res1.status_code, 201)
-        self.assertEqual(res2.status_code, 201)
-        self.assertEqual(res3.status_code, 401)
+        self.assertEqual(res1.status_code, 200)
+        self.assertEqual(res2.status_code, 200)
+        self.assertEqual(res3.status_code, 200)

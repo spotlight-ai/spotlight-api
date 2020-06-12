@@ -114,16 +114,17 @@ class Job(Resource):
         datasets_owned = [dataset.dataset_id for dataset in
                           DatasetModel.query.join(DatasetOwner).join(UserModel).filter(
                               (UserModel.user_id == user_id)).all()]
-        
+
         job = JobModel.query.filter_by(job_id=job_id).first()
         user = UserModel.query.filter_by(user_id=user_id).first()
-        
+
         if not job:
             abort(404, "Job not found.")
-        
-        if not user.admin and job.dataset_id not in datasets_owned:
-            abort(401, "Not authorized to edit this job.")
-        
+
+        if user_id != 'MODEL':
+            if not user.admin and job.dataset_id not in datasets_owned:
+                abort(401, "Not authorized to edit this job.")
+
         data = request.get_json(force=True)
         for k, v in data.items():
             if k in self.loadable_fields:
