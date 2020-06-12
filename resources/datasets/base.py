@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 import requests
 from flask import abort, request
 from flask_restful import Resource
+from loguru import logger
 from sqlalchemy.sql.expression import true
 
 from core.aws import generate_presigned_download_link
@@ -125,6 +126,10 @@ class Dataset(Resource):
             elif shared:
                 dataset.download_link = generate_presigned_download_link('spotlightai-redacted-copies', s3_object_key,
                                                                          permissions=permissions, markers=markers)
+            logger.debug(permissions)
+            logger.debug(markers)
+            dataset.markers = list(
+                set([perm.description for perm in permissions]) & set([marker.pii_type for marker in markers]))
             return flat_file_dataset_schema.dump(dataset)
         
         return
