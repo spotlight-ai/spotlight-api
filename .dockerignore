@@ -1,5 +1,15 @@
+.git/
+.github/
+controllers/
+htmlcov/
+migrations/
+scripts/
+tests/
+
 .coverage
 .coveragerc
 .env
-htmlcov/
-controllers/
+.gitignore
+docker-compose.yml
+Dockerfile
+remote-docker-compose.yml
