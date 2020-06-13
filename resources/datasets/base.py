@@ -125,6 +125,14 @@ class Dataset(Resource):
             elif shared:
                 dataset.download_link = generate_presigned_download_link('spotlightai-redacted-copies', s3_object_key,
                                                                          permissions=permissions, markers=markers)
+            
+            new_markers = []
+            permission_descriptions = set([perm.description for perm in permissions])
+            for marker in dataset.markers:
+                if marker.pii_type in permission_descriptions:
+                    new_markers.append(marker)
+            
+            dataset.markers = new_markers
             return flat_file_dataset_schema.dump(dataset)
         
         return
