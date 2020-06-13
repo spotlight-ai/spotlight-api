@@ -88,14 +88,16 @@ class RoleDatasetCollection(Resource):
         
         data = request.get_json(force=True)
         datasets = retrieve_datasets(data.get('datasets', []))
-        
+
         user = UserModel.query.filter_by(user_id=user_id).first()
-        
+
         for dataset in datasets:
             if user not in dataset.owners:
                 abort(401, f'{dataset.dataset_id}: {DatasetErrors.USER_DOES_NOT_OWN}')
             if dataset not in role.datasets:
                 abort(400, f'{dataset.dataset_id}: {RoleErrors.DATASET_NOT_PRESENT}')
             role.datasets.remove(dataset)
+
+        db.session.commit()
         
         return role_schema.dump(role)
