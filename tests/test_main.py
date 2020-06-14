@@ -17,12 +17,6 @@ class BaseTest(unittest.TestCase):
         self.role_object = {
             'role_name': 'Test Role'
         }
-        self.user_object = {
-            'first_name': 'Test',
-            'last_name': 'User',
-            'email': 'test@user.com',
-            'password': 'testpass'
-        }
         
         self.user_route = '/user'
         self.role_route = '/role'
