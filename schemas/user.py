@@ -8,7 +8,7 @@ from models.user import UserModel
 class UserSchema(ma.ModelSchema):
     class Meta:
         model = UserModel
-        exclude = ('role', 'role_member')
+        exclude = ("role", "role_member")
         ordered = True
 
     email = fields.Email(required=True)

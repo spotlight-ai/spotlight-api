@@ -13,10 +13,13 @@ def retrieve_role(role_id, user_id):
     :param user_id: ID of the user to verify ownership.
     :return: Role object if user is owner, otherwise None.
     """
-    role = RoleModel.query.filter((RoleModel.role_id == role_id) & (RoleMemberModel.user_id == user_id) & (
-            RoleMemberModel.is_owner == true())).first()
-    
+    role = RoleModel.query.filter(
+        (RoleModel.role_id == role_id)
+        & (RoleMemberModel.user_id == user_id)
+        & (RoleMemberModel.is_owner == true())
+    ).first()
+
     if not role:
         abort(401, RoleErrors.MISSING_NO_PERMISSIONS)
-    
+
     return role

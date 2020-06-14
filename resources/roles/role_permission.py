@@ -24,9 +24,9 @@ class RolePermissionCollection(Resource):
         :return: List of role permissions.
         """
         role = retrieve_role(role_id=role_id, user_id=user_id)
-        
+
         return pii_schema.dump(role.permissions, many=True)
-    
+
     @authenticate_token
     def post(self, user_id, role_id):
         """
@@ -36,24 +36,31 @@ class RolePermissionCollection(Resource):
         :return: None
         """
         role = retrieve_role(role_id=role_id, user_id=user_id)
-        
-        permission_descriptions = request.get_json(force=True).get('permissions', [])
-        
+
+        permission_descriptions = request.get_json(force=True).get("permissions", [])
+
         # Retrieve PII marker objects based on descriptions passed in the POST body
-        pii_markers = PIIModel.query.filter((PIIModel.description.in_(permission_descriptions))).all()
-        
+        pii_markers = PIIModel.query.filter(
+            (PIIModel.description.in_(permission_descriptions))
+        ).all()
+
         # Verify that PII added is not already part of the Role permissions
         role_marker_descriptions = [perm.description for perm in role.permissions]
-        permissions_already_existing = list(set(permission_descriptions) & set(role_marker_descriptions))
-        
+        permissions_already_existing = list(
+            set(permission_descriptions) & set(role_marker_descriptions)
+        )
+
         if len(permissions_already_existing) > 0:
-            abort(400, f'{RoleErrors.PERMISSION_ALREADY_PRESENT}: {permissions_already_existing}')
-        
+            abort(
+                400,
+                f"{RoleErrors.PERMISSION_ALREADY_PRESENT}: {permissions_already_existing}",
+            )
+
         role.permissions.extend(pii_markers)
-        
+
         db.session.commit()
         return None, 201
-    
+
     @authenticate_token
     def put(self, user_id, role_id):
         """
@@ -63,15 +70,17 @@ class RolePermissionCollection(Resource):
         :return: Role object that has been updated.
         """
         role = retrieve_role(role_id=role_id, user_id=user_id)
-        
-        permission_descriptions = request.get_json(force=True).get('permissions', [])
-        
+
+        permission_descriptions = request.get_json(force=True).get("permissions", [])
+
         # Retrieve PII marker objects based on descriptions passed in the POST body
-        role.permissions = PIIModel.query.filter((PIIModel.description.in_(permission_descriptions))).all()
+        role.permissions = PIIModel.query.filter(
+            (PIIModel.description.in_(permission_descriptions))
+        ).all()
         db.session.commit()
-        
+
         return role_schema.dump(role)
-    
+
     @authenticate_token
     def delete(self, user_id, role_id):
         """
@@ -81,18 +90,22 @@ class RolePermissionCollection(Resource):
         :return: Role object that has been updated.
         """
         role = retrieve_role(role_id=role_id, user_id=user_id)
-        
-        permission_descriptions = request.get_json(force=True).get('permissions', [])
-        pii_markers = PIIModel.query.filter((PIIModel.description.in_(permission_descriptions))).all()
-        
+
+        permission_descriptions = request.get_json(force=True).get("permissions", [])
+        pii_markers = PIIModel.query.filter(
+            (PIIModel.description.in_(permission_descriptions))
+        ).all()
+
         # Verify that PII removed are all currently in role permissions
         role_marker_descriptions = [perm.description for perm in role.permissions]
-        permissions_missing = list(set(permission_descriptions) - set(role_marker_descriptions))
-        
+        permissions_missing = list(
+            set(permission_descriptions) - set(role_marker_descriptions)
+        )
+
         if len(permissions_missing) != 0:
-            abort(400, f'{RoleErrors.PERMISSIONS_MISSING}: {permissions_missing}')
-        
+            abort(400, f"{RoleErrors.PERMISSIONS_MISSING}: {permissions_missing}")
+
         for pii in pii_markers:
             role.permissions.remove(pii)
-        
+
         return role_schema.dump(role)

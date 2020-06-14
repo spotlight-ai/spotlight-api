@@ -7,105 +7,104 @@ class DatasetSharedUserResourceTest(BaseTest):
     def test_get_dataset_shared_users(self):
         """Verify that owners are able to retrieve a list of users that have access to a dataset that they own."""
         headers = self.generate_auth_headers(user_id=3)
-        res = self.client().get(f'{self.dataset_route}/1/user', headers=headers)
-        
+        res = self.client().get(f"{self.dataset_route}/1/user", headers=headers)
+
         self.assertEqual(res.status_code, 200)
         shared_users = json.loads(res.data.decode())
-        
+
         self.assertEqual(len(shared_users), 2)
-        
+
         for user in shared_users:
-            self.assertEqual(user.get('permissions'), [])
-    
+            self.assertEqual(user.get("permissions"), [])
+
     def test_get_unowned_dataset_shared_users(self):
         """Users should not be able to view access for datasets they do not own."""
         headers = self.generate_auth_headers(user_id=1)
-        res = self.client().get(f'{self.dataset_route}/1/user', headers=headers)
-        
+        res = self.client().get(f"{self.dataset_route}/1/user", headers=headers)
+
         self.assertEqual(res.status_code, 401)
-    
+
     def test_add_dataset_shared_user(self):
         """Owners should be able to add individual users to access their dataset."""
         headers = self.generate_auth_headers(user_id=3)
-        
-        res = self.client().post(f'{self.dataset_route}/1/user', headers=headers, json=[{'user_id': 5}])
-        
+
+        res = self.client().post(
+            f"{self.dataset_route}/1/user", headers=headers, json=[{"user_id": 5}]
+        )
+
         self.assertEqual(res.status_code, 201)
-        
-        res = self.client().get(f'{self.dataset_route}/1/user', headers=headers)
-        
+
+        res = self.client().get(f"{self.dataset_route}/1/user", headers=headers)
+
         self.assertEqual(res.status_code, 200)
         shared_users = json.loads(res.data.decode())
-        
+
         self.assertEqual(len(shared_users), 3)
-        
+
         for user in shared_users:
-            self.assertEqual(user.get('permissions'), [])
-    
+            self.assertEqual(user.get("permissions"), [])
+
     def test_add_dataset_shared_user_already_owner(self):
         headers = self.generate_auth_headers(user_id=3)
-        
-        res = self.client().post(f'{self.dataset_route}/2/user', headers=headers, json=[{'user_id': 4}])
-        
+
+        res = self.client().post(
+            f"{self.dataset_route}/2/user", headers=headers, json=[{"user_id": 4}]
+        )
+
         self.assertEqual(res.status_code, 400)
-        self.assertIn('cannot be shared with owner', res.data.decode())
-    
+        self.assertIn("cannot be shared with owner", res.data.decode())
+
     def test_add_dataset_shared_user_already_shared(self):
         headers = self.generate_auth_headers(user_id=3)
-        
-        res = self.client().post(f'{self.dataset_route}/1/user', headers=headers, json=[
-            {
-                'user_id': 1
-            },
-            {
-                'user_id': 2
-            }
-        ])
-        
+
+        res = self.client().post(
+            f"{self.dataset_route}/1/user",
+            headers=headers,
+            json=[{"user_id": 1}, {"user_id": 2}],
+        )
+
         self.assertEqual(res.status_code, 400)
-        self.assertIn('already shared', res.data.decode())
-    
+        self.assertIn("already shared", res.data.decode())
+
     def test_remove_dataset_shared_users(self):
         headers = self.generate_auth_headers(user_id=3)
-        
-        res = self.client().delete(f'{self.dataset_route}/1/user', headers=headers, json=[
-            {
-                'user_id': 1
-            },
-            {
-                'user_id': 2
-            }
-        ])
-        
+
+        res = self.client().delete(
+            f"{self.dataset_route}/1/user",
+            headers=headers,
+            json=[{"user_id": 1}, {"user_id": 2}],
+        )
+
         self.assertEqual(res.status_code, 204)
-        
-        res = self.client().get(f'{self.dataset_route}/1/user', headers=headers)
+
+        res = self.client().get(f"{self.dataset_route}/1/user", headers=headers)
         shared_users = json.loads(res.data.decode())
-        
+
         self.assertEqual(res.status_code, 200)
         self.assertEqual(len(shared_users), 0)
-    
+
     def test_add_dataset_shared_user_with_permissions(self):
         headers = self.generate_auth_headers(user_id=3)
-        
-        res = self.client().post(f'{self.dataset_route}/1/user', headers=headers, json=[
-            {
-                'user_id': 5,
-                'permissions': ['ssn', 'name']
-            },
-            {
-                'user_id': 4,
-                'permissions': ['ssn']
-            }
-        ])
-        
+
+        res = self.client().post(
+            f"{self.dataset_route}/1/user",
+            headers=headers,
+            json=[
+                {"user_id": 5, "permissions": ["ssn", "name"]},
+                {"user_id": 4, "permissions": ["ssn"]},
+            ],
+        )
+
         self.assertEqual(res.status_code, 201)
-        
-        res = self.client().get(f'{self.dataset_route}/1/user', headers=headers)
-        
+
+        res = self.client().get(f"{self.dataset_route}/1/user", headers=headers)
+
         self.assertEqual(res.status_code, 200)
         shared_users = json.loads(res.data.decode())
-        
+
         self.assertEqual(len(shared_users), 4)
-        self.assertEqual(shared_users[2].get('permissions'), [{'description': 'ssn'}, {'description': 'name'}])
-        self.assertEqual(shared_users[3].get('permissions'), [{'description': 'ssn'}])
+        self.assertEqual(
+            shared_users[2].get("permissions"),
+            [{"description": "ssn"}, {"description": "name"}],
+        )
+        self.assertEqual(shared_users[3].get("permissions"), [{"description": "ssn"}])

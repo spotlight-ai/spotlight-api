@@ -9,5 +9,5 @@ class JobSchema(ma.ModelSchema):
         model = JobModel
         include_fk = True
         strict = True
-    
+
     dataset_id = fields.Int(required=True)

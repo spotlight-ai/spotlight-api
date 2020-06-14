@@ -17,7 +17,7 @@ class TextFilePIICollection(Resource):
         try:
             data = request.get_json(force=True)
             text_file_pii = text_file_pii_schema.load(data)
-            
+
             db.session.add(text_file_pii)
             db.session.commit()
         except ValidationError as err:

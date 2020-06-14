@@ -8,6 +8,6 @@ class SharedDatasetUserSchema(ma.Schema):
     class Meta:
         model = SharedDatasetUserModel
         strict = True
-    
+
     permissions = ma.List(ma.Nested(PIISchema))
     user = ma.Nested(UserSchema)

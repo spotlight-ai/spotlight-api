@@ -20,7 +20,7 @@ class FlatFileCollection(Resource):
     def get(self, user_id):
         datasets = FlatFileDatasetModel.query.all()
         return flat_file_schema.dump(datasets, many=True)
-    
+
     @authenticate_token
     def post(self, user_id):
         """
@@ -33,31 +33,37 @@ class FlatFileCollection(Resource):
         """
         try:
             request_body = request.get_json(force=True)
-            
+
             # Upload Format: s3://{bucket}/{user_id}_{dataset}/{object_name}
-            dataset_name = request_body['dataset_name']
-            key = request_body['location']
-            object_name = f'{user_id}_{dataset_name}/{key}'
-            
-            request_body['uploader'] = user_id
-            request_body['location'] = object_name
-            
+            dataset_name = request_body["dataset_name"]
+            key = request_body["location"]
+            object_name = f"{user_id}_{dataset_name}/{key}"
+
+            request_body["uploader"] = user_id
+            request_body["location"] = object_name
+
             dataset = flat_file_schema.load(request_body)
             owner = UserModel.query.get(user_id)
-            
+
             dataset.owners.append(owner)
             db.session.add(dataset)
-            
+
             db.session.commit()
-            
-            response = generate_presigned_link(bucket_name='uploaded-datasets',
-                                               object_name=object_name)
-            response['dataset_id'] = dataset.dataset_id
-            
+
+            response = generate_presigned_link(
+                bucket_name="uploaded-datasets", object_name=object_name
+            )
+            response["dataset_id"] = dataset.dataset_id
+
             db.session.add(
-                DatasetActionHistoryModel(user_id=user_id, dataset_id=dataset.dataset_id, action=Audit.DATASET_CREATED))
+                DatasetActionHistoryModel(
+                    user_id=user_id,
+                    dataset_id=dataset.dataset_id,
+                    action=Audit.DATASET_CREATED,
+                )
+            )
             db.session.commit()
-            
+
             return response
         except ValidationError as err:
             abort(422, err.messages)

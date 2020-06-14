@@ -7,4 +7,6 @@ def retrieve_datasets(dataset_ids) -> list:
     :param dataset_ids: Dataset IDs to retrieve.
     :return: List of datasets
     """
-    return FlatFileDatasetModel.query.filter((FlatFileDatasetModel.dataset_id.in_(dataset_ids))).all()
+    return FlatFileDatasetModel.query.filter(
+        (FlatFileDatasetModel.dataset_id.in_(dataset_ids))
+    ).all()
