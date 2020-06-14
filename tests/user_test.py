@@ -52,6 +52,13 @@ class UserResourceTest(BaseTest):
         self.assertEqual(res.status_code, 422)
         self.assertIn('Shorter than minimum length 8.', res.data.decode())
 
+    def test_invalid_email_format(self):
+        res = self.client().post(self.user_route, json={'first_name': 'Test', 'last_name': 'User',
+                                                        'email': 'test.com', 'password': 'testpass'})
+
+        self.assertEqual(res.status_code, 422)
+        self.assertIn('Not a valid email address.', res.data.decode())
+
     def test_duplicate_user_creation(self):
         """Validates that an error is thrown if a user with the same e-mail address already exists."""
         res = self.client().post(self.user_route, json={'first_name': 'Test', 'last_name': 'User',
