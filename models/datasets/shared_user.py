@@ -6,8 +6,10 @@ class SharedDatasetUserModel(db.Model):
     __tablename__ = "shared_dataset_user"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"))
-    dataset_id = db.Column(db.Integer, db.ForeignKey("dataset.dataset_id"))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.user_id", ondelete="cascade"))
+    dataset_id = db.Column(
+        db.Integer, db.ForeignKey("dataset.dataset_id", ondelete="cascade")
+    )
     share_expires = db.Column(db.DateTime, nullable=True)
 
     permissions = db.relationship(

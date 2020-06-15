@@ -6,7 +6,9 @@ class FlatFileDatasetModel(DatasetModel):
     __tablename__ = "flat_file_dataset"
 
     dataset_id = db.Column(
-        db.Integer, db.ForeignKey("dataset.dataset_id"), primary_key=True
+        db.Integer,
+        db.ForeignKey("dataset.dataset_id", ondelete="cascade"),
+        primary_key=True,
     )
     location = db.Column(db.String, unique=True)
 

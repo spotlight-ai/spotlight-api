@@ -38,17 +38,32 @@ class UserModel(db.Model):
         self.password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
         self.admin = admin
         self.last_login = datetime.datetime.utcnow()
+        self.created_ts = datetime.datetime.utcnow()
 
     def generate_auth_token(self, ttl=604800):
+        """
+        Generates an authorization token for the user upon login.
+        :param ttl: Time from generation until the token expires.
+        :return: Authorization token.
+        """
         s = Serializer(os.environ.get("SECRET", "default_secret"), expires_in=ttl)
         return s.dumps({"id": self.user_id})
 
     def check_password(self, password):
-        """Check hashed password."""
+        """
+        Check hashed password against the one stored in the database.
+        :param password: Hashed password entered by the user.
+        :return: Boolean representing successful password match.
+        """
         return bcrypt.checkpw(password.encode(), self.password.encode())
 
     @staticmethod
     def verify_auth_token(token):
+        """
+        Verifies that the authorization token is valid and correct.
+        :param token: Authorization Token
+        :return: Boolean representing successful login.
+        """
         s = Serializer(os.environ.get("SECRET", "default_secret"))
 
         try:
@@ -61,4 +76,10 @@ class UserModel(db.Model):
         return True, data["id"]
 
     def __repr__(self):
-        return f"<User {self.email}>"
+        return (
+            f"{self.__class__.__name__}({self.user_id}, {self.email}, {self.password}, {self.first_name}, "
+            f"{self.last_name}, {self.admin}, {self.last_login})"
+        )
+
+    def __str__(self):
+        return f"User {self.user_id} ({self.first_name} {self.last_name}): {self.email}"

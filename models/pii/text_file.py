@@ -10,7 +10,9 @@ class TextFilePIIModel(db.Model):
     )
 
     pii_id = db.Column(db.Integer, primary_key=True)
-    dataset_id = db.Column(db.Integer, db.ForeignKey("dataset.dataset_id"))
+    dataset_id = db.Column(
+        db.Integer, db.ForeignKey("dataset.dataset_id", ondelete="cascade")
+    )
     pii_type = db.Column(db.String, nullable=False)
     start_location = db.Column(db.Integer, nullable=False)
     end_location = db.Column(db.Integer, nullable=False)
