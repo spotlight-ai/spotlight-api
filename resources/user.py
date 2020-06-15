@@ -1,10 +1,9 @@
 from flask import abort, request
 from flask_restful import Resource
 from marshmallow import ValidationError
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.exc import UnmappedInstanceError
 
 from core.decorators import authenticate_token
+from core.errors import UserErrors
 from db import db
 from models.user import UserModel
 from schemas.user import UserSchema
@@ -24,23 +23,21 @@ class UserCollection(Resource):
         query = f'%{args.get("query", None)}%'
 
         if args.get("query"):
-            users = (
+            return user_schema.dump(
                 UserModel.query.filter(
                     (
-                            UserModel.first_name.ilike(query)
-                            | (
-                                    UserModel.last_name.ilike(query)
-                                    | (UserModel.email.ilike(query))
-                            )
+                        UserModel.first_name.ilike(query)
+                        | (
+                            UserModel.last_name.ilike(query)
+                            | (UserModel.email.ilike(query))
+                        )
                     )
                 )
-                    .limit(10)
-                    .all()
+                .limit(10)
+                .all(),
+                many=True,
             )
-        else:
-            users = UserModel.query.all()
-
-        return user_schema.dump(users, many=True)
+        return user_schema.dump(UserModel.query.limit(10).all(), many=True)
 
     def post(self):
         """
@@ -48,25 +45,20 @@ class UserCollection(Resource):
         :return: None.
         """
         try:
-            data = user_schema.load(request.get_json(force=True))
+            user = user_schema.load(request.get_json(force=True))
 
             # Check if user already exists
-            if UserModel.query.filter_by(email=data.email).first():
-                abort(400, "User already exists.")
+            if UserModel.query.filter_by(email=user.email).first():
+                abort(400, UserErrors.USER_ALREADY_EXISTS)
 
-            db.session.add(data)
+            db.session.add(user)
             db.session.commit()
             return None, 201
         except ValidationError as err:
             abort(422, err.messages)
-        except IntegrityError as err:
-            db.session.rollback()
-            abort(400, err)
 
 
 class User(Resource):
-    loadable_fields = ["first_name", "last_name"]
-
     @authenticate_token
     def get(self, user_id, user_query_id):
         """
@@ -77,7 +69,8 @@ class User(Resource):
         """
         user = UserModel.query.filter_by(user_id=user_query_id).first()
         if not user:
-            abort(404, "User not found.")
+            abort(404, UserErrors.USER_NOT_FOUND)
+
         return user_schema.dump(user)
 
     @authenticate_token
@@ -88,23 +81,30 @@ class User(Resource):
         :param user_query_id: User ID to be edited.
         :return: None
         """
+        loadable_fields = [
+            "first_name",
+            "last_name",
+        ]  # Only these fields in the User model can be edited
+
         try:
             user = UserModel.query.filter_by(user_id=user_query_id).first()
             if not user:
-                abort(404, "User not found.")
+                abort(404, UserErrors.USER_NOT_FOUND)
 
             data = request.get_json(force=True)
 
+            user = user_schema.load(data, partial=True)  # Validate fields
+
             for k, v in data.items():
-                if k in self.loadable_fields:
+                if k in loadable_fields:
                     user.__setattr__(k, v)
+                else:
+                    abort(400, f"{k}: {UserErrors.EDITING_INVALID_FIELD}")
 
             db.session.commit()
-            return
+            return user_schema.dump(user)
         except ValidationError as err:
             abort(422, err.messages)
-        except IntegrityError as err:
-            abort(400, err)
 
     @authenticate_token
     def delete(self, user_id, user_query_id):
@@ -114,15 +114,6 @@ class User(Resource):
         :param user_query_id: User ID to be deleted.
         :return: None
         """
-        try:
-            user = UserModel.query.filter_by(user_id=user_query_id).first()
-
-            if not user:
-                abort(404, "User not found.")
-
-            db.session.delete(user)
-            db.session.commit()
-            return
-        except UnmappedInstanceError as err:
-            db.session.rollback()
-            abort(404, err)
+        UserModel.query.filter_by(user_id=user_query_id).delete()
+        db.session.commit()
+        return

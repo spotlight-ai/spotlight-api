@@ -14,9 +14,6 @@ class DatasetSharedUserResourceTest(BaseTest):
 
         self.assertEqual(len(shared_users), 2)
 
-        for user in shared_users:
-            self.assertEqual(user.get("permissions"), [])
-
     def test_get_unowned_dataset_shared_users(self):
         """Users should not be able to view access for datasets they do not own."""
         headers = self.generate_auth_headers(user_id=1)
@@ -40,9 +37,6 @@ class DatasetSharedUserResourceTest(BaseTest):
         shared_users = json.loads(res.data.decode())
 
         self.assertEqual(len(shared_users), 3)
-
-        for user in shared_users:
-            self.assertEqual(user.get("permissions"), [])
 
     def test_add_dataset_shared_user_already_owner(self):
         headers = self.generate_auth_headers(user_id=3)

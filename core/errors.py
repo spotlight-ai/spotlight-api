@@ -21,3 +21,5 @@ class DatasetErrors:
 
 class UserErrors:
     USER_NOT_FOUND = "User or users not found."
+    USER_ALREADY_EXISTS = "User already exists."
+    EDITING_INVALID_FIELD = "Cannot edit this field."

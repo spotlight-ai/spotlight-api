@@ -20,8 +20,14 @@ RoleDataset = db.Table(
 DatasetOwner = db.Table(
     "dataset_owner",
     db.Column("id", db.Integer, primary_key=True),
-    db.Column("dataset_id", db.Integer, db.ForeignKey("dataset.dataset_id")),
-    db.Column("owner_id", db.Integer, db.ForeignKey("user.user_id")),
+    db.Column(
+        "dataset_id",
+        db.Integer,
+        db.ForeignKey("dataset.dataset_id", ondelete="cascade"),
+    ),
+    db.Column(
+        "owner_id", db.Integer, db.ForeignKey("user.user_id", ondelete="cascade")
+    ),
 )
 
 # Table to store permissions for individual users on a dataset (many-to-many relationship).

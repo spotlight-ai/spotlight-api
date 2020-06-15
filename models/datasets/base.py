@@ -13,7 +13,7 @@ class DatasetModel(db.Model):
     dataset_id = db.Column(db.Integer, primary_key=True)
     dataset_name = db.Column(db.String, nullable=False)
     dataset_type = db.Column(db.String, nullable=False)
-    uploader = db.Column(db.Integer, foreign_key="user.user_id")
+    uploader = db.Column(db.Integer, db.ForeignKey("user.user_id", ondelete="cascade"))
     created_ts = db.Column(
         db.DateTime, nullable=False, default=datetime.datetime.utcnow()
     )

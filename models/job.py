@@ -9,7 +9,9 @@ class JobModel(db.Model):
     job_id = db.Column(db.Integer, primary_key=True)
     job_created_ts = db.Column(db.DateTime, nullable=False, default=datetime.now())
     job_completed_ts = db.Column(db.DateTime, default=datetime.now())
-    dataset_id = db.Column(db.Integer, db.ForeignKey("dataset.dataset_id"))
+    dataset_id = db.Column(
+        db.Integer, db.ForeignKey("dataset.dataset_id", ondelete="cascade")
+    )
     job_status = db.Column(db.String, nullable=False, default="PENDING")
 
     def __init__(self, dataset_id):

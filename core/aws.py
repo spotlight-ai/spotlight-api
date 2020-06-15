@@ -6,7 +6,7 @@ from botocore.exceptions import ClientError
 
 
 def generate_presigned_download_link(
-        bucket_name, object_name, expiration=3600, permissions=None, markers=None
+    bucket_name, object_name, expiration=3600, permissions=None, markers=None
 ):
     """
     Generate a presigned URL to share an S3 object
@@ -82,7 +82,7 @@ def generate_presigned_download_link(
 
 
 def generate_presigned_link(
-        bucket_name, object_name, fields=None, conditions=None, expiration=3600
+    bucket_name, object_name, fields=None, conditions=None, expiration=3600
 ):
     """
     Generates an AWS pre-signed link to access files in S3 location.

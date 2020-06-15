@@ -7,7 +7,9 @@ class RoleMemberModel(db.Model):
 
     role_member_id = db.Column(db.Integer, primary_key=True)
     role_id = db.Column(db.Integer, db.ForeignKey("role.role_id"), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("user.user_id", ondelete="cascade"), nullable=False
+    )
     is_owner = db.Column(db.Boolean, default=False, nullable=False)
 
     user = db.relationship("UserModel", backref="role_member")
