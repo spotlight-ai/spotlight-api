@@ -22,6 +22,7 @@ class BaseTest(unittest.TestCase):
         self.job_route = "/job"
         self.dataset_route = "/dataset"
         self.flatfile_route = "/dataset/flat_file"
+        self.pii_route = "/pii"
 
         with self.app.app_context():
             # Pre-load database to desired state
