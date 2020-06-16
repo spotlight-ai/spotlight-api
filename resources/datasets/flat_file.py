@@ -4,7 +4,7 @@ from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from core.aws import generate_presigned_link
-from core.constants import Audit
+from core.constants import AuditConstants
 from core.decorators import authenticate_token
 from db import db
 from models.audit.dataset_action_history import DatasetActionHistoryModel
@@ -59,7 +59,7 @@ class FlatFileCollection(Resource):
                 DatasetActionHistoryModel(
                     user_id=user_id,
                     dataset_id=dataset.dataset_id,
-                    action=Audit.DATASET_CREATED,
+                    action=AuditConstants.DATASET_CREATED,
                 )
             )
             db.session.commit()

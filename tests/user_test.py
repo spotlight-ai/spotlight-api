@@ -69,7 +69,6 @@ class UserResourceTest(BaseTest):
             json={"first_name": "Test", "last_name": "User", "email": "test@user.com"},
         )
 
-        print(res.data.decode())
         self.assertEqual(res.status_code, 422)
         self.assertIn("Missing data for required field.", res.data.decode())
 
@@ -222,7 +221,7 @@ class UserResourceTest(BaseTest):
             f"{self.user_route}/1", json={"first_name": ""}, headers=headers,
         )
 
-        self.assertEqual(res.status_code, 422)
+        self.assertEqual(422, res.status_code)
         self.assertIn("Shorter than minimum length 1.", res.data.decode())
 
     def test_get_user_doesnt_exist(self):

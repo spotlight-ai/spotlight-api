@@ -7,7 +7,7 @@ from flask_restful import Resource
 from sqlalchemy.sql.expression import true
 
 from core.aws import generate_presigned_download_link
-from core.constants import Audit
+from core.constants import AuditConstants
 from core.decorators import authenticate_token
 from core.errors import DatasetErrors, UserErrors
 from db import db
@@ -62,9 +62,9 @@ class DatasetCollection(Resource):
         # Retrieve datasets the user may access via role permissions
         shared_by_role = (
             DatasetModel.query.join(RoleDataset)
-                .join(RoleModel)
-                .join(RoleMemberModel)
-                .filter(RoleMemberModel.user_id == user_id)
+            .join(RoleModel)
+            .join(RoleMemberModel)
+            .filter(RoleMemberModel.user_id == user_id)
         )
 
         # Retrieve datasets the user may access via individual permissions/sharing
@@ -105,7 +105,7 @@ class Dataset(Resource):
             role_ids = []
 
             if (
-                    not shared
+                not shared
             ):  # Check for role sharing if it hasn't been shared individually
                 for role in base_dataset.roles:
                     for member in role.members:
@@ -119,14 +119,14 @@ class Dataset(Resource):
 
             individual_permissions = (
                 PIIModel.query.join(UserDatasetPermission)
-                    .join(SharedDatasetUserModel)
-                    .filter_by(dataset_id=dataset_id, user_id=user_id)
+                .join(SharedDatasetUserModel)
+                .filter_by(dataset_id=dataset_id, user_id=user_id)
             )
 
             role_permissions = (
                 PIIModel.query.join(RolePermission)
-                    .join(RoleModel)
-                    .filter(RoleModel.role_id.in_(role_ids))
+                .join(RoleModel)
+                .filter(RoleModel.role_id.in_(role_ids))
             )
             permissions = individual_permissions.union(role_permissions).all()
 
@@ -233,7 +233,7 @@ class DatasetVerification(Resource):
                     DatasetActionHistoryModel(
                         user_id=user_id,
                         dataset_id=dataset.dataset_id,
-                        action=Audit.DATASET_VERIFIED,
+                        action=AuditConstants.DATASET_VERIFIED,
                     )
                 )
 

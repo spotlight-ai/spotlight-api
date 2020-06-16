@@ -12,6 +12,7 @@ class PIICollection(Resource):
     def get(self, user_id):
         """
         Returns the list of currently accepted PII and their details.
+        :param user_id: Currently logged in user ID.
         :return: List of PII markers
         """
         pii = PIIModel.query.all()

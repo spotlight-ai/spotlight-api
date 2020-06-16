@@ -93,7 +93,9 @@ class User(Resource):
 
             data = request.get_json(force=True)
 
-            user = user_schema.load(data, partial=True)  # Validate fields
+            user = user_schema.load(
+                data, instance=user, partial=True
+            )  # Validate fields
 
             for k, v in data.items():
                 if k in loadable_fields:
