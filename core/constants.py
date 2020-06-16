@@ -5,4 +5,4 @@ class AuditConstants:
 
 class NotificationConstants:
     DATASET_SHARED_TITLE = "A dataset has been shared with you"
-    DATASET_SHARED_DETAIL = "You have been granted access to Dataset:"
+    DATASET_SHARED_DETAIL = "You have been granted access to Dataset(s):"

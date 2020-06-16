@@ -6,7 +6,7 @@ from core.errors import DatasetErrors, RoleErrors
 from db import db
 from models.user import UserModel
 from resources.datasets.util import retrieve_datasets
-from resources.roles.util import retrieve_role
+from resources.roles.util import retrieve_role, send_notifications
 from schemas.datasets.flat_file import FlatFileDatasetSchema
 from schemas.roles.role import RoleSchema
 
@@ -52,6 +52,8 @@ class RoleDatasetCollection(Resource):
 
         role.datasets.extend(datasets)
 
+        send_notifications(db.session, role, datasets)
+
         db.session.commit()
         return None, 201
 
@@ -75,6 +77,9 @@ class RoleDatasetCollection(Resource):
                 abort(401, f"{dataset.dataset_id}: {DatasetErrors.USER_DOES_NOT_OWN}")
 
         role.datasets = datasets
+
+        send_notifications(db.session, role, datasets)
+        db.session.commit()
 
         return role_schema.dump(role)
 

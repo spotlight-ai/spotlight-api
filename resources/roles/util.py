@@ -1,7 +1,9 @@
 from flask import abort
 from sqlalchemy.sql.expression import true
 
+from core.constants import NotificationConstants
 from core.errors import RoleErrors
+from models.notifications.notification import NotificationModel
 from models.roles.role import RoleModel
 from models.roles.role_member import RoleMemberModel
 
@@ -23,3 +25,24 @@ def retrieve_role(role_id, user_id):
         abort(401, RoleErrors.MISSING_NO_PERMISSIONS)
 
     return role
+
+
+def send_notifications(session, role, datasets):
+    """
+    Adds notifications to the session for each member in the role.
+    :param session: Current DB session
+    :param role: Role to send notifications to.
+    :param datasets: Datasets that have been shared for detail.
+    :return: None
+    """
+
+    for member in role.members:
+        # Add notification for each role member
+        if not member.is_owner:
+            notification = NotificationModel(
+                user_id=member.user_id,
+                title=NotificationConstants.DATASET_SHARED_TITLE,
+                detail=f"{NotificationConstants.DATASET_SHARED_DETAIL} {[d.dataset_name for d in datasets]}",
+            )
+
+            session.add(notification)
