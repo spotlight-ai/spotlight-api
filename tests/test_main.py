@@ -23,6 +23,7 @@ class BaseTest(unittest.TestCase):
         self.dataset_route = "/dataset"
         self.flatfile_route = "/dataset/flat_file"
         self.pii_route = "/pii"
+        self.notification_route = "/notification"
 
         with self.app.app_context():
             # Pre-load database to desired state
@@ -32,6 +33,7 @@ class BaseTest(unittest.TestCase):
             from models.pii.pii import PIIModel
             from models.datasets.flat_file import FlatFileDatasetModel
             from models.datasets.shared_user import SharedDatasetUserModel
+            from models.notifications.notification import NotificationModel
 
             db.create_all()
 
@@ -122,6 +124,20 @@ class BaseTest(unittest.TestCase):
             role_2_owner_1 = RoleMemberModel(role_id=2, user_id=4, is_owner=True)
             role_2_user_1 = RoleMemberModel(role_id=2, user_id=2)
 
+            # Create notifications
+            notification_1 = NotificationModel(
+                user_id=1, title="New Notification", detail="Notification Detail"
+            )
+            notification_2 = NotificationModel(
+                user_id=1, title="Additional Notification", detail="Detail"
+            )
+            notification_3 = NotificationModel(
+                user_id=1, title="Third Notification", detail="More Detail", viewed=True
+            )
+            notification_4 = NotificationModel(
+                user_id=2, title="Third Notification", detail="More Detail", viewed=True
+            )
+
             # Create system users and allocate dataset owners
             for user in self.users:
                 user = UserModel(
@@ -161,6 +177,12 @@ class BaseTest(unittest.TestCase):
             db.session.add(role_1_user_1)
             db.session.add(role_2_owner_1)
             db.session.add(role_2_user_1)
+
+            # Store notifications
+            db.session.add(notification_1)
+            db.session.add(notification_2)
+            db.session.add(notification_3)
+            db.session.add(notification_4)
 
             db.session.commit()
 

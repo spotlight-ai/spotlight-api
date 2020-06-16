@@ -23,3 +23,15 @@ class UserErrors:
     USER_NOT_FOUND = "User or users not found."
     USER_ALREADY_EXISTS = "User already exists."
     EDITING_INVALID_FIELD = "Cannot edit this field."
+
+
+class NotificationErrors:
+    NOTIFICATION_NOT_FOUND = "Notification not found."
+    USER_DOES_NOT_HAVE_PERMISSION = (
+        "User does not have permission to view this notification."
+    )
+    CANNOT_UPDATE_FIELDS = 'Only "viewed" property can be updated.'
+
+
+class DatabaseErrors:
+    ISSUE_WRITING_TO_DB = "There was an issue writing to the database. Ensure query params are the correct type."

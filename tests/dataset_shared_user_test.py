@@ -99,6 +99,26 @@ class DatasetSharedUserResourceTest(BaseTest):
         self.assertEqual(len(shared_users), 4)
         self.assertEqual(
             shared_users[2].get("permissions"),
-            [{"description": "ssn"}, {"description": "name"}],
+            [
+                {
+                    "description": "ssn",
+                    "long_description": "Social Security Number",
+                    "category": "Identity",
+                },
+                {
+                    "description": "name",
+                    "long_description": "Name",
+                    "category": "Identity",
+                },
+            ],
         )
-        self.assertEqual(shared_users[3].get("permissions"), [{"description": "ssn"}])
+        self.assertEqual(
+            shared_users[3].get("permissions"),
+            [
+                {
+                    "description": "ssn",
+                    "long_description": "Social Security Number",
+                    "category": "Identity",
+                }
+            ],
+        )

@@ -11,6 +11,7 @@ from resources.datasets.base import Dataset, DatasetCollection, DatasetVerificat
 from resources.datasets.flat_file import FlatFileCollection
 from resources.datasets.shared_user import DatasetSharedUserCollection
 from resources.job import Job, JobCollection
+from resources.notifications.notification import NotificationCollection, Notification
 from resources.pii.pii import PIICollection
 from resources.pii.text_file import TextFilePII, TextFilePIICollection
 from resources.redact.text import RedactText
@@ -48,6 +49,8 @@ def create_app(config):
     api.add_resource(UserCollection, "/user")
     api.add_resource(User, "/user/<int:user_query_id>")
     api.add_resource(PIICollection, "/pii")
+    api.add_resource(NotificationCollection, "/notification")
+    api.add_resource(Notification, "/notification/<int:notification_id>")
 
     return app
 
