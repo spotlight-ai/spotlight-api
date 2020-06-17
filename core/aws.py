@@ -113,3 +113,11 @@ def generate_presigned_link(
         return None
 
     return response
+
+
+def dataset_cleanup(user_id,):
+    """
+    Removes all traces of dataset from S3 location.
+    :return: None
+    """
+    pass

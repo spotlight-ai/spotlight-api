@@ -190,6 +190,28 @@ class Dataset(Resource):
 
         return flat_file_dataset_schema.dump(dataset)
 
+    @authenticate_token
+    def delete(self, user_id, dataset_id):
+        """
+        Deletes a dataset from the system.
+        :param user_id: Currently logged in user ID.
+        :param dataset_id: Dataset unique identifier to delete
+        :return: None
+        """
+        dataset = DatasetModel.query.filter_by(dataset_id=dataset_id)
+
+        owner_ids = [o.user_id for o in dataset.owners]
+
+        if user_id not in owner_ids:
+            abort(401, DatasetErrors.USER_DOES_NOT_OWN)
+
+        dataset.delete()
+
+        # TODO: Add S3 cleanup
+
+        db.session.commit()
+        return
+
 
 class DatasetVerification(Resource):
     @authenticate_token
