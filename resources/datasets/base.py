@@ -88,7 +88,7 @@ class Dataset(Resource):
     def get(self, user_id, dataset_id):
         base_dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
         
-        if user_id != "Bad token received":  # User is requesting
+        if user_id != "MODEL":  # User is requesting
             user = UserModel.query.filter_by(user_id=user_id).first()
             
             if not base_dataset:
