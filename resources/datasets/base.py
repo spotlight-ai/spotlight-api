@@ -6,7 +6,7 @@ from flask import abort, request
 from flask_restful import Resource
 from sqlalchemy.sql.expression import true
 
-from core.aws import generate_presigned_download_link
+from core.aws import dataset_cleanup, generate_presigned_download_link
 from core.constants import AuditConstants
 from core.decorators import authenticate_token
 from core.errors import DatasetErrors, UserErrors
@@ -189,6 +189,29 @@ class Dataset(Resource):
         db.session.commit()
         
         return flat_file_dataset_schema.dump(dataset)
+    
+    @authenticate_token
+    def delete(self, user_id, dataset_id):
+        """
+        Deletes a dataset from the system.
+        :param user_id: Currently logged in user ID.
+        :param dataset_id: Dataset unique identifier to delete
+        :return: None
+        """
+        dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
+        
+        if not dataset:
+            abort(404, DatasetErrors.DOES_NOT_EXIST)
+        
+        owner_ids = [o.user_id for o in dataset.owners]
+        
+        if user_id not in owner_ids:
+            abort(401, DatasetErrors.USER_DOES_NOT_OWN)
+        
+        DatasetModel.query.filter_by(dataset_id=dataset_id).delete()
+        
+        dataset_cleanup(dataset.location)
+        return None, 202
 
 
 class DatasetVerification(Resource):
