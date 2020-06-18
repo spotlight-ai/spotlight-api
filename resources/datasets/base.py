@@ -141,6 +141,7 @@ class Dataset(Resource):
             dataset = FlatFileDatasetModel.query.filter_by(
                 dataset_id=dataset_id
             ).first()
+            
             parsed_path = urlparse(dataset.location)
             s3_object_key = parsed_path.path[1:]
             if owned:
@@ -154,14 +155,14 @@ class Dataset(Resource):
                     permissions=permissions,
                     markers=markers,
                 )
-            
-            new_markers = []
-            permission_descriptions = set([perm.description for perm in permissions])
-            for marker in dataset.markers:
-                if marker.pii_type in permission_descriptions:
-                    new_markers.append(marker)
-            
-            dataset.markers = new_markers
+                
+                new_markers = []
+                permission_descriptions = set([perm.description for perm in permissions])
+                for marker in dataset.markers:
+                    if marker.pii_type in permission_descriptions:
+                        new_markers.append(marker)
+                
+                dataset.markers = new_markers
             return flat_file_dataset_schema.dump(dataset)
         
         return

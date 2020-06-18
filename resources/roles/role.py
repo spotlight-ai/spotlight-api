@@ -127,10 +127,7 @@ class Role(Resource):
         :return: None
         """
         try:
-            role = self.retrieve_role(role_id=role_id, user_id=user_id)
-            
-            if not role:
-                abort(404, "Role was not found or user does not have permissions.")
+            self.retrieve_role(role_id=role_id, user_id=user_id)
             
             RoleModel.query.filter_by(role_id=role_id).delete()
             

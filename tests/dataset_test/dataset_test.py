@@ -46,3 +46,12 @@ class DatasetSharedUserResourceTest(BaseTest):
         res = self.client().delete(f"{self.dataset_route}/4", headers=headers)
         
         self.assertEqual(res.status_code, 401)
+    
+    def test_owner_get_dataset(self):
+        headers = self.generate_auth_headers(user_id=3)
+        
+        res = self.client().get(f"{self.dataset_route}/1", headers=headers)
+        
+        self.assertEqual(200, res.status_code)
+        
+        print(res.data.decode())
