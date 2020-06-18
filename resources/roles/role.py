@@ -127,7 +127,13 @@ class Role(Resource):
         :return: None
         """
         try:
-            self.retrieve_role(role_id=role_id, user_id=user_id).delete()
+            role = self.retrieve_role(role_id=role_id, user_id=user_id)
+            
+            if not role:
+                abort(404, "Role was not found or user does not have permissions.")
+            
+            RoleModel.query.filter_by(role_id=role_id).delete()
+            
             db.session.commit()
             return
         except UnmappedInstanceError as err:
