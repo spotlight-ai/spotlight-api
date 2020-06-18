@@ -73,6 +73,14 @@ spec:
             secretKeyRef:
               name: dev-secrets
               key: model-key
+        - name: BASE_WEB_URL
+          value: app-dev.hellospotlight.com
+        - name: SENDGRID_KEY
+          valueFrom:
+            secretKeyRef:
+              name: dev-secrets
+              key: sendgrid-key
+
         ports:
         - containerPort: 5000
 
