@@ -15,7 +15,7 @@ from models.datasets.base import DatasetModel
 
 class UserModel(db.Model):
     __tablename__ = "user"
-
+    
     user_id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String, nullable=False)
     last_name = db.Column(db.String, nullable=False)
@@ -26,20 +26,24 @@ class UserModel(db.Model):
     created_ts = db.Column(
         db.DateTime, nullable=False, default=datetime.datetime.utcnow()
     )
-
+    
     owned_datasets = db.relationship(
         DatasetModel, secondary=DatasetOwner, back_populates="owners"
     )
-
+    
     def __init__(self, email, password, first_name, last_name, admin=False):
         self.first_name = first_name
         self.last_name = last_name
         self.email = email
-        self.password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+        self.password = self.hash_password(password)
         self.admin = admin
         self.last_login = datetime.datetime.utcnow()
         self.created_ts = datetime.datetime.utcnow()
-
+    
+    @staticmethod
+    def hash_password(password):
+        return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    
     def generate_auth_token(self, ttl=604800):
         """
         Generates an authorization token for the user upon login.
@@ -48,7 +52,7 @@ class UserModel(db.Model):
         """
         s = Serializer(os.environ.get("SECRET", "default_secret"), expires_in=ttl)
         return s.dumps({"id": self.user_id})
-
+    
     def check_password(self, password):
         """
         Check hashed password against the one stored in the database.
@@ -56,7 +60,7 @@ class UserModel(db.Model):
         :return: Boolean representing successful password match.
         """
         return bcrypt.checkpw(password.encode(), self.password.encode())
-
+    
     @staticmethod
     def verify_auth_token(token):
         """
@@ -65,21 +69,21 @@ class UserModel(db.Model):
         :return: Boolean representing successful login.
         """
         s = Serializer(os.environ.get("SECRET", "default_secret"))
-
+        
         try:
             data = s.loads(token)
         except SignatureExpired:
             return False, "Token expired"  # Valid token, but TTL is passed
         except BadSignature:
             return False, "Bad token received"  # Invalid token
-
+        
         return True, data["id"]
-
+    
     def __repr__(self):
         return (
             f"{self.__class__.__name__}({self.user_id}, {self.email}, {self.password}, {self.first_name}, "
             f"{self.last_name}, {self.admin}, {self.last_login})"
         )
-
+    
     def __str__(self):
         return f"User {self.user_id} ({self.first_name} {self.last_name}): {self.email}"

@@ -4,16 +4,16 @@ from db import db
 RolePermission = db.Table(
     "role_permissions",
     db.Column("id", db.Integer, primary_key=True),
-    db.Column("role_id", db.Integer, db.ForeignKey("role.role_id")),
-    db.Column("pii_id", db.Integer, db.ForeignKey("pii_marker_base.pii_id")),
+    db.Column("role_id", db.Integer, db.ForeignKey("role.role_id", ondelete='cascade')),
+    db.Column("pii_id", db.Integer, db.ForeignKey("pii_marker_base.pii_id", ondelete='cascade')),
 )
 
 # Table to store Role to Dataset sharing mappings (many-to-many relationship).
 RoleDataset = db.Table(
     "role_dataset",
     db.Column("id", db.Integer, primary_key=True),
-    db.Column("role_id", db.Integer, db.ForeignKey("role.role_id")),
-    db.Column("dataset_id", db.Integer, db.ForeignKey("dataset.dataset_id")),
+    db.Column("role_id", db.Integer, db.ForeignKey("role.role_id", ondelete='cascade')),
+    db.Column("dataset_id", db.Integer, db.ForeignKey("dataset.dataset_id", ondelete='cascade')),
 )
 
 # Table to store Dataset to Owner relationships (many-to-many relationships).
