@@ -1,17 +1,18 @@
 import os
 
 from flask import Flask
+from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from flask_restful import Api
 
 from db import db
 from resources.audit.dataset_action_history import DatasetActionHistoryCollection
-from resources.auth.login import Login
+from resources.auth.login import ForgotPassword, Login, ResetPassword
 from resources.datasets.base import Dataset, DatasetCollection, DatasetVerification
 from resources.datasets.flat_file import FlatFileCollection
 from resources.datasets.shared_user import DatasetSharedUserCollection
 from resources.job import Job, JobCollection
-from resources.notifications.notification import NotificationCollection, Notification
+from resources.notifications.notification import Notification, NotificationCollection
 from resources.pii.pii import PIICollection
 from resources.pii.text_file import TextFilePII, TextFilePIICollection
 from resources.redact.text import RedactText
@@ -26,9 +27,10 @@ def create_app(config):
     app = Flask(__name__.split(".")[0])
     app.config.from_object(config)
     db.init_app(app)
-
+    
     api = Api(app)
-
+    JWTManager(app)
+    
     api.add_resource(RoleCollection, "/role")
     api.add_resource(Role, "/role/<int:role_id>")
     api.add_resource(RoleMemberCollection, "/role/<int:role_id>/member")
@@ -51,7 +53,9 @@ def create_app(config):
     api.add_resource(PIICollection, "/pii")
     api.add_resource(NotificationCollection, "/notification")
     api.add_resource(Notification, "/notification/<int:notification_id>")
-
+    api.add_resource(ForgotPassword, "/forgot")
+    api.add_resource(ResetPassword, "/reset")
+    
     return app
 
 
