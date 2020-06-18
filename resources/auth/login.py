@@ -9,8 +9,9 @@ from marshmallow import ValidationError
 from sendgrid.helpers.mail import Mail
 
 from core.errors import UserErrors
-from db import db, sg
+from db import db
 from models.user import UserModel
+from resources.auth.util import send_email
 from schemas.login import LoginSchema
 from schemas.user import UserSchema
 
@@ -65,8 +66,8 @@ class ForgotPassword(Resource):
             message = Mail(from_email="hellospotlightai@gmail.com", to_emails=email,
                            subject="SpotlightAI | Password Reset Request",
                            html_content=html_body)
-            sg.send(message)
             
+            send_email(message)
             return
         except KeyError as err:
             abort(422, str(err))
