@@ -209,9 +209,12 @@ class Dataset(Resource):
         if user_id not in owner_ids:
             abort(401, DatasetErrors.USER_DOES_NOT_OWN)
         
+        db.session.refresh(dataset)
         DatasetModel.query.filter_by(dataset_id=dataset_id).delete()
         
         dataset_cleanup(dataset.location)
+        
+        db.session.commit()
         return None, 202
 
 
