@@ -1,9 +1,11 @@
 from flask import abort, request
 from flask_restful import Resource
 from marshmallow import ValidationError
+from sqlalchemy import or_
 
 from core.decorators import authenticate_token
 from core.errors import UserErrors
+from core.constants import UserConstants
 from db import db
 from models.user import UserModel
 from schemas.user import UserSchema
@@ -22,9 +24,17 @@ class UserCollection(Resource):
         args = request.args
         query = f'%{args.get("query", None)}%'
 
+        user = UserModel.query.filter_by(user_id=user_id).first()
+        user_domain = user.email.split('@')[1]
+        
+        domains = set(UserConstants.PUBLIC_DOMAINS + [user_domain])
+        domain_filters = [f"%{public_domain}%" for public_domain in domains]
+
+        if not user:
+            abort(404, UserErrors.USER_NOT_FOUND)
+
         if args.get("query"):
-            return user_schema.dump(
-                UserModel.query.filter(
+            user_filter_query = UserModel.query.filter(
                     (
                         UserModel.first_name.ilike(query)
                         | (
@@ -32,12 +42,15 @@ class UserCollection(Resource):
                             | (UserModel.email.ilike(query))
                         )
                     )
+                    
                 )
-                .limit(10)
-                .all(),
-                many=True,
-            )
-        return user_schema.dump(UserModel.query.limit(10).all(), many=True)
+        else:
+            user_filter_query = UserModel.query
+
+        filter_args = [UserModel.email.ilike(domain) for domain in domain_filters]
+        user_filter_query = user_filter_query.filter(or_(*filter_args))
+         
+        return user_schema.dump(user_filter_query.limit(10).all(), many=True)
 
     def post(self):
         """
