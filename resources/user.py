@@ -23,15 +23,14 @@ class UserCollection(Resource):
         """
         args = request.args
         query = f'%{args.get("query", None)}%'
-
         user = UserModel.query.filter_by(user_id=user_id).first()
+        if not user:
+            abort(404, UserErrors.USER_NOT_FOUND)
+            
         user_domain = user.email.split("@")[1]
-
         domains = set(UserConstants.PUBLIC_DOMAINS + [user_domain])
         domain_filters = [f"%{public_domain}%" for public_domain in domains]
 
-        if not user:
-            abort(404, UserErrors.USER_NOT_FOUND)
 
         if args.get("query"):
             user_filter_query = UserModel.query.filter(
