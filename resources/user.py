@@ -25,8 +25,8 @@ class UserCollection(Resource):
         query = f'%{args.get("query", None)}%'
 
         user = UserModel.query.filter_by(user_id=user_id).first()
-        user_domain = user.email.split('@')[1]
-        
+        user_domain = user.email.split("@")[1]
+
         domains = set(UserConstants.PUBLIC_DOMAINS + [user_domain])
         domain_filters = [f"%{public_domain}%" for public_domain in domains]
 
@@ -35,21 +35,21 @@ class UserCollection(Resource):
 
         if args.get("query"):
             user_filter_query = UserModel.query.filter(
-                    (
-                        UserModel.first_name.ilike(query)
-                        | (
-                            UserModel.last_name.ilike(query)
-                            | (UserModel.email.ilike(query))
-                        )
+                (
+                    UserModel.first_name.ilike(query)
+                    | (
+                        UserModel.last_name.ilike(query)
+                        | (UserModel.email.ilike(query))
                     )
-                    
                 )
+            )
         else:
             user_filter_query = UserModel.query
 
         filter_args = [UserModel.email.ilike(domain) for domain in domain_filters]
         user_filter_query = user_filter_query.filter(or_(*filter_args))
-         
+        user_filter_query = user_filter_query.filter(UserModel.email != user.email)
+
         return user_schema.dump(user_filter_query.limit(10).all(), many=True)
 
     def post(self):
