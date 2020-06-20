@@ -129,13 +129,14 @@ class UserResourceTest(BaseTest):
 
     def test_retrieve_all_users(self):
         """Verifies that all users can be successfully retrieved."""
-        headers = self.generate_auth_headers()
+        headers = self.generate_auth_headers(user_id=2)
 
         res = self.client().get(self.user_route, headers=headers)
         response_body = json.loads(res.data.decode())
 
         self.assertEqual(res.status_code, 200)
-        self.assertEqual(len(response_body), len(self.users))
+        number_of_users_available_spotlightai_public = 5
+        self.assertEqual(len(response_body), number_of_users_available_spotlightai_public)
 
     def test_missing_auth_retrieve_all_users(self):
         """Verifies that users cannot be retrieved without an authorization token."""
@@ -154,25 +155,41 @@ class UserResourceTest(BaseTest):
 
     def test_filter_user_list(self):
         """Verifies that the user list can be filtered based on a query."""
-        headers = self.generate_auth_headers()
+        headers = self.generate_auth_headers(user_id=2)
 
         res = self.client().get(f"{self.user_route}?query=doug", headers=headers)
         response_body = json.loads(res.data.decode())
 
         self.assertEqual(res.status_code, 200)
+        """Doug belongs to a different domain so should return empty"""
+        self.assertEqual(len(response_body), 0)
+
+        res = self.client().get(f"{self.user_route}", headers=headers)
+        response_body = json.loads(res.data.decode())
+
+        self.assertEqual(res.status_code, 200)
+        """Dana should see every one from her domain and public users"""
+        self.assertEqual(len(response_body), 5)
+
+        res = self.client().get(f"{self.user_route}?query=rando", headers=headers)
+        response_body = json.loads(res.data.decode())
+
+        self.assertEqual(res.status_code, 200)
+        """Dana should be able to see public user"""
         self.assertEqual(len(response_body), 1)
 
-        res = self.client().get(f"{self.user_route}?query=developer", headers=headers)
+        res = self.client().get(f"{self.user_route}?query=manager", headers=headers)
         response_body = json.loads(res.data.decode())
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(len(response_body), 2)
 
-        res = self.client().get(f"{self.user_route}?query=doug@spotli", headers=headers)
+        res = self.client().get(f"{self.user_route}?query=dana@spotli", headers=headers)
         response_body = json.loads(res.data.decode())
 
         self.assertEqual(res.status_code, 200)
-        self.assertEqual(len(response_body), 1)
+        """Dana cant search for her own user details"""
+        self.assertEqual(len(response_body), 0)
 
     def test_update_user(self):
         """Verifies that user information can be updated."""
@@ -200,8 +217,8 @@ class UserResourceTest(BaseTest):
         self.assertEqual(200, res.status_code)
 
         res = self.client().get(f"{self.user_route}", headers=headers)
-        users = json.loads(res.data.decode())
-        self.assertEqual(len(self.users) - 1, len(users))
+        user_message = json.loads(res.data.decode())
+        self.assertEqual('User or users not found.', user_message['message'])
 
     def test_get_individual_user(self):
         """Verifies that individual user information can be fetched."""

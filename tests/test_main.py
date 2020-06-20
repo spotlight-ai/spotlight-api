@@ -83,6 +83,12 @@ class BaseTest(unittest.TestCase):
                     "email": "oscar@oscartime.com",
                     "password": "pass123",
                 },
+                {
+                    "first_name": "Rando",
+                    "last_name": "Public",
+                    "email": "rando@gmail.com",
+                    "password": "pass123",
+                },
             ]
             
             # Create PII markers
