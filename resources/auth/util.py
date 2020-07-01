@@ -16,5 +16,11 @@ def send_email(message):
 
 
 def send(message):
-    sg.send(message)
-    logger.info('Message sent...')
+    try:
+        response = sg.send(message)
+        logger.debug(response.status_code)
+        logger.debug(response.body)
+        logger.debug(response.headers)
+        logger.info('Message sent...')
+    except Exception as e:
+        logger.error(e.message)
