@@ -12,4 +12,9 @@ def send_email(message):
     :return: None
     """
     logger.info('Sending e-mail message....')
-    Thread(target=sg.send, args=(message,)).start()
+    Thread(target=send, args=(message,)).start()
+
+
+def send(message):
+    sg.send(message)
+    logger.info('Message sent...')
