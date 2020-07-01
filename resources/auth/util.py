@@ -1,5 +1,7 @@
 from threading import Thread
 
+from loguru import logger
+
 from db import sg
 
 
@@ -9,4 +11,5 @@ def send_email(message):
     :param message: Message content
     :return: None
     """
+    logger.info('Sending e-mail message....')
     Thread(target=sg.send, args=(message,)).start()

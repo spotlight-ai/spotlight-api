@@ -5,6 +5,7 @@ from string import Template
 from flask import abort, request
 from flask_jwt_extended import create_access_token, decode_token
 from flask_restful import Resource
+from loguru import logger
 from marshmallow import ValidationError
 from sendgrid.helpers.mail import Mail
 
@@ -48,6 +49,7 @@ class ForgotPassword(Resource):
         Sends password reset e-mail.
         :return: None
         """
+        logger.info('ForgotPassword request received...')
         data = request.get_json(force=True)
         
         try:
@@ -56,12 +58,15 @@ class ForgotPassword(Resource):
             user = UserModel.query.filter_by(email=email).first()
             
             if not user:
+                logger.error(UserErrors.USER_NOT_FOUND)
                 abort(404, UserErrors.USER_NOT_FOUND)
             
             reset_token = create_access_token(str(user.user_id), expires_delta=datetime.timedelta(hours=24))
             
             html_body = Template(open('./email_templates/forgot_password.html').read()).safe_substitute(
                 url=f"{os.environ.get('BASE_WEB_URL')}/reset?token={reset_token}")
+            
+            logger.info('Loaded HTML template successfully...')
             
             message = Mail(from_email="hellospotlightai@gmail.com", to_emails=email,
                            subject="SpotlightAI | Password Reset Request",
