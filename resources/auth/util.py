@@ -11,7 +11,7 @@ def send_email(message):
     :param message: Message content
     :return: None
     """
-    logger.info('Sending e-mail message....')
+    logger.info("Sending e-mail message....")
     Thread(target=send, args=(message,)).start()
 
 
@@ -21,6 +21,6 @@ def send(message):
         logger.debug(response.status_code)
         logger.debug(response.body)
         logger.debug(response.headers)
-        logger.info('Message sent...')
+        logger.info("Message sent...")
     except Exception as e:
         logger.error(e.message)

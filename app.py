@@ -27,10 +27,10 @@ def create_app(config):
     app = Flask(__name__.split(".")[0])
     app.config.from_object(config)
     db.init_app(app)
-    
+
     api = Api(app)
     JWTManager(app)
-    
+
     api.add_resource(RoleCollection, "/role")
     api.add_resource(Role, "/role/<int:role_id>")
     api.add_resource(RoleMemberCollection, "/role/<int:role_id>/member")
@@ -55,7 +55,7 @@ def create_app(config):
     api.add_resource(Notification, "/notification/<int:notification_id>")
     api.add_resource(ForgotPassword, "/forgot")
     api.add_resource(ResetPassword, "/reset")
-    
+
     return app
 
 
