@@ -49,7 +49,7 @@ class UserCollection(Resource):
         user_filter_query = user_filter_query.filter(or_(*filter_args))
         user_filter_query = user_filter_query.filter(UserModel.email != user.email)
 
-        return user_schema.dump(user_filter_query.limit(10).all(), many=True)
+        return user_schema.dump(user_filter_query.order_by(UserModel.first_name).limit(10).all(), many=True)
 
     def post(self):
         """
