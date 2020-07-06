@@ -3,7 +3,6 @@ from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from core.decorators import authenticate_token
-from core.errors import AuditErrors
 
 from models.audit.dataset_action_history import DatasetActionHistoryModel
 from models.user import UserModel
@@ -31,9 +30,9 @@ class DatasetActionHistoryCollection(Resource):
            
             
             if len(owned_dataset_id) == 0:
-                return abort(200, AuditErrors.NO_DATASET_OWNED)
+                return []
             else:
-                owned_datasets_history = DatasetActionHistoryModel.query.filter(DatasetActionHistoryModel.dataset_id.in_(owned_dataset_id)).order_by(DatasetActionHistoryModel.timestamp.desc())
+                owned_datasets_history = DatasetActionHistoryModel.query.filter(DatasetActionHistoryModel.dataset_id.in_(owned_dataset_id)).order_by(DatasetActionHistoryModel.timestamp.desc()).all()
                 return dataset_action_history_schema.dump(owned_datasets_history, many=True)
             
         except ValidationError as err:

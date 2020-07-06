@@ -19,14 +19,10 @@ class DatasetErrors:
     MUST_HAVE_OWNER = "Dataset must have at least one owner."
     DOES_NOT_EXIST = "Dataset does not exist."
 
-
 class UserErrors:
     USER_NOT_FOUND = "User or users not found."
     USER_ALREADY_EXISTS = "User already exists."
     EDITING_INVALID_FIELD = "Cannot edit this field."
-
-class AuditErrors:
-    NO_DATASET_OWNED = "User does not own any dataset."
 
 class NotificationErrors:
     NOTIFICATION_NOT_FOUND = "Notification not found."
