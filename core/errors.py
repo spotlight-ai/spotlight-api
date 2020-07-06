@@ -25,6 +25,8 @@ class UserErrors:
     USER_ALREADY_EXISTS = "User already exists."
     EDITING_INVALID_FIELD = "Cannot edit this field."
 
+class AuditErrors:
+    NO_DATASET_OWNED = "User does not own any dataset."
 
 class NotificationErrors:
     NOTIFICATION_NOT_FOUND = "Notification not found."
