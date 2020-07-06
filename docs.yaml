@@ -4,7 +4,7 @@ info:
   title: SpotlightAI
   description: SpotlightAI is a data access management platform.
 servers:
-  - url: 'https://api.hellospotlight.com:5000'
+- url: 'https://api.hellospotlight.com:5000'
 paths:
   /forgot:
     post:
@@ -100,12 +100,12 @@ paths:
     get:
       summary: Retrieves an individual job object
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          required: true
-          description: Job identifier
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Job identifier
       responses:
         '200':
           description: OK
@@ -145,12 +145,12 @@ paths:
                   enum: ['COMPLETE', 'PENDING', 'FAILED']
                   example: 'COMPLETE'
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          required: true
-          description: Job identifier
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Job identifier
       responses:
         '200':
           description: Successfully updated resource
@@ -175,12 +175,12 @@ paths:
     delete:
       summary: Deletes a job request
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          required: true
-          description: Job identifier
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Job identifier
       responses:
         '200':
           description: OK
@@ -280,12 +280,12 @@ paths:
     patch:
       summary: Update notification information for a single notification
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          required: true
-          description: Notification identifier
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Notification identifier
       requestBody:
         required: false
         content:
@@ -382,9 +382,6 @@ paths:
             schema:
               type: object
               properties:
-                creator_id:
-                  type: integer
-                  example: 1
                 role_name:
                   type: string
                   example: Underwriters
@@ -421,12 +418,12 @@ paths:
     get:
       summary: Retrieves an individual role object
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          required: true
-          description: Role identifier
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Role identifier
       responses:
         '200':
           description: OK
@@ -459,12 +456,12 @@ paths:
                   type: string
                   example: Developers
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          required: true
-          description: Role identifier
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Role identifier
       responses:
         '200':
           description: Successfully updated resource
@@ -493,12 +490,12 @@ paths:
     delete:
       summary: Deletes a role
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          required: true
-          description: Role identifier
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Role identifier
       responses:
         '200':
           description: OK
@@ -518,12 +515,12 @@ paths:
     get:
       summary: Retrieves a list of users
       parameters:
-        - in: query
-          name: query
-          schema:
-            type: string
-          required: false
-          description: Search query
+      - in: query
+        name: query
+        schema:
+          type: string
+        required: false
+        description: Search query
       responses:
         '200':
           description: OK
@@ -588,12 +585,12 @@ paths:
     get:
       summary: Retrieves a single user object
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          required: true
-          description: User identifier
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: User identifier
       responses:
         '200':
           description: OK
@@ -616,12 +613,12 @@ paths:
     patch:
       summary: Updates a single user object
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          required: true
-          description: User identifier
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: User identifier
       requestBody:
         required: false
         content:
@@ -674,12 +671,12 @@ paths:
     delete:
       summary: Deletes a user
       parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          required: true
-          description: User identifier
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: User identifier
       responses:
         '200':
           description: OK
