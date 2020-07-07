@@ -60,13 +60,18 @@ def generate_presigned_download_link(
                 raw_bucket, object_name, object_name.replace("/", "_")
             )
             file = open(object_name.replace("/", "_"), "r+").read()
-
-            for marker in markers:
+            
+            total_diff = 0
+            sorted_markers = sorted(markers, key=lambda k: k.start_location)
+            
+            for marker in sorted_markers:
                 if marker.pii_type not in permission_descriptions:
-                    start = marker.start_location
-                    end = marker.end_location
-                    file = ("*" * (end - start)).join([file[:start], file[end:]])
-
+                    curr_diff = marker.end_location - marker.start_location - 10
+                    start = marker.start_location - total_diff
+                    end = marker.end_location - total_diff
+                    file = ("<REDACTED>").join([file[:start], file[end:]])
+                    total_diff += curr_diff
+            
             open(object_name.replace("/", "_"), "w").write(file)
 
             s3_client.upload_file(
