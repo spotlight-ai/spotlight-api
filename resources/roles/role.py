@@ -32,7 +32,7 @@ class RoleCollection(Resource):
             )
         ).all()
         return role_schema.dump(roles, many=True)
-    
+
     @authenticate_token
     def post(self, user_id):
         """
@@ -43,27 +43,27 @@ class RoleCollection(Resource):
         try:
             # Add currently logged in user as the creator
             data = request.get_json(force=True)
-            
+
             # Create the role object
             role = role_schema.load(
                 {"role_name": data.get("role_name"), "creator_id": user_id}
             )
-            
+
             db.session.add(role)
             db.session.flush()
-            
+
             # If owners are not given, default to the currently logged in user
             owner_ids = data.get("owners", [user_id])
             if user_id not in owner_ids:
                 abort(400, RoleErrors.CREATOR_MUST_BE_OWNER)
-            
+
             for owner_id in owner_ids:
                 db.session.add(
                     role_member_schema.load(
                         {"role_id": role.role_id, "user_id": owner_id, "is_owner": True}
                     )
                 )
-            
+
             db.session.commit()
             return role_schema.dump(role), 201
         except ValidationError as err:
@@ -83,9 +83,9 @@ class Role(Resource):
         :return: Role object
         """
         role = self.retrieve_role(role_id=role_id, user_id=user_id)
-        
+
         return role_schema.dump(role)
-    
+
     @authenticate_token
     def patch(self, user_id, role_id):
         """
@@ -97,11 +97,11 @@ class Role(Resource):
         loadable_fields = ["role_name"]
         role = self.retrieve_role(role_id=role_id, user_id=user_id)
         data = request.get_json(force=True)
-        
+
         for key, value in data.items():
             if key in loadable_fields:
                 role.__setattr__(key, value)
-        
+
         if "owners" in data:
             if len(data.get("owners")) == 0:
                 abort(400, RoleErrors.MUST_HAVE_OWNER)
@@ -114,10 +114,10 @@ class Role(Resource):
                         {"role_id": role.role_id, "user_id": owner_id, "is_owner": True}
                     )
                 )
-        
+
         db.session.commit()
         return role_schema.dump(role)
-    
+
     @authenticate_token
     def delete(self, user_id, role_id):
         """
@@ -128,15 +128,15 @@ class Role(Resource):
         """
         try:
             self.retrieve_role(role_id=role_id, user_id=user_id)
-            
+
             RoleModel.query.filter_by(role_id=role_id).delete()
-            
+
             db.session.commit()
             return
         except UnmappedInstanceError as err:
             db.session.rollback()
             abort(404, err)
-    
+
     @staticmethod
     def retrieve_role(user_id, role_id):
         """
@@ -150,8 +150,8 @@ class Role(Resource):
             & (RoleMemberModel.user_id == user_id)
             & (RoleMemberModel.is_owner == true())
         ).first()
-        
+
         if not role:
             abort(404, RoleErrors.MISSING_NO_PERMISSIONS)
-        
+
         return role

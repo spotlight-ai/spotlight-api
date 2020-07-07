@@ -11,13 +11,15 @@ class RoleModel(db.Model):
     __table_args__ = (
         db.UniqueConstraint("role_name", "creator_id", name="_role_creator_uc"),
     )
-    
+
     role_id = db.Column(db.Integer, primary_key=True)
-    creator_id = db.Column(db.Integer, db.ForeignKey("user.user_id", ondelete='cascade'))
+    creator_id = db.Column(
+        db.Integer, db.ForeignKey("user.user_id", ondelete="cascade")
+    )
     role_name = db.Column(db.String, nullable=False)
     created_ts = db.Column(db.DateTime)
     updated_ts = db.Column(db.DateTime)
-    
+
     members = db.relationship(RoleMemberModel, cascade="all, delete", backref="role")
     creator = db.relationship("UserModel", backref="role")
     datasets = db.relationship(
@@ -29,12 +31,12 @@ class RoleModel(db.Model):
     permissions = db.relationship(
         PIIModel, secondary=RolePermission, back_populates="roles"
     )
-    
+
     def __init__(self, creator_id, role_name):
         self.creator_id = creator_id
         self.role_name = role_name
         self.created_ts = datetime.datetime.utcnow()
         self.updated_ts = datetime.datetime.utcnow()
-    
+
     def __repr__(self):
         return f"<Role {self.role_name}>"
