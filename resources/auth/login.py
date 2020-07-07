@@ -38,7 +38,7 @@ class Login(Resource):
                 db.session.commit()
                 return {"token": token.decode("ascii"), "user": user_schema.dump(user)}
             else:
-                abort(500, "Credentials incorrect.")
+                abort(400, "Credentials incorrect.")
         except ValidationError as err:
             abort(422, err.messages)
 
