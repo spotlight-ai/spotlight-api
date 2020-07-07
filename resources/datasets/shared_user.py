@@ -1,10 +1,5 @@
 from flask import abort, request
 from flask_restful import Resource
-from loguru import logger
-
-from string import Template
-from sendgrid.helpers.mail import Mail
-from resources.auth.util import send_email
 
 from core.constants import NotificationConstants
 from core.decorators import authenticate_token
