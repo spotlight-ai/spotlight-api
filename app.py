@@ -15,6 +15,8 @@ from resources.job import Job, JobCollection
 from resources.notifications.notification import Notification, NotificationCollection
 from resources.pii.pii import PIICollection
 from resources.pii.text_file import TextFilePII, TextFilePIICollection
+from resources.pii.snake_case import SnakeCasePII
+from resources.pii.snake_case import SnakeCasePIICollection
 from resources.redact.text import RedactText
 from resources.roles.role import Role, RoleCollection
 from resources.roles.role_dataset import RoleDatasetCollection
@@ -48,6 +50,8 @@ def create_app(config):
     api.add_resource(DatasetVerification, "/dataset/verification")
     api.add_resource(TextFilePIICollection, "/pii/text_file")
     api.add_resource(TextFilePII, "/pii/text_file/<int:dataset_id>")
+    api.add_resource(SnakeCasePIICollection, "/pii/columnar_file")
+    api.add_resource(SnakeCasePII, "/pii/columnar_file/<int:dataset_id>")
     api.add_resource(UserCollection, "/user")
     api.add_resource(User, "/user/<int:user_query_id>")
     api.add_resource(PIICollection, "/pii")
