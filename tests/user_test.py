@@ -136,7 +136,9 @@ class UserResourceTest(BaseTest):
 
         self.assertEqual(res.status_code, 200)
         number_of_users_available_spotlightai_public = 5
-        self.assertEqual(len(response_body), number_of_users_available_spotlightai_public)
+        self.assertEqual(
+            len(response_body), number_of_users_available_spotlightai_public
+        )
 
     def test_missing_auth_retrieve_all_users(self):
         """Verifies that users cannot be retrieved without an authorization token."""
@@ -218,7 +220,7 @@ class UserResourceTest(BaseTest):
 
         res = self.client().get(f"{self.user_route}", headers=headers)
         user_message = json.loads(res.data.decode())
-        self.assertEqual('User or users not found.', user_message['message'])
+        self.assertEqual("User or users not found.", user_message["message"])
 
     def test_get_individual_user(self):
         """Verifies that individual user information can be fetched."""
