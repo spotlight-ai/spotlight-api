@@ -6,6 +6,317 @@ info:
 servers:
 - url: 'https://api.hellospotlight.com:5000'
 paths:
+  /dataset:
+    get:
+      summary: Retrieves a list of datasets
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetCollection'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /dataset/flat_file:
+    get:
+      summary: Retrieves Flat File datasets
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Adds a Flat File dataset to the system
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dataset_name:
+                  type: string
+                location:
+                  type: string
+      responses:
+        '201':
+          description: Dataset resource added successfully
+        '401':
+          description: Authorization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /dataset/verification:
+    post:
+      summary: Verifies that a file has been uploaded
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dataset_ids:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '200':
+          description: Dataset verified successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: integer
+        '401':
+          description: Authorization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /dataset/{id}:
+    get:
+      summary: Retrieves an individual dataset
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Dataset identifier
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+        '401':
+          description: Authorization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationError'
+        '404':
+          description: Dataset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Updates an individual dataset
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Dataset identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                owners:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+        '401':
+          description: Authorization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationError'
+        '404':
+          description: Dataset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Deletes a dataset from the system
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Dataset identifier
+      responses:
+        '202':
+          description: OK
+        '401':
+          description: Authorization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationError'
+        '404':
+          description: job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /dataset/{id}/user:
+    get:
+      summary: Retrieves a list of users the dataset is shared with
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Dataset identifier
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedDatasetUserCollection'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Shares a dataset with a user
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Dataset identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  user_id:
+                    type: integer
+      responses:
+        '201':
+          description: Dataset shared successfully
+        '401':
+          description: Authorization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationError'
+        '404':
+          description: Dataset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Removes sharing permissions from a user
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Dataset identifier
+      responses:
+        '204':
+          description: OK
+        '401':
+          description: Authorization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationError'
+        '404':
+          description: Dataset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /forgot:
     post:
       summary: Sends a forgot password email to the requested user
@@ -696,6 +1007,70 @@ paths:
 
 components:
   schemas:
+    Dataset:
+      type: object
+      properties:
+        dataset_name:
+          type: string
+          example: Credit Card Transactions
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Job'
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+        markers:
+          type: array
+          items:
+            $ref: '#/components/schemas/TextMarker'
+        dataset_type:
+          type: string
+          example: FLAT_FILE
+        created_ts:
+          type: string
+          format: date-time
+        verified:
+          type: boolean
+        owners:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        dataset_id:
+          type: integer
+        permission:
+          type: string
+          example: shared
+    DatasetCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/Dataset'
+    TextMarker:
+      type: object
+      properties:
+        pii_id:
+          type: integer
+        start_location:
+          type: integer
+        end_location:
+          type: integer
+        dataset:
+          type: integer
+        pii_type:
+          type: string
+        confidence:
+          type: number
+          example: 0.75
+        dataset_id:
+          type: integer
+        last_updated_ts:
+          type: string
+          format: date-time
+    TextMarkerCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/TextMarker'
     Job:
       type: object
       properties:
@@ -721,7 +1096,6 @@ components:
         job_completed_ts:
           type: string
           format: date-time
-          required: false
     JobCollection:
       type: array
       items:
@@ -795,6 +1169,24 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/Role'
+    SharedDatasetUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        user:
+          $ref: '#/components/schemas/User'
+        share_expires:
+          type: string
+          format: date-time
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PII'
+    SharedDatasetUserCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/SharedDatasetUser'
     User:
       type: object
       properties:
