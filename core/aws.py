@@ -63,13 +63,19 @@ def generate_presigned_download_link(
 
             total_diff = 0
 
-            sorted_markers = sorted(markers, key=lambda k: (k.start_location, -k.end_location))
+            sorted_markers = sorted(
+                markers, key=lambda k: (k.start_location, -k.end_location)
+            )
 
-            pii_redacted = [] # Store the start location of PII that have been redacted already.
-                              # This will used as a check to avoid multiple redactions of same word.
+            pii_redacted = (
+                []
+            )  # Store the start location of PII that have been redacted already.
+            # This will used as a check to avoid multiple redactions of same word.
 
             for marker in sorted_markers:
-                if (marker.pii_type not in permission_descriptions) and (marker.start_location not in pii_redacted):
+                if (marker.pii_type not in permission_descriptions) and (
+                    marker.start_location not in pii_redacted
+                ):
                     curr_diff = marker.end_location - marker.start_location - 10
                     start = marker.start_location - total_diff
                     end = marker.end_location - total_diff
