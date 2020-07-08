@@ -8,4 +8,4 @@ secrets.yml
 .coverage
 .coveragerc
 htmlcov/
-snake_case.py-checkpoint.ipynb
+.ipynb
