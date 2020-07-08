@@ -60,29 +60,40 @@ def generate_presigned_download_link(
                 raw_bucket, object_name, object_name.replace("/", "_")
             )
             file = open(object_name.replace("/", "_"), "r+").read()
-
-            total_diff = 0
-
-            sorted_markers = sorted(
-                markers, key=lambda k: (k.start_location, -k.end_location)
-            )
-
-            pii_redacted = (
-                []
-            )  # Store the start location of PII that have been redacted already.
-            # This will used as a check to avoid multiple redactions of same word.
-
-            for marker in sorted_markers:
-                if (marker.pii_type not in permission_descriptions) and (
-                    marker.start_location not in pii_redacted
-                ):
-                    curr_diff = marker.end_location - marker.start_location - 10
-                    start = marker.start_location - total_diff
-                    end = marker.end_location - total_diff
-                    file = ("<REDACTED>").join([file[:start], file[end:]])
-                    total_diff += curr_diff
-                    pii_redacted.append(marker.start_location)
-
+            
+            total_diff, i = 0, 0
+            sorted_markers = sorted(markers, key=lambda k: (k.start_location, -k.end_location))
+            
+            total_markers = len(sorted_markers)
+            
+            redaction_text = "<REDACTED>" # The PII's will be replaced with this text.
+            
+            while i < len(sorted_markers):
+                marker_start = sorted_markers[i].start_location
+                marker_end = sorted_markers[i].end_location
+                marker_len = marker_end - marker_start
+                j = i
+                permit = True
+                while (j < total_markers) and (sorted_markers[j].start_location == marker_start):
+                    if not permit:
+                        sorted_markers[j].start_location -= total_diff
+                        sorted_markers[j].end_location = sorted_markers[j].start_location + len(redaction_text)
+                    elif permit and (sorted_markers[j].pii_type not in permission_descriptions):
+                        permit = False
+                        for k in range(i,j+1):
+                            sorted_markers[k].start_location -= total_diff
+                            sorted_markers[k].end_location = sorted_markers[k].start_location + len(redaction_text)
+                    j += 1
+                if not permit:
+                    file_start , file_end = marker_start - total_diff , marker_end - total_diff
+                    file = ("<REDACTED>").join([file[:file_start], file[file_end:]])
+                    total_diff = total_diff + marker_len - len(redaction_text)
+                else:
+                    for k in range(i,j):
+                        sorted_markers[k].start_location -= total_diff
+                        sorted_markers[k].end_location -= total_diff
+                i = j                
+                    
             open(object_name.replace("/", "_"), "w").write(file)
 
             s3_client.upload_file(
@@ -95,7 +106,7 @@ def generate_presigned_download_link(
                 "get_object",
                 Params={"Bucket": redacted_bucket, "Key": redacted_filepath},
                 ExpiresIn=expiration,
-            )
+            ), sorted_markers
 
 
 def generate_presigned_link(
