@@ -1,9 +1,6 @@
 name: Building and pushing a docker image to Amazon ECR
 
 on:
-  pull_request:
-    branches:
-    - develop
   push:
     branches:
     - develop
