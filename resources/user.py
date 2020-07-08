@@ -3,9 +3,9 @@ from flask_restful import Resource
 from marshmallow import ValidationError
 from sqlalchemy import or_
 
+from core.constants import UserConstants
 from core.decorators import authenticate_token
 from core.errors import UserErrors
-from core.constants import UserConstants
 from db import db
 from models.user import UserModel
 from schemas.user import UserSchema
@@ -26,11 +26,10 @@ class UserCollection(Resource):
         user = UserModel.query.filter_by(user_id=user_id).first()
         if not user:
             abort(404, UserErrors.USER_NOT_FOUND)
-            
+
         user_domain = user.email.split("@")[1]
         domains = set(UserConstants.PUBLIC_DOMAINS + [user_domain])
         domain_filters = [f"%{public_domain}%" for public_domain in domains]
-
 
         if args.get("query"):
             user_filter_query = UserModel.query.filter(
@@ -49,7 +48,9 @@ class UserCollection(Resource):
         user_filter_query = user_filter_query.filter(or_(*filter_args))
         user_filter_query = user_filter_query.filter(UserModel.email != user.email)
 
-        return user_schema.dump(user_filter_query.order_by(UserModel.last_name).limit(10).all(), many=True)
+        return user_schema.dump(
+            user_filter_query.order_by(UserModel.last_name).limit(10).all(), many=True
+        )
 
     def post(self):
         """

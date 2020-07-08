@@ -9,4 +9,4 @@ class NotificationConstants:
 
 
 class UserConstants:
-    PUBLIC_DOMAINS = ['gmail.com','yahoo.com','msn.com','hotmail.com']
+    PUBLIC_DOMAINS = ["gmail.com", "yahoo.com", "msn.com", "hotmail.com"]

@@ -74,6 +74,7 @@ class DatasetSharedUserCollection(Resource):
                 title=NotificationConstants.DATASET_SHARED_TITLE,
                 detail=f"{NotificationConstants.DATASET_SHARED_DETAIL} {dataset.dataset_name}",
             )
+            notification.send_notification_email()
 
             db.session.add(notification)
 

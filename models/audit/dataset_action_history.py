@@ -20,7 +20,6 @@ class DatasetActionHistoryModel(db.Model):
         self.dataset_id = dataset_id
         self.action = action
         self.notes = notes
-        
+
     def __repr__(self):
         return f"<DatasetActionHistory(item_id={self.item_id},dataset_id={self.dataset_id}, name={self.dataset_name}, action={self.action}, notes={self.notes}, timestamp={self.timestamp}>"
-        

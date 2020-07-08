@@ -1,0 +1,1247 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: SpotlightAI
+  description: SpotlightAI is a data access management platform.
+servers:
+- url: 'https://api.hellospotlight.com:5000'
+paths:
+  /dataset:
+    get:
+      summary: Retrieves a list of datasets
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetCollection'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /dataset/flat_file:
+    get:
+      summary: Retrieves Flat File datasets
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Adds a Flat File dataset to the system
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dataset_name:
+                  type: string
+                location:
+                  type: string
+      responses:
+        '201':
+          description: Dataset resource added successfully
+        '401':
+          description: Authorization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /dataset/verification:
+    post:
+      summary: Verifies that a file has been uploaded
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dataset_ids:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '200':
+          description: Dataset verified successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: integer
+        '401':
+          description: Authorization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /dataset/{id}:
+    get:
+      summary: Retrieves an individual dataset
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Dataset identifier
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+        '401':
+          description: Authorization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationError'
+        '404':
+          description: Dataset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Updates an individual dataset
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Dataset identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                owners:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+        '401':
+          description: Authorization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationError'
+        '404':
+          description: Dataset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Deletes a dataset from the system
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Dataset identifier
+      responses:
+        '202':
+          description: OK
+        '401':
+          description: Authorization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationError'
+        '404':
+          description: job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /dataset/{id}/user:
+    get:
+      summary: Retrieves a list of users the dataset is shared with
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Dataset identifier
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedDatasetUserCollection'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Shares a dataset with a user
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Dataset identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  user_id:
+                    type: integer
+      responses:
+        '201':
+          description: Dataset shared successfully
+        '401':
+          description: Authorization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationError'
+        '404':
+          description: Dataset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Removes sharing permissions from a user
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Dataset identifier
+      responses:
+        '204':
+          description: OK
+        '401':
+          description: Authorization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationError'
+        '404':
+          description: Dataset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /forgot:
+    post:
+      summary: Sends a forgot password email to the requested user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: doug@hellospotlight.com
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /job:
+    get:
+      summary: Retrieves a list of model parsing jobs
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobCollection'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Initiates a model parsing job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dataset_id:
+                  type: integer
+                  example: 1
+      responses:
+        '201':
+          description: Job resource added successfully
+        '401':
+          description: Authorization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationError'
+        '404':
+          description: Dataset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /job/{id}:
+    get:
+      summary: Retrieves an individual job object
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Job identifier
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '401':
+          description: Authorization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationError'
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      summary: Updates an individual job's information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                job_status:
+                  type: string
+                  enum: ['COMPLETE', 'PENDING', 'FAILED']
+                  example: 'COMPLETE'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Job identifier
+      responses:
+        '200':
+          description: Successfully updated resource
+        '401':
+          description: Authorization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationError'
+        '404':
+          description: job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Deletes a job request
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Job identifier
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Authorization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationError'
+        '404':
+          description: job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /login:
+    post:
+      summary: Logs in the user and generates an authentication token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: doug@hellospotlight.com
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    format: byte
+                  user:
+                    $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Credentials incorrect
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /notification:
+    get:
+      summary: System notifications for various events
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationCollection'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /notification/{id}:
+    patch:
+      summary: Update notification information for a single notification
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Notification identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                detail:
+                  type: string
+                viewed:
+                  type: boolean
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Authorization error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationError'
+        '404':
+          description: Notification not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /reset:
+    post:
+      summary: Resets a user's password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+                  format: password
+                reset_token:
+                  type: string
+                  format: byte
+      responses:
+        '200':
+          description: OK
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /role:
+    get:
+      summary: Retrieves a list of role objects
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleCollection'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Creates a new role object
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role_name:
+                  type: string
+                  example: Underwriters
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '400':
+          description: Creator does not own the dataset
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Creator must be listed as a dataset owner.
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /role/{id}:
+    get:
+      summary: Retrieves an individual role object
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Role identifier
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '404':
+          description: Role not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      summary: Updates an individual role's information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role_name:
+                  type: string
+                  example: Developers
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Role identifier
+      responses:
+        '200':
+          description: Successfully updated resource
+        '400':
+          description: Role does not have an owner
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Role must have an owner.
+        '404':
+          description: job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Deletes a role
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: Role identifier
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /user:
+    get:
+      summary: Retrieves a list of users
+      parameters:
+      - in: query
+        name: query
+        schema:
+          type: string
+        required: false
+        description: Search query
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCollection'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Registers a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: doug@hellospotlight.com
+                password:
+                  type: string
+                  format: password
+                first_name:
+                  type: string
+                  example: Doug
+                last_name:
+                  type: string
+                  example: Developer
+      responses:
+        '201':
+          description: Successfully added user
+        '400':
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User already exists.
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /user/{id}:
+    get:
+      summary: Retrieves a single user object
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: User identifier
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      summary: Updates a single user object
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: User identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                  example: Doug
+                last_name:
+                  type: string
+                  example: Developer
+
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Editing invalid field
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'password: Cannot edit this field'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Deletes a user
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: User identifier
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+
+components:
+  schemas:
+    Dataset:
+      type: object
+      properties:
+        dataset_name:
+          type: string
+          example: Credit Card Transactions
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Job'
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+        markers:
+          type: array
+          items:
+            $ref: '#/components/schemas/TextMarker'
+        dataset_type:
+          type: string
+          example: FLAT_FILE
+        created_ts:
+          type: string
+          format: date-time
+        verified:
+          type: boolean
+        owners:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        dataset_id:
+          type: integer
+        permission:
+          type: string
+          example: shared
+    DatasetCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/Dataset'
+    TextMarker:
+      type: object
+      properties:
+        pii_id:
+          type: integer
+        start_location:
+          type: integer
+        end_location:
+          type: integer
+        dataset:
+          type: integer
+        pii_type:
+          type: string
+        confidence:
+          type: number
+          example: 0.75
+        dataset_id:
+          type: integer
+        last_updated_ts:
+          type: string
+          format: date-time
+    TextMarkerCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/TextMarker'
+    Job:
+      type: object
+      properties:
+        job_id:
+          type: integer
+          minimum: 0
+          example: 1
+        dataset:
+          type: integer
+          minimum: 0
+          example: 1
+        dataset_id:
+          type: integer
+          minimum: 0
+          example: 1
+        job_status:
+          type: string
+          enum: [COMPLETE, PENDING, FAILED]
+          example: PENDING
+        job_created_ts:
+          type: string
+          format: date-time
+        job_completed_ts:
+          type: string
+          format: date-time
+    JobCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/Job'
+    Notification:
+      type: object
+      properties:
+        notification_id:
+          type: integer
+          minimum: 0
+          example: 1
+        title:
+          type: string
+          example: A dataset has been shared with you
+        detail:
+          type: string
+          example: "You have been granted access to Dataset(s): ['Dataset 1']"
+        viewed:
+          type: boolean
+        created_ts:
+          type: string
+          format: date-time
+        last_updated_ts:
+          type: string
+          format: date-time
+    NotificationCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/Notification'
+    PII:
+      type: object
+      properties:
+        pii_id:
+          type: integer
+          example: 1
+          minimum: 1
+        description:
+          type: string
+          example: ssn
+        long_description:
+          type: string
+          example: Social Security Number
+        category:
+          type: string
+          enum: ['Identity', 'Financial']
+    Role:
+      type: object
+      properties:
+        role_id:
+          type: integer
+          example: 1
+          minimum: 1
+        creator:
+          $ref: '#/components/schemas/User'
+        created_ts:
+          type: string
+          format: date-time
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PII'
+        role_name:
+          type: string
+          example: Underwriters
+        members:
+          $ref: '#/components/schemas/UserCollection'
+        updated_ts:
+          type: string
+          format: date-time
+    RoleCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/Role'
+    SharedDatasetUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        user:
+          $ref: '#/components/schemas/User'
+        share_expires:
+          type: string
+          format: date-time
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PII'
+    SharedDatasetUserCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/SharedDatasetUser'
+    User:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          minimum: 1
+          example: 1
+        first_name:
+          type: string
+          example: Doug
+        last_name:
+          type: string
+          example: Developer
+        email:
+          type: string
+          format: email
+          example: doug@hellospotlight.com
+        admin:
+          type: boolean
+        last_login:
+          type: string
+          format: date-time
+        created_ts:
+          type: string
+          format: date-time
+    UserCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/User'
+
+    # Errors
+    AuthorizationError:
+      type: object
+      properties:
+        message:
+          type: string
+          example: User does not have permission to access this resource
+    NotFoundError:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Resource not found
+    ValidationError:
+      type: object
+      properties:
+        message:
+          type: object
+          properties:
+            property_name:
+              type: string
+              example: Missing data for required field
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Unexpected error occurred
