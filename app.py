@@ -27,10 +27,10 @@ def create_app(config):
     app = Flask(__name__.split(".")[0])
     app.config.from_object(config)
     db.init_app(app)
-    
+
     api = Api(app)
     JWTManager(app)
-    
+
     api.add_resource(DatasetActionHistoryCollection, "/audit/dataset")
     api.add_resource(DatasetCollection, "/dataset")
     api.add_resource(FlatFileCollection, "/dataset/flat_file")
@@ -55,7 +55,7 @@ def create_app(config):
     api.add_resource(RolePermissionCollection, "/role/<int:role_id>/permission")
     api.add_resource(UserCollection, "/user")
     api.add_resource(User, "/user/<int:user_query_id>")
-    
+
     return app
 
 
