@@ -164,10 +164,15 @@ class Dataset(Resource):
                 permission_descriptions = set(
                     [perm.description for perm in permissions]
                 )
-                for marker in modified_markers:
-                    if marker.pii_type in permission_descriptions:
-                        new_markers.append(marker)
-
+                if modified_markers:
+                    for marker in modified_markers:
+                        if marker.pii_type in permission_descriptions:
+                            new_markers.append(marker)
+                else:
+                    for marker in dataset.markers:
+                        if marker.pii_type in permission_descriptions:
+                            new_markers.append(marker)
+                    
                 dataset.markers = new_markers
             return flat_file_dataset_schema.dump(dataset)
 
