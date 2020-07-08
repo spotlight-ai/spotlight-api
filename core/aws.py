@@ -62,15 +62,20 @@ def generate_presigned_download_link(
             file = open(object_name.replace("/", "_"), "r+").read()
             
             total_diff = 0
-            sorted_markers = sorted(markers, key=lambda k: k.start_location)
+            sorted_markers = sorted(markers, key=lambda k: (k.start_location, -k.end_location))
+            
+            pii_redacted = [] # Store the start location of PII that have been redacted already.
+                              # This will used as a check to avoid multiple redactions of same word.
+                               
             
             for marker in sorted_markers:
-                if marker.pii_type not in permission_descriptions:
+                if (marker.pii_type not in permission_descriptions) and (marker.start_location not in pii_redacted):
                     curr_diff = marker.end_location - marker.start_location - 10
                     start = marker.start_location - total_diff
                     end = marker.end_location - total_diff
                     file = ("<REDACTED>").join([file[:start], file[end:]])
                     total_diff += curr_diff
+                    pii_redacted.append(marker.start_location)
             
             open(object_name.replace("/", "_"), "w").write(file)
 
