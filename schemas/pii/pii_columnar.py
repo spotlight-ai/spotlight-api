@@ -7,3 +7,4 @@ class ColumnarPIISchema(ma.ModelSchema):
         model = ColumnarPIIModel
         include_fk = True
         dump_only = ("last_updated_ts",)
+        

@@ -28,4 +28,5 @@ class ColumnarPIIModel(db.Model):
         )
     
     def __str__(self):
-        return f"PII {self.pii_id} ({self.column_index} - {self.confidence}% confidence)"    
+        return f"PII {self.pii_id} ({self.column_index} - {self.confidence}% confidence)"   
+         

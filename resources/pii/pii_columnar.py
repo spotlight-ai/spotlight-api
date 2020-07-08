@@ -30,4 +30,5 @@ class ColumnarPIICollection(Resource):
         except IntegrityError as err:
             db.session.rollback()
             abort(400, err)
-        return        
+        return    
+            
