@@ -20,6 +20,6 @@ class FlatFileDatasetSchema(ma.ModelSchema):
         )
         dump_only = ("created_ts", "dataset_id", "jobs", "owners")
         ordered = True
-    
+
     jobs = ma.List(ma.Nested(JobSchema))
     markers = ma.List(ma.Nested(TextFilePIISchema))

@@ -16,10 +16,9 @@ def retrieve_role(role_id, user_id):
     :return: Role object if user is owner, otherwise None.
     """
     role = RoleModel.query.filter(
-        (RoleModel.role_id == role_id) &
-        RoleModel.members.any(
-            (RoleMemberModel.user_id == user_id)
-            & (RoleMemberModel.is_owner == true())
+        (RoleModel.role_id == role_id)
+        & RoleModel.members.any(
+            (RoleMemberModel.user_id == user_id) & (RoleMemberModel.is_owner == true())
         )
     ).first()
 
