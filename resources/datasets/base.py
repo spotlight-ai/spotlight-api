@@ -145,11 +145,11 @@ class Dataset(Resource):
             parsed_path = urlparse(dataset.location)
             s3_object_key = parsed_path.path[1:]
             if owned:
-                dataset.download_link = generate_presigned_download_link(
+                dataset.download_link, dataset.markers = generate_presigned_download_link(
                     "uploaded-datasets", s3_object_key
                 )
             elif shared:
-                dataset.download_link = generate_presigned_download_link(
+                dataset.download_link, modified_markers = generate_presigned_download_link(
                     "spotlightai-redacted-copies",
                     s3_object_key,
                     permissions=permissions,
@@ -160,7 +160,7 @@ class Dataset(Resource):
                 permission_descriptions = set(
                     [perm.description for perm in permissions]
                 )
-                for marker in dataset.markers:
+                for marker in modified_markers:
                     if marker.pii_type in permission_descriptions:
                         new_markers.append(marker)
 

@@ -1,14 +1,13 @@
 from datetime import datetime
-
-from db import db
+from string import Template
 
 from loguru import logger
-
-from string import Template
 from sendgrid.helpers.mail import Mail
+
+from db import db
+from models.user import UserModel
 from resources.auth.util import send_email
 
-from models.user import UserModel
 
 class NotificationModel(db.Model):
     __tablename__ = "notification"
@@ -35,26 +34,30 @@ class NotificationModel(db.Model):
 
     def __str__(self):
         return f"Notification ({self.created_ts}): {self.title} - {self.detail}"
-        
+
     def send_notification_email(self):
         user_id = self.user_id
         user = UserModel.query.filter(UserModel.user_id == user_id).first()
-        
+
         user_name = f"{user.first_name} {user.last_name}"
         user_email = user.email
-        
+
         email_title = self.title
         email_detail = self.detail
-        
-        html_body = Template(open('./email_templates/notification.html').read()).safe_substitute(
-            title=email_title , detail=email_detail)
 
-        logger.info(f'Loaded HTML template successfully. Sending email to {user_email}')
-       
-        message = Mail(from_email="hellospotlightai@gmail.com", to_emails=user_email,
-                       subject=f"SpotlightAI | Notification for {user_name}",
-                       html_content=html_body)
-        
+        html_body = Template(
+            open("./email_templates/notification.html").read()
+        ).safe_substitute(title=email_title, detail=email_detail)
+
+        logger.info(f"Loaded HTML template successfully. Sending email to {user_email}")
+
+        message = Mail(
+            from_email="hellospotlightai@gmail.com",
+            to_emails=user_email,
+            subject=f"SpotlightAI | Notification for {user_name}",
+            html_content=html_body,
+        )
+
         send_email(message)
-        
+
         return
