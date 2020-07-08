@@ -65,6 +65,9 @@ def generate_presigned_download_link(
             sorted_markers = sorted(markers, key=lambda k: (k.start_location, -k.end_location))
             
             total_markers = len(sorted_markers)
+            
+            redaction_text = "<REDACTED>" # The PII's will be replaced with this text.
+            
             while i < len(sorted_markers):
                 marker_start = sorted_markers[i].start_location
                 marker_end = sorted_markers[i].end_location
@@ -74,17 +77,17 @@ def generate_presigned_download_link(
                 while (j < total_markers) and (sorted_markers[j].start_location == marker_start):
                     if not permit:
                         sorted_markers[j].start_location -= total_diff
-                        sorted_markers[j].end_location = sorted_markers[j].start_location + 10
+                        sorted_markers[j].end_location = sorted_markers[j].start_location + len(redaction_text)
                     elif permit and (sorted_markers[j].pii_type not in permission_descriptions):
                         permit = False
                         for k in range(i,j+1):
                             sorted_markers[k].start_location -= total_diff
-                            sorted_markers[k].end_location = sorted_markers[k].start_location + 10
+                            sorted_markers[k].end_location = sorted_markers[k].start_location + len(redaction_text)
                     j += 1
                 if not permit:
                     file_start , file_end = marker_start - total_diff , marker_end - total_diff
                     file = ("<REDACTED>").join([file[:file_start], file[file_end:]])
-                    total_diff = total_diff + marker_len - 10
+                    total_diff = total_diff + marker_len - len(redaction_text)
                 else:
                     for k in range(i,j):
                         sorted_markers[k].start_location -= total_diff
