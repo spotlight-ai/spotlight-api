@@ -11,13 +11,14 @@ def generate_presigned_download_link(
 ):
     """
     Generate a presigned URL to share an S3 object
-
+    Also modifies and returns marker coordinates for shared users with selective permission 
     :param bucket_name: string
     :param object_name: string
     :param expiration: Time in seconds for the presigned URL to remain valid
     :param permissions: PII that should be exposed to the requesting viewer
     :param markers: PII markers detected in the dataset
     :return: Presigned URL as string. If error, returns None.
+             Modified list of markers for shared users. Returns None for owners
     """
     s3_client = boto3.client(
         "s3",
@@ -47,7 +48,7 @@ def generate_presigned_download_link(
                 ExpiresIn=expiration,
             )
 
-        return response
+        return response, None
 
     except ClientError as e:
         if e.response["ResponseMetadata"]["HTTPStatusCode"] == 404:
