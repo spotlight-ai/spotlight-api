@@ -16,9 +16,11 @@ def retrieve_role(role_id, user_id):
     :return: Role object if user is owner, otherwise None.
     """
     role = RoleModel.query.filter(
-        (RoleModel.role_id == role_id)
-        & (RoleMemberModel.user_id == user_id)
-        & (RoleMemberModel.is_owner == true())
+        (RoleModel.role_id == role_id) &
+        RoleModel.members.any(
+            (RoleMemberModel.user_id == user_id)
+            & (RoleMemberModel.is_owner == true())
+        )
     ).first()
 
     if not role:
@@ -42,7 +44,7 @@ def send_notifications(session, role, datasets):
             notification = NotificationModel(
                 user_id=member.user_id,
                 title=NotificationConstants.DATASET_SHARED_TITLE,
-                detail=f"{NotificationConstants.DATASET_SHARED_DETAIL} {[d.dataset_name for d in datasets]}",
+                detail=f"{NotificationConstants.DATASET_SHARED_DETAIL} {', '.join([d.dataset_name for d in datasets])}",
             )
-
+            notification.send_notification_email()
             session.add(notification)
