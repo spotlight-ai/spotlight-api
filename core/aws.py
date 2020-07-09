@@ -40,16 +40,16 @@ def generate_presigned_download_link(
             redacted_filepath = hashlib.sha1(
                 (object_name + str(permission_descriptions)).encode()
             ).hexdigest()
-            
-            if markers:
-                markers = modify_markers(markers, permission_descriptions)
-                
+                            
             s3_client.head_object(Bucket=redacted_bucket, Key=redacted_filepath)
             response = s3_client.generate_presigned_url(
                 "get_object",
                 Params={"Bucket": redacted_bucket, "Key": redacted_filepath},
                 ExpiresIn=expiration,
             )
+            
+            if markers:
+                markers = modify_markers(markers, permission_descriptions)
 
         return response, markers
 
