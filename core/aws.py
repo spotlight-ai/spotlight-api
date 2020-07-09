@@ -40,7 +40,10 @@ def generate_presigned_download_link(
             redacted_filepath = hashlib.sha1(
                 (object_name + str(permission_descriptions)).encode()
             ).hexdigest()
-
+            
+            if markers:
+                markers = modify_markers(markers, permission_descriptions)
+                
             s3_client.head_object(Bucket=redacted_bucket, Key=redacted_filepath)
             response = s3_client.generate_presigned_url(
                 "get_object",
@@ -48,7 +51,7 @@ def generate_presigned_download_link(
                 ExpiresIn=expiration,
             )
 
-        return response, None
+        return response, markers
 
     except ClientError as e:
         if e.response["ResponseMetadata"]["HTTPStatusCode"] == 404:
@@ -165,3 +168,44 @@ def dataset_cleanup(filepath):
         s3_client.delete_objects(Bucket=bucket, Delete={"Objects": [{"Key": key}]})
     except ClientError:
         return None
+        
+        
+def modify_markers(markers, permission_descriptions):
+    total_diff, i = 0, 0
+    sorted_markers = sorted(markers, key=lambda k: (k.start_location, -k.end_location))
+
+    total_markers = len(sorted_markers)
+
+    redaction_text = "<REDACTED>" # The PII's will be replaced with this text.
+    
+    while i < len(sorted_markers):
+        marker_start = sorted_markers[i].start_location
+        marker_end = sorted_markers[i].end_location
+        marker_len = marker_end - marker_start
+        j = i
+        permit = True
+        while (j < total_markers) and (sorted_markers[j].start_location == marker_start):
+            if not permit:
+                sorted_markers[j].start_location -= total_diff
+                sorted_markers[j].end_location = sorted_markers[j].start_location + len(redaction_text)
+            elif permit and (sorted_markers[j].pii_type not in permission_descriptions):
+                permit = False
+                for k in range(i,j+1):
+                    sorted_markers[k].start_location -= total_diff
+                    sorted_markers[k].end_location = sorted_markers[k].start_location + len(redaction_text)
+            j += 1
+        if not permit:
+            total_diff = total_diff + marker_len - len(redaction_text)
+        else:
+            for k in range(i,j):
+                sorted_markers[k].start_location -= total_diff
+                sorted_markers[k].end_location -= total_diff
+        i = j                
+        
+    return sorted_markers
+        
+        
+        
+        
+        
+        
