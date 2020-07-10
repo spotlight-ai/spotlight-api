@@ -71,6 +71,7 @@ def generate_presigned_download_link(
             total_markers = len(sorted_markers)
             
             redaction_text = "<REDACTED>" # The PII's will be replaced with this text.
+            marker_to_be_excluded = []
             
             while i < len(sorted_markers):
                 marker_start = sorted_markers[i].start_location
@@ -82,22 +83,26 @@ def generate_presigned_download_link(
                     if not permit:
                         sorted_markers[j].start_location -= total_diff
                         sorted_markers[j].end_location = sorted_markers[j].start_location + len(redaction_text)
+                        marker_to_be_excluded.append(j)
                     elif permit and (sorted_markers[j].pii_type not in permission_descriptions):
                         permit = False
                         for k in range(i,j+1):
                             sorted_markers[k].start_location -= total_diff
                             sorted_markers[k].end_location = sorted_markers[k].start_location + len(redaction_text)
+                            marker_to_be_excluded.append(k)
                     j += 1
                 if not permit:
                     file_start , file_end = marker_start - total_diff , marker_end - total_diff
-                    file = ("<REDACTED>").join([file[:file_start], file[file_end:]])
+                    file = (redaction_text).join([file[:file_start], file[file_end:]])
                     total_diff = total_diff + marker_len - len(redaction_text)
                 else:
                     for k in range(i,j):
                         sorted_markers[k].start_location -= total_diff
                         sorted_markers[k].end_location -= total_diff
                 i = j                
-                    
+                
+            modified_markers = [marker for i, marker in enumerate(sorted_markers) if i not in marker_to_be_excluded]
+               
             open(object_name.replace("/", "_"), "w").write(file)
 
             s3_client.upload_file(
@@ -110,7 +115,7 @@ def generate_presigned_download_link(
                 "get_object",
                 Params={"Bucket": redacted_bucket, "Key": redacted_filepath},
                 ExpiresIn=expiration,
-            ), sorted_markers
+            ), modified_markers
 
 
 def generate_presigned_link(
@@ -177,6 +182,7 @@ def modify_markers(markers, permission_descriptions):
     total_markers = len(sorted_markers)
 
     redaction_text = "<REDACTED>" # The PII's will be replaced with this text.
+    marker_to_be_excluded = []
     
     while i < len(sorted_markers):
         marker_start = sorted_markers[i].start_location
@@ -188,11 +194,13 @@ def modify_markers(markers, permission_descriptions):
             if not permit:
                 sorted_markers[j].start_location -= total_diff
                 sorted_markers[j].end_location = sorted_markers[j].start_location + len(redaction_text)
+                marker_to_be_excluded.append(j)
             elif permit and (sorted_markers[j].pii_type not in permission_descriptions):
                 permit = False
                 for k in range(i,j+1):
                     sorted_markers[k].start_location -= total_diff
                     sorted_markers[k].end_location = sorted_markers[k].start_location + len(redaction_text)
+                    marker_to_be_excluded.append(k)
             j += 1
         if not permit:
             total_diff = total_diff + marker_len - len(redaction_text)
@@ -202,7 +210,8 @@ def modify_markers(markers, permission_descriptions):
                 sorted_markers[k].end_location -= total_diff
         i = j                
         
-    return sorted_markers
+    modified_markers = [marker for i, marker in enumerate(sorted_markers) if i not in marker_to_be_excluded]    
+    return modified_markers
         
         
         
