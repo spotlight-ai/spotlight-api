@@ -7,9 +7,9 @@ from sqlalchemy.orm.exc import UnmappedInstanceError
 from core.decorators import authenticate_token
 from db import db
 from models.associations import DatasetOwner
+from models.auth.user import UserModel
 from models.datasets.base import DatasetModel
 from models.job import JobModel
-from models.user import UserModel
 from schemas.job import JobSchema
 
 job_schema = JobSchema()

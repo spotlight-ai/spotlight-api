@@ -4,11 +4,11 @@ from flask_restful import Resource
 from core.constants import NotificationConstants
 from core.decorators import authenticate_token
 from db import db
+from models.auth.user import UserModel
 from models.datasets.base import DatasetModel
 from models.datasets.shared_user import SharedDatasetUserModel
 from models.notifications.notification import NotificationModel
 from models.pii.pii import PIIModel
-from models.user import UserModel
 from schemas.datasets.shared_user import SharedDatasetUserSchema
 
 shared_dataset_user_schema = SharedDatasetUserSchema()

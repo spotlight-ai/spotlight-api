@@ -27,7 +27,7 @@ class BaseTest(unittest.TestCase):
 
         with self.app.app_context():
             # Pre-load database to desired state
-            from models.user import UserModel
+            from models.auth.user import UserModel
             from models.roles.role import RoleModel
             from models.roles.role_member import RoleMemberModel
             from models.pii.pii import PIIModel
