@@ -64,8 +64,10 @@ class DatasetSharedUserCollection(Resource):
             permission_objects = PIIModel.query.filter(
                 (PIIModel.description.in_(user_object.get("permissions", [])))
             ).all()
+            
             shared_user_object.permissions = permission_objects
-
+            permission_long_descriptions = [perm.long_description for perm in permission_objects]
+            
             db.session.add(shared_user_object)
 
             # Add notification for shared user
@@ -74,7 +76,7 @@ class DatasetSharedUserCollection(Resource):
                 title=NotificationConstants.DATASET_SHARED_TITLE,
                 detail=f"{NotificationConstants.DATASET_SHARED_DETAIL} {dataset.dataset_name}",
             )
-            notification.send_notification_email()
+            notification.send_notification_email(permission_long_descriptions)
 
             db.session.add(notification)
 

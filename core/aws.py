@@ -212,9 +212,3 @@ def modify_markers(markers, permission_descriptions):
         
     modified_markers = [marker for i, marker in enumerate(sorted_markers) if i not in marker_to_be_excluded]    
     return modified_markers
-        
-        
-        
-        
-        
-        
