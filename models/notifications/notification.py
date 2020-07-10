@@ -44,13 +44,15 @@ class NotificationModel(db.Model):
 
         email_title = self.title
         email_detail = self.detail
-        
+
         permissions.sort()
         permission_text = f"<br><b>You have the following permissions:</b><br> {'<br>'.join(permissions)}"
-        
+
         html_body = Template(
             open("./email_templates/notification.html").read()
-        ).safe_substitute(title=email_title, detail=email_detail, permission=permission_text)
+        ).safe_substitute(
+            title=email_title, detail=email_detail, permission=permission_text
+        )
 
         logger.info(f"Loaded HTML template successfully. Sending email to {user_email}")
 

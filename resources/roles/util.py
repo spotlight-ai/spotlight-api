@@ -37,7 +37,7 @@ def send_notifications(session, role, datasets):
     :return: None
     """
     role_permission_descriptions = [perm.long_description for perm in role.permissions]
-        
+
     for member in role.members:
         # Add notification for each role member
         if not member.is_owner:
