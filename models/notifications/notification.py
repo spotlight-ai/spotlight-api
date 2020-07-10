@@ -5,7 +5,7 @@ from loguru import logger
 from sendgrid.helpers.mail import Mail
 
 from db import db
-from models.user import UserModel
+from models.auth.user import UserModel
 from resources.auth.util import send_email
 
 

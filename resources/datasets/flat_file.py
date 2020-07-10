@@ -8,8 +8,8 @@ from core.constants import AuditConstants
 from core.decorators import authenticate_token
 from db import db
 from models.audit.dataset_action_history import DatasetActionHistoryModel
+from models.auth.user import UserModel
 from models.datasets.flat_file import FlatFileDatasetModel
-from models.user import UserModel
 from schemas.datasets.flat_file import FlatFileDatasetSchema
 
 flat_file_schema = FlatFileDatasetSchema()

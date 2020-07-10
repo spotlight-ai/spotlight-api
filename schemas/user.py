@@ -2,13 +2,19 @@ from marshmallow import fields
 from marshmallow.validate import Length
 
 from db import ma
-from models.user import UserModel
+from models.auth.user import UserModel
 
 
 class UserSchema(ma.ModelSchema):
     class Meta:
         model = UserModel
-        exclude = ("role", "role_member", "owned_datasets", "shared_datasets")
+        exclude = (
+            "role",
+            "role_member",
+            "owned_datasets",
+            "shared_datasets",
+            "api_keys",
+        )
         ordered = True
 
     email = fields.Email(required=True)

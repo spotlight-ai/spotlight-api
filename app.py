@@ -7,6 +7,7 @@ from flask_restful import Api
 
 from db import db
 from resources.audit.dataset_action_history import DatasetActionHistoryCollection
+from resources.auth.api_key import APIKeyCollection, APIKeyRevokeCollection
 from resources.auth.login import ForgotPassword, Login, ResetPassword
 from resources.datasets.base import Dataset, DatasetCollection, DatasetVerification
 from resources.datasets.flat_file import FlatFileCollection
@@ -32,6 +33,8 @@ def create_app(config):
     JWTManager(app)
 
     api.add_resource(DatasetActionHistoryCollection, "/audit/dataset")
+    api.add_resource(APIKeyCollection, "/auth/api_key")
+    api.add_resource(APIKeyRevokeCollection, "/auth/api_key/revoke")
     api.add_resource(DatasetCollection, "/dataset")
     api.add_resource(FlatFileCollection, "/dataset/flat_file")
     api.add_resource(DatasetVerification, "/dataset/verification")

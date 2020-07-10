@@ -11,7 +11,7 @@ def generate_presigned_download_link(
 ):
     """
     Generate a presigned URL to share an S3 object
-    Also modifies and returns marker coordinates for shared users with selective permission 
+    Also modifies and returns marker coordinates for shared users with selective permission
     :param bucket_name: string
     :param object_name: string
     :param expiration: Time in seconds for the presigned URL to remain valid
@@ -29,7 +29,7 @@ def generate_presigned_download_link(
     redacted_bucket = "spotlightai-redacted-copies"
 
     try:
-        if permissions is None:
+        if permissions is None:  # Owner of the dataset
             response = s3_client.generate_presigned_url(
                 "get_object",
                 Params={"Bucket": raw_bucket, "Key": object_name},
@@ -40,14 +40,14 @@ def generate_presigned_download_link(
             redacted_filepath = hashlib.sha1(
                 (object_name + str(permission_descriptions)).encode()
             ).hexdigest()
-                            
+
             s3_client.head_object(Bucket=redacted_bucket, Key=redacted_filepath)
             response = s3_client.generate_presigned_url(
                 "get_object",
                 Params={"Bucket": redacted_bucket, "Key": redacted_filepath},
                 ExpiresIn=expiration,
             )
-            
+
             if markers:
                 markers = modify_markers(markers, permission_descriptions)
 
@@ -64,40 +64,53 @@ def generate_presigned_download_link(
                 raw_bucket, object_name, object_name.replace("/", "_")
             )
             file = open(object_name.replace("/", "_"), "r+").read()
-            
+
             total_diff, i = 0, 0
-            sorted_markers = sorted(markers, key=lambda k: (k.start_location, -k.end_location))
-            
+            sorted_markers = sorted(
+                markers, key=lambda k: (k.start_location, -k.end_location)
+            )
+
             total_markers = len(sorted_markers)
-            
-            redaction_text = "<REDACTED>" # The PII's will be replaced with this text.
-            
+
+            redaction_text = "<REDACTED>"  # The PII's will be replaced with this text.
+
             while i < len(sorted_markers):
                 marker_start = sorted_markers[i].start_location
                 marker_end = sorted_markers[i].end_location
                 marker_len = marker_end - marker_start
                 j = i
                 permit = True
-                while (j < total_markers) and (sorted_markers[j].start_location == marker_start):
+                while (j < total_markers) and (
+                    sorted_markers[j].start_location == marker_start
+                ):
                     if not permit:
                         sorted_markers[j].start_location -= total_diff
-                        sorted_markers[j].end_location = sorted_markers[j].start_location + len(redaction_text)
-                    elif permit and (sorted_markers[j].pii_type not in permission_descriptions):
+                        sorted_markers[j].end_location = sorted_markers[
+                            j
+                        ].start_location + len(redaction_text)
+                    elif permit and (
+                        sorted_markers[j].pii_type not in permission_descriptions
+                    ):
                         permit = False
-                        for k in range(i,j+1):
+                        for k in range(i, j + 1):
                             sorted_markers[k].start_location -= total_diff
-                            sorted_markers[k].end_location = sorted_markers[k].start_location + len(redaction_text)
+                            sorted_markers[k].end_location = sorted_markers[
+                                k
+                            ].start_location + len(redaction_text)
                     j += 1
                 if not permit:
-                    file_start , file_end = marker_start - total_diff , marker_end - total_diff
+                    file_start, file_end = (
+                        marker_start - total_diff,
+                        marker_end - total_diff,
+                    )
                     file = ("<REDACTED>").join([file[:file_start], file[file_end:]])
                     total_diff = total_diff + marker_len - len(redaction_text)
                 else:
-                    for k in range(i,j):
+                    for k in range(i, j):
                         sorted_markers[k].start_location -= total_diff
                         sorted_markers[k].end_location -= total_diff
-                i = j                
-                    
+                i = j
+
             open(object_name.replace("/", "_"), "w").write(file)
 
             s3_client.upload_file(
@@ -106,11 +119,14 @@ def generate_presigned_download_link(
 
             os.remove(object_name.replace("/", "_"))
 
-            return s3_client.generate_presigned_url(
-                "get_object",
-                Params={"Bucket": redacted_bucket, "Key": redacted_filepath},
-                ExpiresIn=expiration,
-            ), sorted_markers
+            return (
+                s3_client.generate_presigned_url(
+                    "get_object",
+                    Params={"Bucket": redacted_bucket, "Key": redacted_filepath},
+                    ExpiresIn=expiration,
+                ),
+                sorted_markers,
+            )
 
 
 def generate_presigned_link(
@@ -168,44 +184,44 @@ def dataset_cleanup(filepath):
         s3_client.delete_objects(Bucket=bucket, Delete={"Objects": [{"Key": key}]})
     except ClientError:
         return None
-        
-        
+
+
 def modify_markers(markers, permission_descriptions):
     total_diff, i = 0, 0
     sorted_markers = sorted(markers, key=lambda k: (k.start_location, -k.end_location))
 
     total_markers = len(sorted_markers)
 
-    redaction_text = "<REDACTED>" # The PII's will be replaced with this text.
-    
+    redaction_text = "<REDACTED>"  # The PII's will be replaced with this text.
+
     while i < len(sorted_markers):
         marker_start = sorted_markers[i].start_location
         marker_end = sorted_markers[i].end_location
         marker_len = marker_end - marker_start
         j = i
         permit = True
-        while (j < total_markers) and (sorted_markers[j].start_location == marker_start):
+        while (j < total_markers) and (
+            sorted_markers[j].start_location == marker_start
+        ):
             if not permit:
                 sorted_markers[j].start_location -= total_diff
-                sorted_markers[j].end_location = sorted_markers[j].start_location + len(redaction_text)
+                sorted_markers[j].end_location = sorted_markers[j].start_location + len(
+                    redaction_text
+                )
             elif permit and (sorted_markers[j].pii_type not in permission_descriptions):
                 permit = False
-                for k in range(i,j+1):
+                for k in range(i, j + 1):
                     sorted_markers[k].start_location -= total_diff
-                    sorted_markers[k].end_location = sorted_markers[k].start_location + len(redaction_text)
+                    sorted_markers[k].end_location = sorted_markers[
+                        k
+                    ].start_location + len(redaction_text)
             j += 1
         if not permit:
             total_diff = total_diff + marker_len - len(redaction_text)
         else:
-            for k in range(i,j):
+            for k in range(i, j):
                 sorted_markers[k].start_location -= total_diff
                 sorted_markers[k].end_location -= total_diff
-        i = j                
-        
+        i = j
+
     return sorted_markers
-        
-        
-        
-        
-        
-        
