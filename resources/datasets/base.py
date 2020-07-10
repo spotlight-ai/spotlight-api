@@ -13,7 +13,6 @@ from core.errors import DatasetErrors, UserErrors
 from db import db
 from models.associations import RoleDataset, RolePermission, UserDatasetPermission
 from models.audit.dataset_action_history import DatasetActionHistoryModel
-from models.auth.user import UserModel
 from models.datasets.base import DatasetModel
 from models.datasets.flat_file import FlatFileDatasetModel
 from models.datasets.shared_user import SharedDatasetUserModel
@@ -21,6 +20,7 @@ from models.pii.pii import PIIModel
 from models.pii.text_file import TextFilePIIModel
 from models.roles.role import RoleModel
 from models.roles.role_member import RoleMemberModel
+from models.user import UserModel
 from schemas.datasets.base import DatasetSchema
 from schemas.datasets.flat_file import FlatFileDatasetSchema
 from schemas.job import JobSchema
@@ -151,6 +151,7 @@ class Dataset(Resource):
                     "uploaded-datasets", s3_object_key
                 )  # For owners, all PII's are permitted. Hence no redaction and therefore no modification in markers
             elif shared:
+
                 # For shared users it returns markers with modified co-ordinates after redaction.
                 (
                     dataset.download_link,

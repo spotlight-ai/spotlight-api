@@ -35,7 +35,7 @@ class NotificationModel(db.Model):
     def __str__(self):
         return f"Notification ({self.created_ts}): {self.title} - {self.detail}"
 
-    def send_notification_email(self):
+    def send_notification_email(self, permissions):
         user_id = self.user_id
         user = UserModel.query.filter(UserModel.user_id == user_id).first()
 
@@ -45,9 +45,14 @@ class NotificationModel(db.Model):
         email_title = self.title
         email_detail = self.detail
 
+        permissions.sort()
+        permission_text = f"<br><b>You have the following permissions:</b><br> {'<br>'.join(permissions)}"
+
         html_body = Template(
             open("./email_templates/notification.html").read()
-        ).safe_substitute(title=email_title, detail=email_detail)
+        ).safe_substitute(
+            title=email_title, detail=email_detail, permission=permission_text
+        )
 
         logger.info(f"Loaded HTML template successfully. Sending email to {user_email}")
 

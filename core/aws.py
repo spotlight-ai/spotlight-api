@@ -11,7 +11,7 @@ def generate_presigned_download_link(
 ):
     """
     Generate a presigned URL to share an S3 object
-    Also modifies and returns marker coordinates for shared users with selective permission
+    Also modifies and returns marker coordinates for shared users with selective permission 
     :param bucket_name: string
     :param object_name: string
     :param expiration: Time in seconds for the presigned URL to remain valid
@@ -29,7 +29,7 @@ def generate_presigned_download_link(
     redacted_bucket = "spotlightai-redacted-copies"
 
     try:
-        if permissions is None:  # Owner of the dataset
+        if permissions is None:
             response = s3_client.generate_presigned_url(
                 "get_object",
                 Params={"Bucket": raw_bucket, "Key": object_name},
@@ -73,6 +73,7 @@ def generate_presigned_download_link(
             total_markers = len(sorted_markers)
 
             redaction_text = "<REDACTED>"  # The PII's will be replaced with this text.
+            marker_to_be_excluded = []
 
             while i < len(sorted_markers):
                 marker_start = sorted_markers[i].start_location
@@ -88,6 +89,7 @@ def generate_presigned_download_link(
                         sorted_markers[j].end_location = sorted_markers[
                             j
                         ].start_location + len(redaction_text)
+                        marker_to_be_excluded.append(j)
                     elif permit and (
                         sorted_markers[j].pii_type not in permission_descriptions
                     ):
@@ -97,19 +99,26 @@ def generate_presigned_download_link(
                             sorted_markers[k].end_location = sorted_markers[
                                 k
                             ].start_location + len(redaction_text)
+                            marker_to_be_excluded.append(k)
                     j += 1
                 if not permit:
                     file_start, file_end = (
                         marker_start - total_diff,
                         marker_end - total_diff,
                     )
-                    file = ("<REDACTED>").join([file[:file_start], file[file_end:]])
+                    file = (redaction_text).join([file[:file_start], file[file_end:]])
                     total_diff = total_diff + marker_len - len(redaction_text)
                 else:
                     for k in range(i, j):
                         sorted_markers[k].start_location -= total_diff
                         sorted_markers[k].end_location -= total_diff
                 i = j
+
+            modified_markers = [
+                marker
+                for i, marker in enumerate(sorted_markers)
+                if i not in marker_to_be_excluded
+            ]
 
             open(object_name.replace("/", "_"), "w").write(file)
 
@@ -125,7 +134,7 @@ def generate_presigned_download_link(
                     Params={"Bucket": redacted_bucket, "Key": redacted_filepath},
                     ExpiresIn=expiration,
                 ),
-                sorted_markers,
+                modified_markers,
             )
 
 
@@ -193,6 +202,7 @@ def modify_markers(markers, permission_descriptions):
     total_markers = len(sorted_markers)
 
     redaction_text = "<REDACTED>"  # The PII's will be replaced with this text.
+    marker_to_be_excluded = []
 
     while i < len(sorted_markers):
         marker_start = sorted_markers[i].start_location
@@ -208,6 +218,7 @@ def modify_markers(markers, permission_descriptions):
                 sorted_markers[j].end_location = sorted_markers[j].start_location + len(
                     redaction_text
                 )
+                marker_to_be_excluded.append(j)
             elif permit and (sorted_markers[j].pii_type not in permission_descriptions):
                 permit = False
                 for k in range(i, j + 1):
@@ -215,6 +226,7 @@ def modify_markers(markers, permission_descriptions):
                     sorted_markers[k].end_location = sorted_markers[
                         k
                     ].start_location + len(redaction_text)
+                    marker_to_be_excluded.append(k)
             j += 1
         if not permit:
             total_diff = total_diff + marker_len - len(redaction_text)
@@ -224,4 +236,9 @@ def modify_markers(markers, permission_descriptions):
                 sorted_markers[k].end_location -= total_diff
         i = j
 
-    return sorted_markers
+    modified_markers = [
+        marker
+        for i, marker in enumerate(sorted_markers)
+        if i not in marker_to_be_excluded
+    ]
+    return modified_markers

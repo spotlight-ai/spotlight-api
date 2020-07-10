@@ -36,6 +36,7 @@ def send_notifications(session, role, datasets):
     :param datasets: Datasets that have been shared for detail.
     :return: None
     """
+    role_permission_descriptions = [perm.long_description for perm in role.permissions]
 
     for member in role.members:
         # Add notification for each role member
@@ -45,5 +46,5 @@ def send_notifications(session, role, datasets):
                 title=NotificationConstants.DATASET_SHARED_TITLE,
                 detail=f"{NotificationConstants.DATASET_SHARED_DETAIL} {', '.join([d.dataset_name for d in datasets])}",
             )
-            notification.send_notification_email()
+            notification.send_notification_email(role_permission_descriptions)
             session.add(notification)
