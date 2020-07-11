@@ -7,7 +7,7 @@ from core.constants import UserConstants
 from core.decorators import authenticate_token
 from core.errors import UserErrors
 from db import db
-from models.user import UserModel
+from models.auth.user import UserModel
 from schemas.user import UserSchema
 
 user_schema = UserSchema()

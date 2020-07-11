@@ -13,6 +13,7 @@ from core.errors import DatasetErrors, UserErrors
 from db import db
 from models.associations import RoleDataset, RolePermission, UserDatasetPermission
 from models.audit.dataset_action_history import DatasetActionHistoryModel
+from models.auth.user import UserModel
 from models.datasets.base import DatasetModel
 from models.datasets.flat_file import FlatFileDatasetModel
 from models.datasets.shared_user import SharedDatasetUserModel
@@ -20,7 +21,6 @@ from models.pii.pii import PIIModel
 from models.pii.text_file import TextFilePIIModel
 from models.roles.role import RoleModel
 from models.roles.role_member import RoleMemberModel
-from models.user import UserModel
 from schemas.datasets.base import DatasetSchema
 from schemas.datasets.flat_file import FlatFileDatasetSchema
 from schemas.job import JobSchema
@@ -144,16 +144,19 @@ class Dataset(Resource):
 
             parsed_path = urlparse(dataset.location)
             s3_object_key = parsed_path.path[1:]
-            
+
             # generate_presigned_download_link will return a presigned URL to share an S3 object and dataset markers with modified markers (if any)
             if owned:
                 dataset.download_link, _ = generate_presigned_download_link(
                     "uploaded-datasets", s3_object_key
-                ) # For owners, all PII's are permitted. Hence no redaction and therefore no modification in markers
+                )  # For owners, all PII's are permitted. Hence no redaction and therefore no modification in markers
             elif shared:
-            
-                #For shared users it returns markers with modified co-ordinates after redaction.
-                dataset.download_link, modified_markers = generate_presigned_download_link(
+
+                # For shared users it returns markers with modified co-ordinates after redaction.
+                (
+                    dataset.download_link,
+                    modified_markers,
+                ) = generate_presigned_download_link(
                     "spotlightai-redacted-copies",
                     s3_object_key,
                     permissions=permissions,
@@ -172,7 +175,7 @@ class Dataset(Resource):
                     for marker in dataset.markers:
                         if marker.pii_type in permission_descriptions:
                             new_markers.append(marker)
-                    
+
                 dataset.markers = new_markers
             return flat_file_dataset_schema.dump(dataset)
 

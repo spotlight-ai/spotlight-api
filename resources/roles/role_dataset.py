@@ -4,7 +4,7 @@ from flask_restful import Resource
 from core.decorators import authenticate_token
 from core.errors import DatasetErrors, RoleErrors
 from db import db
-from models.user import UserModel
+from models.auth.user import UserModel
 from resources.datasets.util import retrieve_datasets
 from resources.roles.util import retrieve_role, send_notifications
 from schemas.datasets.flat_file import FlatFileDatasetSchema

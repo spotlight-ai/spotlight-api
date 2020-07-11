@@ -4,11 +4,11 @@ from flask_restful import Resource
 from core.constants import NotificationConstants
 from core.decorators import authenticate_token
 from db import db
+from models.auth.user import UserModel
 from models.datasets.base import DatasetModel
 from models.datasets.shared_user import SharedDatasetUserModel
 from models.notifications.notification import NotificationModel
 from models.pii.pii import PIIModel
-from models.user import UserModel
 from schemas.datasets.shared_user import SharedDatasetUserSchema
 
 shared_dataset_user_schema = SharedDatasetUserSchema()
@@ -64,7 +64,11 @@ class DatasetSharedUserCollection(Resource):
             permission_objects = PIIModel.query.filter(
                 (PIIModel.description.in_(user_object.get("permissions", [])))
             ).all()
+
             shared_user_object.permissions = permission_objects
+            permission_long_descriptions = [
+                perm.long_description for perm in permission_objects
+            ]
 
             db.session.add(shared_user_object)
 
@@ -74,7 +78,7 @@ class DatasetSharedUserCollection(Resource):
                 title=NotificationConstants.DATASET_SHARED_TITLE,
                 detail=f"{NotificationConstants.DATASET_SHARED_DETAIL} {dataset.dataset_name}",
             )
-            notification.send_notification_email()
+            notification.send_notification_email(permission_long_descriptions)
 
             db.session.add(notification)
 

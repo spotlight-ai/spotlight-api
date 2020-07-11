@@ -10,6 +10,7 @@ from itsdangerous import (
 
 from db import db
 from models.associations import DatasetOwner
+from models.auth.api_key import APIKeyModel
 from models.datasets.base import DatasetModel
 
 
@@ -21,7 +22,7 @@ class UserModel(db.Model):
     last_name = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
     password = db.Column(db.String, nullable=False)
-    admin = db.Column(db.Boolean, default=False, nullable=False)
+    admin = db.Column(db.Boolean, server_default="False", nullable=False)
     last_login = db.Column(db.DateTime)
     created_ts = db.Column(
         db.DateTime, nullable=False, default=datetime.datetime.utcnow()
@@ -30,6 +31,7 @@ class UserModel(db.Model):
     owned_datasets = db.relationship(
         DatasetModel, secondary=DatasetOwner, back_populates="owners"
     )
+    api_keys = db.relationship(APIKeyModel, backref="user", lazy=True)
 
     def __init__(self, email, password, first_name, last_name, admin=False):
         self.first_name = first_name
@@ -39,10 +41,6 @@ class UserModel(db.Model):
         self.admin = admin
         self.last_login = datetime.datetime.utcnow()
         self.created_ts = datetime.datetime.utcnow()
-
-    @staticmethod
-    def hash_password(password):
-        return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
     def generate_auth_token(self, ttl=604800):
         """
@@ -60,6 +58,10 @@ class UserModel(db.Model):
         :return: Boolean representing successful password match.
         """
         return bcrypt.checkpw(password.encode(), self.password.encode())
+
+    @staticmethod
+    def hash_password(password):
+        return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
     @staticmethod
     def verify_auth_token(token):
