@@ -12,6 +12,7 @@ from resources.auth.login import ForgotPassword, Login, ResetPassword
 from resources.datasets.base import Dataset, DatasetCollection, DatasetVerification
 from resources.datasets.flat_file import FlatFileCollection
 from resources.datasets.shared_user import DatasetSharedUserCollection
+from resources.datasets.owners import DatasetOwners
 from resources.job import Job, JobCollection
 from resources.notifications.notification import Notification, NotificationCollection
 from resources.notifications.settings import NotificationSettingsCollection , NotificationSettings
@@ -41,6 +42,7 @@ def create_app(config):
     api.add_resource(DatasetVerification, "/dataset/verification")
     api.add_resource(Dataset, "/dataset/<int:dataset_id>")
     api.add_resource(DatasetSharedUserCollection, "/dataset/<int:dataset_id>/user")
+    api.add_resource(DatasetOwners, "/dataset/<int:dataset_id>/owner")
     api.add_resource(ForgotPassword, "/forgot")
     api.add_resource(JobCollection, "/job")
     api.add_resource(Job, "/job/<int:job_id>")

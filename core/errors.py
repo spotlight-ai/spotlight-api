@@ -18,7 +18,8 @@ class DatasetErrors:
     USER_DOES_NOT_OWN = "User does not own this dataset."
     MUST_HAVE_OWNER = "Dataset must have at least one owner."
     DOES_NOT_EXIST = "Dataset does not exist."
-
+    NO_NEW_OWNERS = "No new owners to be added."
+    GIVEN_USERS_DO_NOT_OWN = "Cannot process this request as user(s) {not_an_owner} are not the owner(s) of this dataset."    
 
 class UserErrors:
     USER_NOT_FOUND = "User or users not found."
