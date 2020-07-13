@@ -42,7 +42,7 @@ def create_app(config):
     api.add_resource(DatasetVerification, "/dataset/verification")
     api.add_resource(Dataset, "/dataset/<int:dataset_id>")
     api.add_resource(DatasetSharedUserCollection, "/dataset/<int:dataset_id>/user")
-    api.add_resource(DatasetOwners, "/dataset_owners/<int:dataset_id>")
+    api.add_resource(DatasetOwners, "/dataset/<int:dataset_id>/owner")
     api.add_resource(ForgotPassword, "/forgot")
     api.add_resource(JobCollection, "/job")
     api.add_resource(Job, "/job/<int:job_id>")

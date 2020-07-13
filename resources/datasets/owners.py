@@ -4,6 +4,7 @@ from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from core.decorators import authenticate_token
+from core.constants import AuditConstants
 from core.errors import DatasetErrors
 from db import db
 from models.audit.dataset_action_history import DatasetActionHistoryModel
@@ -50,13 +51,13 @@ class DatasetOwners(Resource):
             
                 db.session.commit()
             else:
-                abort(400, "No new owners to be added.")
+                abort(400, DatasetErrors.NO_NEW_OWNERS)
             
             db.session.add(
                 DatasetActionHistoryModel(
                     user_id=user_id,
                     dataset_id=dataset.dataset_id,
-                    action="New owners added to dataset",
+                    action=AuditConstants.DATASET_OWNERS_MODIFIED,
                     notes=f"Users with id {', '.join([str(id) for id in new_owners_id])} added as owners to the dataset."
                 )
             )
@@ -90,13 +91,13 @@ class DatasetOwners(Resource):
             
                 db.session.commit()
             else:
-                abort(400, "Owners list cannot be empty.")
+                abort(400, DatasetErrors.MUST_HAVE_OWNER)
                 
             db.session.add(
                 DatasetActionHistoryModel(
                     user_id=user_id,
                     dataset_id=dataset.dataset_id,
-                    action="Dataset owners replaced",
+                    action=AuditConstants.DATASET_OWNERS_MODIFIED,
                     notes=f"Users with id {', '.join([str(id) for id in new_owners_id])} made owners of the dataset."
                 )
             )
@@ -127,7 +128,8 @@ class DatasetOwners(Resource):
             not_an_existing_owner = [user for user in owners_to_be_removed if user not in existing_owners]
             
             if len(not_an_existing_owner) > 0:
-                abort(400, f"Cannot process this request as user(s) {', '.join([str(id) for id in not_an_existing_owner])} are not the owner(s) of this dataset.")
+                abort(400, (DatasetErrors.GIVEN_USERS_DO_NOT_OWN).format(not_an_owner=', '.join([str(id) for id in not_an_existing_owner])))
+                 
                 
             dataset.owners = [owner for owner in dataset.owners if owner.user_id not in owners_to_be_removed]
             
@@ -137,7 +139,7 @@ class DatasetOwners(Resource):
                 DatasetActionHistoryModel(
                     user_id=user_id,
                     dataset_id=dataset.dataset_id,
-                    action="Dataset owners list modified",
+                    action=AuditConstants.DATASET_OWNERS_MODIFIED,
                     notes=f"Users with id {', '.join([str(id) for id in owners_to_be_removed])} removed as owners of the dataset."
                 )
             )
