@@ -14,6 +14,7 @@ from resources.datasets.flat_file import FlatFileCollection
 from resources.datasets.shared_user import DatasetSharedUserCollection
 from resources.job import Job, JobCollection
 from resources.notifications.notification import Notification, NotificationCollection
+from resources.notifications.settings import NotificationSettingsCollection , NotificationSettings
 from resources.pii.pii import PIICollection
 from resources.pii.text_file import TextFilePII, TextFilePIICollection
 from resources.redact.text import RedactText
@@ -49,6 +50,8 @@ def create_app(config):
     api.add_resource(TextFilePII, "/pii/text_file/<int:dataset_id>")
     api.add_resource(NotificationCollection, "/notification")
     api.add_resource(Notification, "/notification/<int:notification_id>")
+    api.add_resource(NotificationSettingsCollection, "/settings/notification")
+    api.add_resource(NotificationSettings, "/settings/notification/<int:setting_id>")
     api.add_resource(RedactText, "/redact/text")
     api.add_resource(ResetPassword, "/reset")
     api.add_resource(RoleCollection, "/role")
