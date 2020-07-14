@@ -23,7 +23,7 @@ from resources.roles.role import Role, RoleCollection
 from resources.roles.role_dataset import RoleDatasetCollection
 from resources.roles.role_member import RoleMemberCollection
 from resources.roles.role_permission import RolePermissionCollection
-from resources.slack.slack_token import SlackTokenCollection
+from resources.slack.slack_token import SlackToken, SlackTokenCollection
 from resources.user import User, UserCollection
 
 
@@ -63,6 +63,7 @@ def create_app(config):
     api.add_resource(RoleMemberCollection, "/role/<int:role_id>/member")
     api.add_resource(RolePermissionCollection, "/role/<int:role_id>/permission")
     api.add_resource(SlackTokenCollection, "/slack_token")
+    api.add_resource(SlackToken, "/slack_token/<int:team_id>")
     api.add_resource(UserCollection, "/user")
     api.add_resource(User, "/user/<int:user_query_id>")
     

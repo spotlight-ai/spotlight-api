@@ -38,3 +38,12 @@ class SlackTokenCollection(Resource):
         except IntegrityError as err:
             db.session.rollback()
             abort(400, err)
+
+
+class SlackToken(Resource):
+    def get(self, team_id):
+        token = SlackTokenModel.get(team_id)
+        
+        if not token:
+            abort(400, SlackErrors.NO_TOKEN_FOUND)
+        return slack_token_schema.dump(token)

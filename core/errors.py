@@ -43,3 +43,4 @@ class DatabaseErrors:
 
 class SlackErrors:
     TOKEN_ALREADY_EXISTS = 'A token already exists for this team ID.'
+    NO_TOKEN_FOUND = "No token was found for this team ID."
