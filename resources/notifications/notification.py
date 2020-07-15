@@ -24,13 +24,13 @@ class NotificationCollection(Resource):
         
         notifications = NotificationModel.query.filter_by(
             user_id=user_id, viewed=False
-        ).all()
+        ).order_by(NotificationModel.last_updated_ts.desc()).all()
         
         if len(notifications) < 5:
-            notifications = NotificationModel.query.filter_by(user_id=user_id).order_by(
-                NotificationModel.last_updated_ts.desc()).limit(5)
-            
-            return notification_schema.dump(notifications, many=True)
+            notifications = NotificationModel.query.filter_by(user_id=user_id). \
+                order_by(NotificationModel.viewed, NotificationModel.last_updated_ts.desc()).limit(5)
+        
+        return notification_schema.dump(notifications, many=True)
 
 
 class Notification(Resource):
