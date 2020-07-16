@@ -22,7 +22,6 @@ def create_app(config):
     app = Flask(__name__.split('.')[0])
     app.config.from_object(config)
     db.init_app(app)
-    
     api = Api(app)
     
     api.add_resource(RoleCollection, '/role')
