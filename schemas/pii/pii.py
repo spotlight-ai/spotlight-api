@@ -1,9 +1,10 @@
-from marshmallow import Schema
+from db import ma
 
 from models.pii.pii import PIIModel
 
 
-class PIISchema(Schema):
+class PIISchema(ma.ModelSchema):
     class Meta:
         model = PIIModel
-        fields = ('description',)
+        ordered = True
+        exclude = ("shared_datasets", "roles", "pii_id")

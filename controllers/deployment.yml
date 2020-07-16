@@ -48,7 +48,7 @@ spec:
         - name: POSTGRES_PORT
           value: '5432'
         - name: MODEL_HOST
-          value: a7e79b1cb07844ac3b1ab33cf5e74397-905358753.us-east-1.elb.amazonaws.com
+          value: spotlight-model-service
         - name: MODEL_PORT
           value: '5001'
         - name: AWS_ACCESS_KEY_ID
@@ -73,6 +73,14 @@ spec:
             secretKeyRef:
               name: dev-secrets
               key: model-key
+        - name: BASE_WEB_URL
+          value: app-dev.hellospotlight.com
+        - name: SENDGRID_KEY
+          valueFrom:
+            secretKeyRef:
+              name: dev-secrets
+              key: sendgrid-key
+
         ports:
         - containerPort: 5000
 
@@ -111,11 +119,6 @@ spec:
     spec:
       containers:
       - name: spotlight-web
-        image: 553443767398.dkr.ecr.us-east-1.amazonaws.com/spotlight_web:latest
-        env:
-        - name: REACT_APP_API_URL
-          value: a22d2755ff7db44438ed2bce2639130d-683259215.us-east-1.elb.amazonaws.com
-        - name: REACT_APP_VERSION
-          value: v1.0
+        image: 553443767398.dkr.ecr.us-east-1.amazonaws.com/spotlight_web:2e7dfb6f129995e688adc12173583bc406ac764c
         ports:
         - containerPort: 3000

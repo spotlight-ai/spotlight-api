@@ -2,11 +2,11 @@ from flask import abort, request
 from flask_restful import Resource
 
 from core.decorators import authenticate_token
+from core.errors import DatasetErrors, RoleErrors
 from db import db
-from models.datasets.flat_file import FlatFileDatasetModel
-from models.roles.role import RoleModel
-from models.roles.role_member import RoleMemberModel
-from models.user import UserModel
+from models.auth.user import UserModel
+from resources.datasets.util import retrieve_datasets
+from resources.roles.util import retrieve_role, send_notifications
 from schemas.datasets.flat_file import FlatFileDatasetSchema
 from schemas.roles.role import RoleSchema
 
@@ -17,81 +17,94 @@ role_schema = RoleSchema()
 class RoleDatasetCollection(Resource):
     @authenticate_token
     def get(self, user_id, role_id):
-        role = RoleModel.query.filter((RoleModel.role_id == role_id) & (RoleMemberModel.user_id == user_id) & (
-                RoleMemberModel.is_owner == True)).first()
-        
-        if not role:
-            abort(401, "Role either does not exist or user does not have permissions")
-        
+        """
+        Retrieves all datasets that a Role has access to (as long as the requester owns the Role.
+        :param user_id: Currently logged in user ID.
+        :param role_id: Role being requested.
+        :return: List of datasets.
+        """
+        role = retrieve_role(user_id=user_id, role_id=role_id)
         return flat_file_schema.dump(role.datasets, many=True)
-    
+
     @authenticate_token
     def post(self, user_id, role_id):
-        role = RoleModel.query.filter((RoleModel.role_id == role_id) & (RoleMemberModel.user_id == user_id) & (
-                RoleMemberModel.is_owner == True)).first()
-        
-        if not role:
-            abort(401, "Role either does not exist or user does not have permissions")
-        
+        """
+        Adds datasets to a Role and allows Role Members to access those datasets.
+        :param user_id: Currently logged in user ID.
+        :param role_id: Role to be updated,
+        :return: None
+        """
+        role = retrieve_role(user_id=user_id, role_id=role_id)
+
         data = request.get_json(force=True)
-        
-        dataset_ids = data.get('datasets', [])
-        datasets = FlatFileDatasetModel.query.filter((FlatFileDatasetModel.dataset_id.in_(dataset_ids))).all()
-        
+        datasets = retrieve_datasets(data.get("datasets", []))
+
         user = UserModel.query.filter_by(user_id=user_id).first()
-        
+
         for dataset in datasets:
             if dataset in role.datasets:
-                abort(400, f'Dataset {dataset} already present in role.')
-            
+                abort(
+                    400, f"{dataset.dataset_id}: {RoleErrors.DATASET_ALREADY_PRESENT}"
+                )
+
             if user not in dataset.owners:
-                abort(401, "User does not own one or more of these datasets.")
-            
-            role.datasets.append(dataset)
-        
+                abort(401, f"{dataset.dataset_id}: {DatasetErrors.USER_DOES_NOT_OWN}")
+
+        role.datasets.extend(datasets)
+
+        send_notifications(db.session, role, datasets)
+
         db.session.commit()
         return None, 201
-    
+
     @authenticate_token
     def put(self, user_id, role_id):
-        role = RoleModel.query.filter((RoleModel.role_id == role_id) & (RoleMemberModel.user_id == user_id) & (
-                RoleMemberModel.is_owner == True)).first()
-        
-        if not role:
-            abort(401, "Role either does not exist or user does not have permissions")
-        
+        """
+        Replaces the datasets that a Role may access.
+        :param user_id: Currently logged in user ID.
+        :param role_id: Role to be updated.
+        :return: Role object
+        """
+        role = retrieve_role(role_id=role_id, user_id=user_id)
+
         data = request.get_json(force=True)
-        dataset_ids = data.get('datasets', [])
-        datasets = FlatFileDatasetModel.query.filter((FlatFileDatasetModel.dataset_id.in_(dataset_ids))).all()
-        
+        datasets = retrieve_datasets(data.get("datasets", []))
+
         user = UserModel.query.filter_by(user_id=user_id).first()
+
         for dataset in datasets:
             if user not in dataset.owners:
-                abort(401, "User does not own one or more of these datasets.")
-        
+                abort(401, f"{dataset.dataset_id}: {DatasetErrors.USER_DOES_NOT_OWN}")
+
         role.datasets = datasets
-        
+
+        send_notifications(db.session, role, datasets)
+        db.session.commit()
+
         return role_schema.dump(role)
-    
+
     @authenticate_token
     def delete(self, user_id, role_id):
-        role = RoleModel.query.filter((RoleModel.role_id == role_id) & (RoleMemberModel.user_id == user_id) & (
-                RoleMemberModel.is_owner == True)).first()
-        
-        if not role:
-            abort(401, "Role either does not exist or user does not have permissions")
-        
+        """
+        Removes datasets from a Role.
+        :param user_id: Currently logged in user ID.
+        :param role_id: Role to be updated.
+        :return: Role object
+        """
+        role = retrieve_role(user_id=user_id, role_id=role_id)
+
         data = request.get_json(force=True)
-        dataset_ids = data.get('datasets', [])
-        datasets = FlatFileDatasetModel.query.filter((FlatFileDatasetModel.dataset_id.in_(dataset_ids))).all()
-        
+        datasets = retrieve_datasets(data.get("datasets", []))
+
         user = UserModel.query.filter_by(user_id=user_id).first()
-        
+
         for dataset in datasets:
             if user not in dataset.owners:
-                abort(401, "User does not own one or more of these datasets.")
+                abort(401, f"{dataset.dataset_id}: {DatasetErrors.USER_DOES_NOT_OWN}")
             if dataset not in role.datasets:
-                abort(400, f"Dataset {dataset} not present in the role.")
+                abort(400, f"{dataset.dataset_id}: {RoleErrors.DATASET_NOT_PRESENT}")
             role.datasets.remove(dataset)
-        
+
+        db.session.commit()
+
         return role_schema.dump(role)

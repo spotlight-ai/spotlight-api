@@ -4,10 +4,12 @@ import os
 class Config(object):
     DEBUG = False
     TESTING = False
-    SQLALCHEMY_DATABASE_URI = f'postgresql://{os.environ.get("POSTGRES_USER")}:{os.environ.get("POSTGRES_PASSWORD")}' \
-                              f'@{os.environ.get("POSTGRES_HOST")}:{os.environ.get("POSTGRES_PORT")}'
+    SQLALCHEMY_DATABASE_URI = (
+        f'postgresql://{os.environ.get("POSTGRES_USER")}:{os.environ.get("POSTGRES_PASSWORD")}'
+        f'@{os.environ.get("POSTGRES_HOST")}:{os.environ.get("POSTGRES_PORT")}'
+    )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SECRET_KEY = os.environ.get('SECRET')
+    SECRET_KEY = os.environ.get("SECRET")
 
 
 class DevelopmentConfig(Config):
@@ -16,5 +18,4 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite://'
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_DATABASE_URI = "sqlite://"

@@ -1,9 +1,10 @@
-INSERT INTO pii_marker_base VALUES
-    (1, 'email'),
-    (2, 'ein'),
-    (3, 'ssn'),
-    (4, 'cc_number'),
-    (5, 'usa_phone'),
-    (6, 'country'),
-    (7, 'city'),
-    (8, 'gender')
+INSERT INTO pii_marker_base (pii_id, description, category, long_description) VALUES (6, 'country', 'Location', 'Country');
+INSERT INTO pii_marker_base (pii_id, description, category, long_description) VALUES (7, 'city', 'Location', 'City');
+INSERT INTO pii_marker_base (pii_id, description, category, long_description) VALUES (5, 'usa_phone', 'Identity', 'Phone Number (U.S.A.)');
+INSERT INTO pii_marker_base (pii_id, description, category, long_description) VALUES (4, 'cc_number', 'Financial', 'Credit Card Number');
+INSERT INTO pii_marker_base (pii_id, description, category, long_description) VALUES (3, 'ssn', 'Identity', 'Social Security Number');
+INSERT INTO pii_marker_base (pii_id, description, category, long_description) VALUES (2, 'ein', 'Identity', 'Employee Identification Number');
+INSERT INTO pii_marker_base (pii_id, description, category, long_description) VALUES (8, 'gender', 'Identity', 'Gender');
+INSERT INTO pii_marker_base (pii_id, description, category, long_description) VALUES (1, 'email', 'Identity', 'E-Mail Address');
+INSERT INTO pii_marker_base (pii_id, description, category, long_description) VALUES (9, 'name', 'Identity', 'Name');
+INSERT INTO pii_marker_base (pii_id, description, category, long_description) VALUES(10, 'routing_number', 'Financial', 'Routing Number');
