@@ -42,8 +42,25 @@ class SlackTokenCollection(Resource):
 
 class SlackToken(Resource):
     def get(self, team_id):
-        token = SlackTokenModel.get(team_id)
+        token = db.session.query(SlackTokenModel).get(str(team_id))
 
         if not token:
-            abort(400, SlackErrors.NO_TOKEN_FOUND)
+            abort(404, SlackErrors.NO_TOKEN_FOUND)
+
         return slack_token_schema.dump(token)
+
+    def delete(self, team_id):
+        """
+        Removes all tokens associated with the given team ID.
+        :param team_id: Team ID to remove.
+        :return: None
+        """
+        token = db.session.query(SlackTokenModel).get(str(team_id))
+
+        if not token:
+            abort(404, SlackErrors.NO_TOKEN_FOUND)
+
+        db.session.delete(token)
+        db.session.commit()
+
+        return None, 201
