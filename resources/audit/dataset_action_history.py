@@ -39,7 +39,10 @@ class DatasetActionHistoryCollection(Resource):
                     DatasetActionHistoryModel.query.filter(
                         DatasetActionHistoryModel.dataset_id.in_(owned_dataset_id)
                     )
-                    .order_by(DatasetActionHistoryModel.timestamp.desc(), DatasetActionHistoryModel.item_id.desc())
+                    .order_by(
+                        DatasetActionHistoryModel.timestamp.desc(),
+                        DatasetActionHistoryModel.item_id.desc(),
+                    )
                     .all()
                 )
                 return dataset_action_history_schema.dump(

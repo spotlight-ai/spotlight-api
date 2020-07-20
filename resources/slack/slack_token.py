@@ -14,25 +14,25 @@ slack_token_schema = SlackTokenSchema()
 class SlackTokenCollection(Resource):
     def get(self):
         tokens = SlackTokenModel.query.all()
-        
+
         return slack_token_schema.dump(tokens, many=True)
-    
+
     def post(self):
         try:
             data = request.get_json(force=True)
-            
+
             token = slack_token_schema.load(data, session=db.session)
             team_id = data.get("team_id")
             existing_token = SlackTokenModel.query.get(team_id)
-            
+
             if existing_token:
                 abort(400, SlackErrors.TOKEN_ALREADY_EXISTS)
-            
+
             db.session.add(token)
             db.session.commit()
-            
+
             return None, 201
-        
+
         except ValidationError as err:
             abort(422, err.messages)
         except IntegrityError as err:
@@ -43,7 +43,7 @@ class SlackTokenCollection(Resource):
 class SlackToken(Resource):
     def get(self, team_id):
         token = SlackTokenModel.get(team_id)
-        
+
         if not token:
             abort(400, SlackErrors.NO_TOKEN_FOUND)
         return slack_token_schema.dump(token)
