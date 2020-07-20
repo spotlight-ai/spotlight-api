@@ -15,7 +15,10 @@ from resources.datasets.owners import DatasetOwners
 from resources.datasets.shared_user import DatasetSharedUserCollection
 from resources.job import Job, JobCollection
 from resources.notifications.notification import Notification, NotificationCollection
-from resources.notifications.settings import NotificationSettings, NotificationSettingsCollection
+from resources.notifications.settings import (
+    NotificationSettings,
+    NotificationSettingsCollection,
+)
 from resources.pii.pii import PIICollection
 from resources.pii.text_file import TextFilePII, TextFilePIICollection
 from resources.redact.text import RedactText
@@ -31,10 +34,10 @@ def create_app(config):
     app = Flask(__name__.split(".")[0])
     app.config.from_object(config)
     db.init_app(app)
-    
+
     api = Api(app)
     JWTManager(app)
-    
+
     api.add_resource(DatasetActionHistoryCollection, "/audit/dataset")
     api.add_resource(APIKeyCollection, "/auth/api_key")
     api.add_resource(APIKeyRevokeCollection, "/auth/api_key/revoke")
@@ -66,7 +69,7 @@ def create_app(config):
     api.add_resource(SlackToken, "/slack_token/<int:team_id>")
     api.add_resource(UserCollection, "/user")
     api.add_resource(User, "/user/<int:user_query_id>")
-    
+
     return app
 
 
