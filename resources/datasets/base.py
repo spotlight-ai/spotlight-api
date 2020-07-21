@@ -88,16 +88,17 @@ class Dataset(Resource):
     @authenticate_token
     def get(self, user_id, dataset_id):
         base_dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
-        
-        # Check if any job related to this dataset is PENDING or Failed in which case we can't reveal the dataset.
-        jobs = JobModel.query.filter(JobModel.dataset_id == dataset_id).all()
-        jobs_json = job_schema.dump(jobs, many=True)
-        
-        for job in jobs_json:
-            if job.get("job_status","").lower() in ["pending","failed"]:
-                abort(400, JobErrors.JOB_ACTIVE)
-                
+                        
         if user_id != "MODEL":  # User is requesting
+        
+            # Check if any job related to this dataset is PENDING or Failed in which case we can't reveal the dataset.
+            jobs = JobModel.query.filter(JobModel.dataset_id == dataset_id).all()
+            jobs_json = job_schema.dump(jobs, many=True)
+            
+            for job in jobs_json:
+                if job.get("job_status","").lower() in ["pending","failed"]:
+                    abort(400, JobErrors.JOB_ACTIVE)
+
             user = UserModel.query.filter_by(user_id=user_id).first()
 
             if not base_dataset:
