@@ -66,7 +66,7 @@ def create_app(config):
     api.add_resource(RoleMemberCollection, "/role/<int:role_id>/member")
     api.add_resource(RolePermissionCollection, "/role/<int:role_id>/permission")
     api.add_resource(SlackTokenCollection, "/slack_token")
-    api.add_resource(SlackToken, "/slack_token/<int:team_id>")
+    api.add_resource(SlackToken, "/slack_token/<string:team_id>")
     api.add_resource(UserCollection, "/user")
     api.add_resource(User, "/user/<int:user_query_id>")
 
