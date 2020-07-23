@@ -91,7 +91,11 @@ class Dataset(Resource):
         base_dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
         
         args = request.args
-        masked = f'%{args.get("masked", False)}%'
+        masked = f'%{args.get("masked", "false")}%'
+        if masked and (type(masked) == str) and (masked.lower() == 'true'):
+            masked = True
+        else:
+            masked = False
         
         if user_id != "MODEL":  # User is requesting
         
