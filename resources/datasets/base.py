@@ -1,6 +1,6 @@
 import os
 from urllib.parse import urlparse
-
+from loguru import logger
 import requests
 from flask import abort, request
 from flask_restful import Resource
@@ -91,8 +91,8 @@ class Dataset(Resource):
         base_dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
         
         args = request.args
-        masked = f'%{args.get("masked", "false")}%'
-        if masked and (type(masked) == str) and (masked.lower() == 'true'):
+        masked = f'{args.get("masked", "false")}'
+        if (masked.lower() == 'true'):
             masked = True
         else:
             masked = False
