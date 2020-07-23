@@ -81,7 +81,6 @@ def generate_presigned_download_link(
             while i < len(sorted_markers):
                 marker_start = sorted_markers[i].start_location
                 marker_end = sorted_markers[i].end_location
-                marker_len = marker_end - marker_start
                 j = i
                 last_end = i
                 permit = True
@@ -109,6 +108,7 @@ def generate_presigned_download_link(
                         masked_value = masks_dict.get(sorted_markers[i].pii_type, redaction_text) 
                     else:
                         masked_value = redaction_text
+                    marker_len = marker_end - marker_start
                     file = (masked_value).join([file[:file_start], file[file_end:]])
                     total_diff = total_diff + marker_len - len(masked_value)
                 else:
@@ -212,7 +212,6 @@ def modify_markers(markers, permission_descriptions, mask):
     while i < len(sorted_markers):
         marker_start = sorted_markers[i].start_location
         marker_end = sorted_markers[i].end_location
-        marker_len = marker_end - marker_start
         j = i
         last_end = i
         permit = True
@@ -236,6 +235,7 @@ def modify_markers(markers, permission_descriptions, mask):
                 masked_value = masks_dict.get(sorted_markers[i].pii_type, redaction_text) 
             else:
                 masked_value = redaction_text
+            marker_len = marker_end - marker_start
             total_diff = total_diff + marker_len - len(masked_value)
         else:
             for k in range(i, j):
