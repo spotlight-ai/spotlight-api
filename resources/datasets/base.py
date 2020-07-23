@@ -22,6 +22,7 @@ from models.pii.pii import PIIModel
 from models.pii.text_file import TextFilePIIModel
 from models.roles.role import RoleModel
 from models.roles.role_member import RoleMemberModel
+from models.job import JobModel
 from schemas.datasets.base import DatasetSchema
 from schemas.datasets.flat_file import FlatFileDatasetSchema
 from schemas.job import JobSchema
@@ -88,7 +89,7 @@ class Dataset(Resource):
     @authenticate_token
     def get(self, user_id, dataset_id):
         base_dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
-
+        
         if user_id != "MODEL":  # User is requesting
         
             # Check if any job related to this dataset is PENDING or Failed in which case we can't reveal the dataset.
@@ -96,7 +97,7 @@ class Dataset(Resource):
             jobs_json = job_schema.dump(jobs, many=True)
 
             for job in jobs_json:
-                if job.get("job_status", "").lower() in ["pending", "failed"]:
+                if job.get("job_status", "").lower() in ["pending", "failed"]
                     abort(400, JobErrors.JOB_ACTIVE)
 
             user = UserModel.query.filter_by(user_id=user_id).first()

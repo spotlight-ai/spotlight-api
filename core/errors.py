@@ -38,10 +38,8 @@ class NotificationErrors:
     )
     CANNOT_UPDATE_FIELDS = 'Only "viewed" property can be updated.'
 
-
 class JobErrors:
     JOB_ACTIVE = "There are currently active jobs for this dataset."
-
 
 class DatabaseErrors:
     ISSUE_WRITING_TO_DB = "There was an issue writing to the database. Ensure query params are the correct type."
