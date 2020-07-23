@@ -27,7 +27,8 @@ def generate_presigned_download_link(
     )
     raw_bucket = "uploaded-datasets"
     redacted_bucket = "spotlightai-redacted-copies"
-
+    masked_bucket = "spotlightai-masked-copies"    
+    
     try:
         if permissions is None:
             response = s3_client.generate_presigned_url(
@@ -41,14 +42,23 @@ def generate_presigned_download_link(
                 (object_name + str(permission_descriptions)).encode()
             ).hexdigest()
 
-            s3_client.head_object(Bucket=redacted_bucket, Key=redacted_filepath)
-            
-            response = s3_client.generate_presigned_url(
-                "get_object",
-                Params={"Bucket": redacted_bucket, "Key": redacted_filepath},
-                ExpiresIn=expiration,
-            )
-
+            if not mask:
+                s3_client.head_object(Bucket=redacted_bucket, Key=redacted_filepath)
+                
+                response = s3_client.generate_presigned_url(
+                    "get_object",
+                    Params={"Bucket": redacted_bucket, "Key": redacted_filepath},
+                    ExpiresIn=expiration,
+                )
+            else:
+                s3_client.head_object(Bucket=masked_bucket, Key=redacted_filepath)
+                
+                response = s3_client.generate_presigned_url(
+                    "get_object",
+                    Params={"Bucket": masked_bucket, "Key": redacted_filepath},
+                    ExpiresIn=expiration,
+                )
+                
             if markers:
                 markers = modify_markers(markers, permission_descriptions, mask)
 
@@ -124,21 +134,32 @@ def generate_presigned_download_link(
             ]
 
             open(object_name.replace("/", "_"), "w").write(file)
-
-            s3_client.upload_file(
-                object_name.replace("/", "_"), redacted_bucket, redacted_filepath
-            )
-
-            os.remove(object_name.replace("/", "_"))
-
-            return (
-                s3_client.generate_presigned_url(
-                    "get_object",
-                    Params={"Bucket": redacted_bucket, "Key": redacted_filepath},
-                    ExpiresIn=expiration,
-                ),
-                modified_markers,
-            )
+            if not mask:
+                s3_client.upload_file(
+                    object_name.replace("/", "_"), redacted_bucket, redacted_filepath
+                )
+                os.remove(object_name.replace("/", "_"))
+                return (
+                    s3_client.generate_presigned_url(
+                        "get_object",
+                        Params={"Bucket": redacted_bucket, "Key": redacted_filepath},
+                        ExpiresIn=expiration,
+                    ),
+                    modified_markers,
+                )
+            else:
+                s3_client.upload_file(
+                    object_name.replace("/", "_"), masked_bucket, redacted_filepath
+                )
+                os.remove(object_name.replace("/", "_"))
+                return (
+                    s3_client.generate_presigned_url(
+                        "get_object",
+                        Params={"Bucket": masked_bucket, "Key": redacted_filepath},
+                        ExpiresIn=expiration,
+                    ),
+                    modified_markers,
+                )
 
 
 def generate_presigned_link(
