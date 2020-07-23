@@ -1,6 +1,6 @@
 import os
 from urllib.parse import urlparse
-
+from loguru import logger
 import requests
 from flask import abort, request
 from flask_restful import Resource
@@ -89,14 +89,22 @@ class Dataset(Resource):
     @authenticate_token
     def get(self, user_id, dataset_id):
         base_dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
+        
+        args = request.args
+        masked = f'{args.get("masked", "false")}'
+        if (masked.lower() == 'true'):
+            masked = True
+        else:
+            masked = False
+        
         if user_id != "MODEL":  # User is requesting
         
             # Check if any job related to this dataset is PENDING or Failed in which case we can't reveal the dataset.
             jobs = JobModel.query.filter(JobModel.dataset_id == dataset_id).all()
             jobs_json = job_schema.dump(jobs, many=True)
-            
+
             for job in jobs_json:
-                if job.get("job_status","").lower() in ["pending","failed"]:
+                if job.get("job_status", "").lower() in ["pending", "failed"]:
                     abort(400, JobErrors.JOB_ACTIVE)
 
             user = UserModel.query.filter_by(user_id=user_id).first()
@@ -171,6 +179,7 @@ class Dataset(Resource):
                     s3_object_key,
                     permissions=permissions,
                     markers=markers,
+                    mask=masked,
                 )
 
                 new_markers = []
