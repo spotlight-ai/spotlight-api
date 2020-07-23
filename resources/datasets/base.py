@@ -100,7 +100,7 @@ class Dataset(Resource):
             jobs_json = job_schema.dump(jobs, many=True)
 
             for job in jobs_json:
-                if job.get("job_status", "").lower() in ["pending", "failed"]
+                if job.get("job_status", "").lower() in ["pending", "failed"]:
                     abort(400, JobErrors.JOB_ACTIVE)
 
             user = UserModel.query.filter_by(user_id=user_id).first()
