@@ -162,7 +162,7 @@ class Dataset(Resource):
             # generate_presigned_download_link will return a presigned URL to share an S3 object and dataset markers with modified markers (if any)
             if owned:
                 dataset.download_link, _ = generate_presigned_download_link(
-                    "uploaded-datasets"
+                    "uploaded-datasets", s3_object_key
                 )  # For owners, all PII's are permitted. Hence no redaction and therefore no modification in markers
             elif shared:
 
