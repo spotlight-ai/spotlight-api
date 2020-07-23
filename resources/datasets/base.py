@@ -90,6 +90,9 @@ class Dataset(Resource):
     def get(self, user_id, dataset_id):
         base_dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
         
+        args = request.args
+        masked = f'%{args.get("masked", True)}%'
+        
         if user_id != "MODEL":  # User is requesting
         
             # Check if any job related to this dataset is PENDING or Failed in which case we can't reveal the dataset.
@@ -159,7 +162,7 @@ class Dataset(Resource):
             # generate_presigned_download_link will return a presigned URL to share an S3 object and dataset markers with modified markers (if any)
             if owned:
                 dataset.download_link, _ = generate_presigned_download_link(
-                    "uploaded-datasets", s3_object_key
+                    "uploaded-datasets"
                 )  # For owners, all PII's are permitted. Hence no redaction and therefore no modification in markers
             elif shared:
 
@@ -172,6 +175,7 @@ class Dataset(Resource):
                     s3_object_key,
                     permissions=permissions,
                     markers=markers,
+                    mask=masked,
                 )
 
                 new_markers = []
