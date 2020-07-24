@@ -37,9 +37,7 @@ class DatasetCollection(Resource):
     def get(self, user_id):
         """
         Returns a list of datasets that are owned by and shared with the currently logged in user.
-
         Note: This will only return datasets that have been verified.
-
         :param user_id: Currently logged in user ID
         :return: List of datasets
         """
@@ -257,7 +255,6 @@ class DatasetVerification(Resource):
         """
         Verifies that a dataset has been uploaded. Accepts a list of dataset IDs that are to be verified, and checks
         dataset upload on AWS S3.
-
         :param user_id: Currently logged in user ID
         :return: None
         """
@@ -289,7 +286,7 @@ class DatasetVerification(Resource):
 
                 job_ids.append(job.job_id)
                 requests.post(url, json=payload)
-                db.session.add(
+                db.session.add(                
                     DatasetActionHistoryModel(
                         user_id=user_id,
                         dataset_id=dataset.dataset_id,
@@ -299,3 +296,4 @@ class DatasetVerification(Resource):
 
         db.session.commit()
         return {"job_ids": job_ids}
+
