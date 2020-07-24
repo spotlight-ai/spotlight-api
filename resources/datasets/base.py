@@ -1,6 +1,6 @@
 import os
 from urllib.parse import urlparse
-
+from loguru import logger
 import requests
 from flask import abort, request
 from flask_restful import Resource
@@ -37,9 +37,7 @@ class DatasetCollection(Resource):
     def get(self, user_id):
         """
         Returns a list of datasets that are owned by and shared with the currently logged in user.
-
         Note: This will only return datasets that have been verified.
-
         :param user_id: Currently logged in user ID
         :return: List of datasets
         """
@@ -90,6 +88,13 @@ class Dataset(Resource):
     def get(self, user_id, dataset_id):
         base_dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
         
+        args = request.args
+        masked = f'{args.get("masked", "false")}'
+        if (masked.lower() == 'true'):
+            masked = True
+        else:
+            masked = False
+        
         if user_id != "MODEL":  # User is requesting
         
             # Check if any job related to this dataset is PENDING or Failed in which case we can't reveal the dataset.
@@ -97,7 +102,7 @@ class Dataset(Resource):
             jobs_json = job_schema.dump(jobs, many=True)
 
             for job in jobs_json:
-                if job.get("job_status", "").lower() in ["pending", "failed"]
+                if job.get("job_status", "").lower() in ["pending", "failed"]:
                     abort(400, JobErrors.JOB_ACTIVE)
 
             user = UserModel.query.filter_by(user_id=user_id).first()
@@ -172,6 +177,7 @@ class Dataset(Resource):
                     s3_object_key,
                     permissions=permissions,
                     markers=markers,
+                    mask=masked,
                 )
 
                 new_markers = []
@@ -249,7 +255,6 @@ class DatasetVerification(Resource):
         """
         Verifies that a dataset has been uploaded. Accepts a list of dataset IDs that are to be verified, and checks
         dataset upload on AWS S3.
-
         :param user_id: Currently logged in user ID
         :return: None
         """
@@ -281,7 +286,7 @@ class DatasetVerification(Resource):
 
                 job_ids.append(job.job_id)
                 requests.post(url, json=payload)
-                db.session.add(
+                db.session.add(                
                     DatasetActionHistoryModel(
                         user_id=user_id,
                         dataset_id=dataset.dataset_id,
@@ -291,3 +296,4 @@ class DatasetVerification(Resource):
 
         db.session.commit()
         return {"job_ids": job_ids}
+
