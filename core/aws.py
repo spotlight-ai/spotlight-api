@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 import boto3
 from botocore.exceptions import ClientError
 from core.constants import Masks
+from core.util import one_way_hash_mask
 
 def generate_presigned_download_link(
     bucket_name, object_name, expiration=3600, permissions=None, markers=None, mask=False
@@ -60,7 +61,7 @@ def generate_presigned_download_link(
                 )
                 
             if markers:
-                markers = modify_markers(markers, permission_descriptions, mask)
+                markers = modify_markers(markers, permission_descriptions, mask, object_name, s3_client)
 
         return response, markers
 
@@ -83,7 +84,10 @@ def generate_presigned_download_link(
 
             total_markers = len(sorted_markers)
             
-            masks_dict = Masks().masks
+            mask_class = Masks()
+            masks_dict = mask_class.masks
+            
+            hash_pii_types = mask_class.hash_pii_types 
             
             redaction_text = "<REDACTED>"  # The PII's will be replaced with this text if not masked.
             marker_to_be_excluded = []
@@ -115,7 +119,10 @@ def generate_presigned_download_link(
                         marker_end - total_diff,
                     )
                     if (i == last_end) and mask:
-                        masked_value = masks_dict.get(sorted_markers[i].pii_type, redaction_text) 
+                        if sorted_markers[i].pii_type in hash_pii_types:
+                            masked_value = one_way_hash_mask(file[file_start:file_end], sorted_markers[i].pii_type)
+                        else:
+                            masked_value = masks_dict.get(sorted_markers[i].pii_type, redaction_text) 
                     else:
                         masked_value = redaction_text
                     marker_len = marker_end - marker_start
@@ -219,13 +226,23 @@ def dataset_cleanup(filepath):
         return None
 
 
-def modify_markers(markers, permission_descriptions, mask):
+def modify_markers(markers, permission_descriptions, mask, object_name, s3_client):
+    if mask:
+        s3_client.download_file(
+            "uploaded-datasets", object_name, object_name.replace("/", "_")
+        )
+        file = open(object_name.replace("/", "_"), "r+").read()
+        
     total_diff, i = 0, 0
     sorted_markers = sorted(markers, key=lambda k: (k.start_location, -k.end_location))
 
     total_markers = len(sorted_markers)
     
-    masks_dict = Masks().masks
+    mask_class = Masks()
+    masks_dict = mask_class.masks
+    
+    hash_pii_types = mask_class.hash_pii_types 
+
     
     redaction_text = "<REDACTED>"  # The PII's will be replaced with this text if not masked.
     marker_to_be_excluded = []
@@ -252,10 +269,21 @@ def modify_markers(markers, permission_descriptions, mask):
                 last_end = j
             j += 1
         if not permit:
+            file_start, file_end = (
+                marker_start - total_diff,
+                marker_end - total_diff,
+            )
             if (i == last_end) and mask:
-                masked_value = masks_dict.get(sorted_markers[i].pii_type, redaction_text) 
+                if sorted_markers[i].pii_type in hash_pii_types:
+                    masked_value = one_way_hash_mask(file[file_start:file_end], sorted_markers[i].pii_type)
+                else:
+                    masked_value = masks_dict.get(sorted_markers[i].pii_type, redaction_text) 
             else:
                 masked_value = redaction_text
+                
+            if mask:
+                file = (masked_value).join([file[:file_start], file[file_end:]])
+                
             marker_len = marker_end - marker_start
             total_diff = total_diff + marker_len - len(masked_value)
         else:
@@ -269,4 +297,8 @@ def modify_markers(markers, permission_descriptions, mask):
         for i, marker in enumerate(sorted_markers)
         if i not in marker_to_be_excluded
     ]
+    
+    if mask:
+        os.remove(object_name.replace("/", "_"))
+    
     return modified_markers

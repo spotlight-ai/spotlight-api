@@ -14,6 +14,7 @@ class UserConstants:
     
 class Masks:
     def __init__(self):
+        self.hash_pii_types = ['ssn','ein','routing','usa_phone']
         self.masks = {
             "name" : 'NAME',
             "email" : 'user@domain',
