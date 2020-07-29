@@ -76,7 +76,7 @@ class DatasetSharedUserCollection(Resource):
             notification = NotificationModel(
                 user_id=shared_user_object.user_id,
                 title=NotificationConstants.DATASET_SHARED_TITLE,
-                detail=f"{NotificationConstants.DATASET_SHARED_DETAIL} {dataset.dataset_name}",
+                detail=f"{NotificationConstants.DATASET_SHARED_DETAIL}-{dataset.dataset_name}",
             )
             notification.send_notification_email(permission_long_descriptions)
 
