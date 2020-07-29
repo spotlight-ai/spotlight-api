@@ -51,8 +51,11 @@ class RoleDatasetCollection(Resource):
                 abort(401, f"{dataset.dataset_id}: {DatasetErrors.USER_DOES_NOT_OWN}")
 
         role.datasets.extend(datasets)
-
-        send_notifications(db.session, role, datasets)
+        
+        role_datasets = flat_file_schema.dump(role.datasets, many=True)
+        current_members = [member.user_id for member in role.members]
+        
+        send_notifications(db.session, role, role_datasets, current_members)
 
         db.session.commit()
         return None, 201
@@ -78,7 +81,11 @@ class RoleDatasetCollection(Resource):
 
         role.datasets = datasets
 
-        send_notifications(db.session, role, datasets)
+        role_datasets = flat_file_schema.dump(role.datasets, many=True)
+        current_members = [member.user_id for member in role.members]
+        
+        send_notifications(db.session, role, role_datasets, current_members)
+
         db.session.commit()
 
         return role_schema.dump(role)
