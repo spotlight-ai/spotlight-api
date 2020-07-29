@@ -29,13 +29,13 @@ class TextFilePIICollection(Resource):
         return
 
 
-class TextFilePII(Resource):
+class TextFilePIIDatasetCollection(Resource):
     @authenticate_token
     def get(self, user_id, dataset_id):
         pii = TextFilePIIModel.query.filter_by(dataset_id=dataset_id).all()
         return text_file_pii_schema.dump(pii, many=True)
 
-class TextFilePIIDeletion(Resource):        
+class TextFilePII(Resource):        
     @authenticate_token
     def delete(self, user_id, marker_id):
         try:

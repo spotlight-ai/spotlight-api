@@ -20,7 +20,7 @@ from resources.notifications.settings import (
     NotificationSettingsCollection,
 )
 from resources.pii.pii import PIICollection
-from resources.pii.text_file import TextFilePII, TextFilePIICollection, TextFilePIIDeletion
+from resources.pii.text_file import TextFilePII, TextFilePIICollection, TextFilePIIDatasetCollection
 from resources.redact.text import RedactText
 from resources.roles.role import Role, RoleCollection
 from resources.roles.role_dataset import RoleDatasetCollection
@@ -52,8 +52,8 @@ def create_app(config):
     api.add_resource(Login, "/login")
     api.add_resource(PIICollection, "/pii")
     api.add_resource(TextFilePIICollection, "/pii/text_file")
-    api.add_resource(TextFilePII, "/pii/text_file/<int:dataset_id>")
-    api.add_resource(TextFilePIIDeletion, "/pii/text_file/<int:marker_id>")
+    api.add_resource(TextFilePIIDatasetCollection, "/pii/text_file/<int:dataset_id>")
+    api.add_resource(TextFilePII, "/pii/text_file/<int:marker_id>")
     api.add_resource(NotificationCollection, "/notification")
     api.add_resource(Notification, "/notification/<int:notification_id>")
     api.add_resource(NotificationSettingsCollection, "/settings/notification")
