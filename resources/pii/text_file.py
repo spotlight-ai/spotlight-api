@@ -12,7 +12,6 @@ from schemas.pii.text_file import TextFilePIISchema
 
 text_file_pii_schema = TextFilePIISchema()
 
-from loguru import logger
 class TextFilePIICollection(Resource):
     @authenticate_token
     def post(self, user_id):
