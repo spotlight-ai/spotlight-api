@@ -103,7 +103,12 @@ class Dataset(Resource):
 
             for job in jobs_json:
                 if job.get("job_status", "").lower() in ["pending", "failed"]:
-                    abort(400, JobErrors.JOB_ACTIVE)
+                    if base_dataset.dataset_type == "FLAT_FILE":
+                        dataset = FlatFileDatasetModel.query.filter_by(
+                            dataset_id=dataset_id
+                        ).first()
+                        dataset.download_link , dataset.markers = None , []
+                    return flat_file_dataset_schema.dump(dataset)
 
             user = UserModel.query.filter_by(user_id=user_id).first()
 
