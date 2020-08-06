@@ -1,5 +1,7 @@
 import hashlib
 
+from core.errors import MaskingErrors
+
 
 def one_way_hash_mask(text: str, pii_type: str) -> str:
     """
@@ -19,7 +21,7 @@ def one_way_hash_mask(text: str, pii_type: str) -> str:
 
         return format_numeric_mask(hash_val, pii_type)
     else:
-        raise AttributeError("Unable to mask given PII type.")
+        raise AttributeError(MaskingErrors.PII_TYPE_NOT_SUPPORTED)
 
 
 def format_numeric_mask(masked_text: str, masked_pii_type: str) -> str:

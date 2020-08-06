@@ -2,6 +2,7 @@ import os
 
 from flask import abort, request
 
+from core.errors import AuthenticationErrors
 from models.auth.api_key import APIKeyModel
 from models.auth.user import UserModel
 from models.auth.util import hash_token
@@ -22,7 +23,7 @@ def authenticate_token(func):
         bearer_token = request.headers.get("authorization", None)
 
         if not api_key and not bearer_token:
-            abort(400, "Missing authentication header")
+            abort(400, AuthenticationErrors.MISSING_AUTH_HEADER)
 
         if api_key:
             is_authenticated, message = _authenticate_api_key(api_key)
@@ -42,18 +43,19 @@ def authenticate_token(func):
     return wrapper
 
 
-def _authenticate_api_key(api_key):
+def _authenticate_api_key(api_key: str) -> tuple:
     """
     Authenticates that the API key exists in the database.
     :param api_key: Raw API key
     :return: Boolean representing authentication status
     """
-    hashed_key = hash_token(api_key)
-    key = APIKeyModel.query.filter_by(api_key=hashed_key).first()
+    hashed_key: str = hash_token(api_key)
+    key: APIKeyModel = APIKeyModel.query.filter_by(api_key=hashed_key).first()
 
-    if key:
+    try:
         if key.revoked:
-            return False, "Unauthorized API key"
+            return False, AuthenticationErrors.UNAUTHORIZED_API_KEY
         return True, key.user_id
 
-    return False, "Incorrect API key"
+    except AttributeError:
+        return False, AuthenticationErrors.INCORRECT_API_KEY

@@ -50,3 +50,13 @@ class DatabaseErrors:
 class SlackErrors:
     TOKEN_ALREADY_EXISTS = "A token already exists for this team ID."
     NO_TOKEN_FOUND = "No token was found for this team ID."
+
+
+class MaskingErrors:
+    PII_TYPE_NOT_SUPPORTED = "The requested PII type is not supported for masking."
+
+
+class AuthenticationErrors:
+    MISSING_AUTH_HEADER = "Missing authentication header."
+    UNAUTHORIZED_API_KEY = "Unauthorized API key."
+    INCORRECT_API_KEY = "Incorrect API key."
