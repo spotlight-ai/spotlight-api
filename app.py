@@ -9,6 +9,7 @@ from db import db
 from resources.audit.dataset_action_history import DatasetActionHistoryCollection
 from resources.auth.api_key import APIKeyCollection, APIKeyRevokeCollection
 from resources.auth.login import ForgotPassword, Login, ResetPassword
+from resources.auth.logout import Logout
 from resources.datasets.base import Dataset, DatasetCollection, DatasetVerification
 from resources.datasets.flat_file import FlatFileCollection
 from resources.datasets.owners import DatasetOwners
@@ -55,6 +56,7 @@ def create_app(config):
     api.add_resource(JobCollection, "/job")
     api.add_resource(Job, "/job/<int:job_id>")
     api.add_resource(Login, "/login")
+    api.add_resource(Logout, "/logout")
     api.add_resource(PIICollection, "/pii")
     api.add_resource(TextFilePIICollection, "/pii/text_file")
     api.add_resource(TextFilePIIDatasetCollection, "/pii/text_file/<int:dataset_id>")

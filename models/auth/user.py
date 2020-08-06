@@ -11,8 +11,8 @@ from itsdangerous import (
 from db import db
 from models.associations import DatasetOwner
 from models.auth.api_key import APIKeyModel
+from models.auth.util import add_valid_token, check_validity
 from models.datasets.base import DatasetModel
-
 
 class UserModel(db.Model):
     __tablename__ = "user"
@@ -49,7 +49,12 @@ class UserModel(db.Model):
         :return: Authorization token.
         """
         s = Serializer(os.environ.get("SECRET", "default_secret"), expires_in=ttl)
-        return s.dumps({"id": self.user_id})
+        
+        token = s.dumps({"id": self.user_id})
+        
+        # Add token to an in-memory set
+        add_valid_token(self.user_id, token.decode("ascii"))
+        return token
 
     def check_password(self, password):
         """
@@ -78,9 +83,13 @@ class UserModel(db.Model):
             return False, "Token expired"  # Valid token, but TTL is passed
         except BadSignature:
             return False, "Bad token received"  # Invalid token
-
-        return True, data["id"]
-
+        
+        # check if the hash of token is present in the memory to validate it.
+        if check_validity(data["id"], token):
+            return True, data["id"]
+        else:
+            return False, "Invalid token received"
+            
     def __repr__(self):
         return (
             f"{self.__class__.__name__}({self.user_id}, {self.email}, {self.password}, {self.first_name}, "
