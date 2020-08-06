@@ -1,59 +1,40 @@
 import hashlib
 
-# ssn, routing are 9-digit number
-def one_way_hash_mask(text, pii_type):
-    if pii_type == "ssn":
-        hash_value = str(
-            int(hashlib.sha256(text.encode("utf-8")).hexdigest(), 16) % (10 ** 9)
-        )
-        if len(hash_value) < 9:
-            hash_value += "0" * (9 - len(hash_value))
 
-        if "-" in text:
-            return hash_value[:3] + "-" + hash_value[3:5] + "-" + hash_value[5:]
-        else:
-            return hash_value
+def one_way_hash_mask(text: str, pii_type: str) -> str:
+    """
+    Masks PII in a one-way process so that the same value is generated for any input.
+    :param text: Input PII text to mask
+    :param pii_type: Type of PII (needed for determining masking function)
+    :return: Masked string of PII
+    """
+    numeric_types: set = {"ssn", "ein", "routing", "usa_phone"}
 
-    if pii_type == "ein":
-        hash_value = str(
-            int(hashlib.sha256(text.encode("utf-8")).hexdigest(), 16) % (10 ** 9)
+    if pii_type in numeric_types:
+        hash_val = str(
+            int(hashlib.blake2b(text.encode("utf-8")).hexdigest(), 16) % 10 ** len(text)
         )
 
-        if len(hash_value) < 9:
-            hash_value += "0" * (9 - len(hash_value))
+        hash_val.ljust(len(text), "0")
 
-        if "-" in text:
-            return hash_value[:2] + "-" + hash_value[2:]
-        else:
-            return hash_value
+        return format_numeric_mask(hash_val, pii_type)
+    else:
+        raise AttributeError("Unable to mask given PII type.")
 
-    if pii_type == "routing":
-        hash_value = str(
-            int(hashlib.sha256(text.encode("utf-8")).hexdigest(), 16) % (10 ** 9)
-        )
 
-        if len(hash_value) < 9:
-            hash_value = ("0" * (9 - len(hash_value))) + hash_value
+def format_numeric_mask(masked_text: str, masked_pii_type: str) -> str:
+    """
+    Formats a numeric PII token into the correct format.
+    :param masked_text: Masked PII token
+    :param masked_pii_type: PII type
+    :return: Formatted String object
+    """
+    # Dictionary of formatting functions for each type of PII
+    format_funcs = {
+        "usa_phone": lambda x: f"+1 {x[:3]}-{x[3:6]}-{x[6:10]}",
+        "ssn": lambda x: f"{x[:3]}-{x[3:5]}-{x[5:9]}",
+        "ein": lambda x: f"{x[:2]}-{x[2:9]}",
+    }
 
-        return hash_value
-
-    if pii_type == "usa_phone":
-        hash_value = str(
-            int(hashlib.sha256(text.encode("utf-8")).hexdigest(), 16) % (10 ** 10)
-        )
-
-        if len(hash_value) < 10:
-            hash_value += "0" * (10 - len(hash_value))
-
-        if "+1" in text:
-            return "+1-" + hash_value[:3] + "-" + hash_value[3:6] + "-" + hash_value[6:]
-        elif "(" in text:
-            return "(" + hash_value[:3] + ") " + hash_value[3:6] + "-" + hash_value[6:]
-        elif "-" in text:
-            return hash_value[:3] + "-" + hash_value[3:6] + "-" + hash_value[6:]
-        elif " " in text:
-            return hash_value[:3] + " " + hash_value[3:6] + " " + hash_value[6:]
-        else:
-            return hash_value
-
-    return None
+    # Call the function from the dictionary with the masked token, pass-through if no special format required
+    return format_funcs.get(masked_pii_type, lambda x: x)(masked_text)
