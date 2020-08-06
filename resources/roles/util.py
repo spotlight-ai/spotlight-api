@@ -1,6 +1,6 @@
 from flask import abort
 from sqlalchemy.sql.expression import true
-from loguru import logger
+
 from core.constants import NotificationConstants
 from core.errors import RoleErrors
 from models.notifications.notification import NotificationModel
@@ -37,10 +37,10 @@ def send_notifications(session, role, datasets, new_members):
     :return: None
     """
     role_permission_descriptions = [perm.long_description for perm in role.permissions]
-    role_dataset_names = [d.get('dataset_name') for d in datasets]
-    
+    role_dataset_names = [d.get("dataset_name") for d in datasets]
+
     role_dataset_names.sort()
-    
+
     for member in new_members:
         # Add notification for each new member of the role
         notification = NotificationModel(

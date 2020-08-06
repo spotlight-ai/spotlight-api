@@ -1,6 +1,6 @@
 import os
 from urllib.parse import urlparse
-from loguru import logger
+
 import requests
 from flask import abort, request
 from flask_restful import Resource
@@ -9,7 +9,7 @@ from sqlalchemy.sql.expression import true
 from core.aws import dataset_cleanup, generate_presigned_download_link
 from core.constants import AuditConstants
 from core.decorators import authenticate_token
-from core.errors import DatasetErrors, UserErrors, JobErrors
+from core.errors import DatasetErrors, UserErrors
 from db import db
 from models.associations import RoleDataset, RolePermission, UserDatasetPermission
 from models.audit.dataset_action_history import DatasetActionHistoryModel
@@ -22,7 +22,6 @@ from models.pii.pii import PIIModel
 from models.pii.text_file import TextFilePIIModel
 from models.roles.role import RoleModel
 from models.roles.role_member import RoleMemberModel
-from models.job import JobModel
 from schemas.datasets.base import DatasetSchema
 from schemas.datasets.flat_file import FlatFileDatasetSchema
 from schemas.job import JobSchema
@@ -87,16 +86,16 @@ class Dataset(Resource):
     @authenticate_token
     def get(self, user_id, dataset_id):
         base_dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
-        
+
         args = request.args
         masked = f'{args.get("masked", "false")}'
-        if (masked.lower() == 'true'):
+        if masked.lower() == "true":
             masked = True
         else:
             masked = False
-        
+
         if user_id != "MODEL":  # User is requesting
-        
+
             # Check if any job related to this dataset is PENDING or Failed in which case we can't reveal the dataset.
             jobs = JobModel.query.filter(JobModel.dataset_id == dataset_id).all()
             jobs_json = job_schema.dump(jobs, many=True)
@@ -107,7 +106,7 @@ class Dataset(Resource):
                         dataset = FlatFileDatasetModel.query.filter_by(
                             dataset_id=dataset_id
                         ).first()
-                        dataset.download_link , dataset.markers = None , []
+                        dataset.download_link, dataset.markers = None, []
                     return flat_file_dataset_schema.dump(dataset)
 
             user = UserModel.query.filter_by(user_id=user_id).first()
@@ -291,7 +290,7 @@ class DatasetVerification(Resource):
 
                 job_ids.append(job.job_id)
                 requests.post(url, json=payload)
-                db.session.add(                
+                db.session.add(
                     DatasetActionHistoryModel(
                         user_id=user_id,
                         dataset_id=dataset.dataset_id,
@@ -301,4 +300,3 @@ class DatasetVerification(Resource):
 
         db.session.commit()
         return {"job_ids": job_ids}
-

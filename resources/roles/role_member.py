@@ -10,11 +10,12 @@ from core.errors import RoleErrors
 from db import db
 from models.roles.role_member import RoleMemberModel
 from resources.roles.util import retrieve_role, send_notifications
-from schemas.roles.role_member import RoleMemberSchema
 from schemas.datasets.flat_file import FlatFileDatasetSchema
+from schemas.roles.role_member import RoleMemberSchema
 
 role_member_schema = RoleMemberSchema()
 flat_file_schema = FlatFileDatasetSchema()
+
 
 class RoleMemberCollection(Resource):
     @authenticate_token
@@ -67,7 +68,7 @@ class RoleMemberCollection(Resource):
 
             if role_datasets and len(role_datasets) > 0:
                 send_notifications(db.session, role, role_datasets, users)
-                
+
             return None, 201
         except ValidationError as err:
             abort(422, err.messages)
@@ -104,7 +105,7 @@ class RoleMemberCollection(Resource):
             role.updated_ts = datetime.datetime.now()
 
             db.session.commit()
-            
+
             role_datasets = flat_file_schema.dump(role.datasets, many=True)
 
             if role_datasets and len(role_datasets) > 0:

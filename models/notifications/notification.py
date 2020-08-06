@@ -44,8 +44,10 @@ class NotificationModel(db.Model):
 
         email_title = self.title
         email_detail = self.detail
-        email_detail = '<b>' + email_detail.replace('-','</b><br>').replace(', ', '<br>')
-        
+        email_detail = "<b>" + email_detail.replace("-", "</b><br>").replace(
+            ", ", "<br>"
+        )
+
         permissions.sort()
         permission_text = f"<br><b>You have the following permissions:</b><br> {'<br>'.join(permissions)}"
 

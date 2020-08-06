@@ -4,11 +4,18 @@ from urllib.parse import urlparse
 
 import boto3
 from botocore.exceptions import ClientError
+
 from core.constants import Masks
 from core.util import one_way_hash_mask
 
+
 def generate_presigned_download_link(
-    bucket_name, object_name, expiration=3600, permissions=None, markers=None, mask=False
+    bucket_name,
+    object_name,
+    expiration=3600,
+    permissions=None,
+    markers=None,
+    mask=False,
 ):
     """
     Generate a presigned URL to share an S3 object
@@ -28,8 +35,8 @@ def generate_presigned_download_link(
     )
     raw_bucket = "uploaded-datasets"
     redacted_bucket = "spotlightai-redacted-copies"
-    masked_bucket = "spotlightai-masked-copies"    
-    
+    masked_bucket = "spotlightai-masked-copies"
+
     try:
         if permissions is None:
             response = s3_client.generate_presigned_url(
@@ -45,7 +52,7 @@ def generate_presigned_download_link(
 
             if not mask:
                 s3_client.head_object(Bucket=redacted_bucket, Key=redacted_filepath)
-                
+
                 response = s3_client.generate_presigned_url(
                     "get_object",
                     Params={"Bucket": redacted_bucket, "Key": redacted_filepath},
@@ -53,15 +60,17 @@ def generate_presigned_download_link(
                 )
             else:
                 s3_client.head_object(Bucket=masked_bucket, Key=redacted_filepath)
-                
+
                 response = s3_client.generate_presigned_url(
                     "get_object",
                     Params={"Bucket": masked_bucket, "Key": redacted_filepath},
                     ExpiresIn=expiration,
                 )
-                
+
             if markers:
-                markers = modify_markers(markers, permission_descriptions, mask, object_name, s3_client)
+                markers = modify_markers(
+                    markers, permission_descriptions, mask, object_name, s3_client
+                )
 
         return response, markers
 
@@ -83,13 +92,15 @@ def generate_presigned_download_link(
             )
 
             total_markers = len(sorted_markers)
-            
+
             mask_class = Masks()
             masks_dict = mask_class.masks
-            
-            hash_pii_types = mask_class.hash_pii_types 
-            
-            redaction_text = "<REDACTED>"  # The PII's will be replaced with this text if not masked.
+
+            hash_pii_types = mask_class.hash_pii_types
+
+            redaction_text = (
+                "<REDACTED>"  # The PII's will be replaced with this text if not masked.
+            )
             marker_to_be_excluded = []
 
             while i < len(sorted_markers):
@@ -99,17 +110,17 @@ def generate_presigned_download_link(
                 last_end = i
                 permit = True
                 while (j < total_markers) and (
-                    sorted_markers[j].start_location < marker_end 
+                    sorted_markers[j].start_location < marker_end
                 ):
                     if not permit:
-                        marker_to_be_excluded.append(j)    
+                        marker_to_be_excluded.append(j)
                     elif permit and (
                         sorted_markers[j].pii_type not in permission_descriptions
                     ):
                         permit = False
                         for k in range(i, j + 1):
                             marker_to_be_excluded.append(k)
-                    if (sorted_markers[j].end_location > marker_end):
+                    if sorted_markers[j].end_location > marker_end:
                         marker_end = sorted_markers[j].end_location
                         last_end = j
                     j += 1
@@ -120,9 +131,13 @@ def generate_presigned_download_link(
                     )
                     if (i == last_end) and mask:
                         if sorted_markers[i].pii_type in hash_pii_types:
-                            masked_value = one_way_hash_mask(file[file_start:file_end], sorted_markers[i].pii_type)
+                            masked_value = one_way_hash_mask(
+                                file[file_start:file_end], sorted_markers[i].pii_type
+                            )
                         else:
-                            masked_value = masks_dict.get(sorted_markers[i].pii_type, redaction_text) 
+                            masked_value = masks_dict.get(
+                                sorted_markers[i].pii_type, redaction_text
+                            )
                     else:
                         masked_value = redaction_text
                     marker_len = marker_end - marker_start
@@ -232,39 +247,36 @@ def modify_markers(markers, permission_descriptions, mask, object_name, s3_clien
             "uploaded-datasets", object_name, object_name.replace("/", "_")
         )
         file = open(object_name.replace("/", "_"), "r+").read()
-        
+
     total_diff, i = 0, 0
     sorted_markers = sorted(markers, key=lambda k: (k.start_location, -k.end_location))
 
     total_markers = len(sorted_markers)
-    
+
     mask_class = Masks()
     masks_dict = mask_class.masks
-    
-    hash_pii_types = mask_class.hash_pii_types 
 
-    
-    redaction_text = "<REDACTED>"  # The PII's will be replaced with this text if not masked.
+    hash_pii_types = mask_class.hash_pii_types
+
+    redaction_text = (
+        "<REDACTED>"  # The PII's will be replaced with this text if not masked.
+    )
     marker_to_be_excluded = []
-    
+
     while i < len(sorted_markers):
         marker_start = sorted_markers[i].start_location
         marker_end = sorted_markers[i].end_location
         j = i
         last_end = i
         permit = True
-        while (j < total_markers) and (
-            sorted_markers[j].start_location < marker_end 
-        ):
+        while (j < total_markers) and (sorted_markers[j].start_location < marker_end):
             if not permit:
-                marker_to_be_excluded.append(j)    
-            elif permit and (
-                sorted_markers[j].pii_type not in permission_descriptions
-            ):
+                marker_to_be_excluded.append(j)
+            elif permit and (sorted_markers[j].pii_type not in permission_descriptions):
                 permit = False
                 for k in range(i, j + 1):
                     marker_to_be_excluded.append(k)
-            if (sorted_markers[j].end_location > marker_end):
+            if sorted_markers[j].end_location > marker_end:
                 marker_end = sorted_markers[j].end_location
                 last_end = j
             j += 1
@@ -275,15 +287,19 @@ def modify_markers(markers, permission_descriptions, mask, object_name, s3_clien
             )
             if (i == last_end) and mask:
                 if sorted_markers[i].pii_type in hash_pii_types:
-                    masked_value = one_way_hash_mask(file[file_start:file_end], sorted_markers[i].pii_type)
+                    masked_value = one_way_hash_mask(
+                        file[file_start:file_end], sorted_markers[i].pii_type
+                    )
                 else:
-                    masked_value = masks_dict.get(sorted_markers[i].pii_type, redaction_text) 
+                    masked_value = masks_dict.get(
+                        sorted_markers[i].pii_type, redaction_text
+                    )
             else:
                 masked_value = redaction_text
-                
+
             if mask:
                 file = (masked_value).join([file[:file_start], file[file_end:]])
-                
+
             marker_len = marker_end - marker_start
             total_diff = total_diff + marker_len - len(masked_value)
         else:
@@ -297,8 +313,8 @@ def modify_markers(markers, permission_descriptions, mask, object_name, s3_clien
         for i, marker in enumerate(sorted_markers)
         if i not in marker_to_be_excluded
     ]
-    
+
     if mask:
         os.remove(object_name.replace("/", "_"))
-    
+
     return modified_markers

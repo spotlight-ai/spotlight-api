@@ -6,11 +6,12 @@ from sqlalchemy.exc import IntegrityError
 from core.decorators import authenticate_token
 from core.errors import DatasetErrors
 from db import db
-from models.pii.text_file import TextFilePIIModel
 from models.datasets.flat_file import FlatFileDatasetModel
+from models.pii.text_file import TextFilePIIModel
 from schemas.pii.text_file import TextFilePIISchema
 
 text_file_pii_schema = TextFilePIISchema()
+
 
 class TextFilePIICollection(Resource):
     @authenticate_token
@@ -35,12 +36,15 @@ class TextFilePIIDatasetCollection(Resource):
         pii = TextFilePIIModel.query.filter_by(dataset_id=dataset_id).all()
         return text_file_pii_schema.dump(pii, many=True)
 
-class TextFilePII(Resource):        
+
+class TextFilePII(Resource):
     @authenticate_token
     def delete(self, user_id, marker_id):
         try:
             pii = TextFilePIIModel.query.filter_by(pii_id=marker_id).first()
-            dataset = FlatFileDatasetModel.query.filter_by(dataset_id=pii.dataset_id).first()
+            dataset = FlatFileDatasetModel.query.filter_by(
+                dataset_id=pii.dataset_id
+            ).first()
             owners = [owner.user_id for owner in dataset.owners]
             if user_id not in owners:
                 abort(400, DatasetErrors.USER_DOES_NOT_OWN)
@@ -54,5 +58,3 @@ class TextFilePII(Resource):
             db.session.rollback()
             abort(400, err)
         return
-    
-        

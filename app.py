@@ -20,7 +20,11 @@ from resources.notifications.settings import (
     NotificationSettingsCollection,
 )
 from resources.pii.pii import PIICollection
-from resources.pii.text_file import TextFilePII, TextFilePIICollection, TextFilePIIDatasetCollection
+from resources.pii.text_file import (
+    TextFilePII,
+    TextFilePIICollection,
+    TextFilePIIDatasetCollection,
+)
 from resources.redact.text import RedactText
 from resources.roles.role import Role, RoleCollection
 from resources.roles.role_dataset import RoleDatasetCollection
@@ -28,6 +32,7 @@ from resources.roles.role_member import RoleMemberCollection
 from resources.roles.role_permission import RolePermissionCollection
 from resources.slack.slack_token import SlackToken, SlackTokenCollection
 from resources.user import User, UserCollection
+
 
 def create_app(config):
     app = Flask(__name__.split(".")[0])
@@ -69,7 +74,7 @@ def create_app(config):
     api.add_resource(SlackToken, "/slack_token/<string:team_id>")
     api.add_resource(UserCollection, "/user")
     api.add_resource(User, "/user/<int:user_query_id>")
-    
+
     return app
 
 
