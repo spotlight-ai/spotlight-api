@@ -38,13 +38,17 @@ class APIKeyCollection(Resource):
 
 class APIKeyRevokeCollection(Resource):
     @authenticate_token
-    def get(self, user_id):
-        revoke_status = request.args.get("revoke_status", True)
+    def get(self, user_id: int) -> dict:
+        """
+        Update the revoke status of a user's API key. Default revoke status is True (API is revoked by default)
+        :param user_id: Currently logged in user ID
+        :return: JSON response
+        """
+        revoke_status: bool = strtobool(request.args.get("revoke_status", "True"))
 
-        api_key = APIKeyModel.query.filter_by(user_id=user_id).first()
-        parsed_bool = strtobool(revoke_status)
-        api_key.revoked = parsed_bool
+        api_key: APIKeyModel = APIKeyModel.query.filter_by(user_id=user_id).first()
+        api_key.revoked = revoke_status
 
         db.session.commit()
 
-        return {"revoked": bool(parsed_bool)}
+        return {"revoked": revoke_status}
