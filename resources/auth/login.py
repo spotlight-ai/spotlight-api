@@ -9,6 +9,7 @@ from loguru import logger
 from marshmallow import ValidationError
 from sendgrid.helpers.mail import Mail
 
+from core.errors import AuthenticationErrors
 from core.errors import UserErrors
 from db import db
 from models.auth.user import UserModel
@@ -21,91 +22,101 @@ user_schema = UserSchema()
 
 
 class Login(Resource):
-    def post(self):
+    @staticmethod
+    def post() -> dict:
         """
         Logs in a user and returns an authentication token.
         :return: Token and User object.
         """
         try:
-            data = login_schema.load(request.get_json(force=True))
-            user = UserModel.query.filter_by(email=data.get("email")).first()
-            if not user:
-                abort(404, "User not found.")
+            # Look up user in DB using the supplied e-mail address
+            data: dict = login_schema.load(request.get_json(force=True))
+            user: UserModel = UserModel.query.filter_by(email=data.get("email")).first()
 
+            if not user:
+                abort(404, UserErrors.USER_NOT_FOUND)
+
+            # Verify that password hashes match and update last login time to current
             if user.check_password(data.get("password")):
                 user.last_login = datetime.datetime.now()
-                token = user.generate_auth_token()
+                token: str = user.generate_auth_token().decode("utf-8")
                 db.session.commit()
-                return {"token": token.decode("ascii"), "user": user_schema.dump(user)}
+
+                return {"token": token, "user": user_schema.dump(user)}
             else:
-                abort(400, "Credentials incorrect.")
+                logger.error(
+                    f'User {data.get("email")} supplied incorrect login credentials'
+                )
+                abort(400, AuthenticationErrors.INCORRECT_CREDS)
         except ValidationError as err:
             abort(422, err.messages)
 
 
 class ForgotPassword(Resource):
-    def post(self):
+    @staticmethod
+    def post() -> None:
         """
         Sends password reset e-mail.
         :return: None
         """
-        logger.info("ForgotPassword request received...")
-        data = request.get_json(force=True)
+        data: dict = request.get_json(force=True)
 
         try:
-            email = data.get("email")
-
-            user = UserModel.query.filter_by(email=email).first()
+            # Attempt to locate the user record for the reset password request
+            email: str = data.get("email")
+            user: UserModel = UserModel.query.filter_by(email=email).first()
 
             if not user:
-                logger.error(UserErrors.USER_NOT_FOUND)
+                logger.error(f"User not found for reset password request: {email}")
                 abort(404, UserErrors.USER_NOT_FOUND)
 
-            reset_token = create_access_token(
+            # Generate a password reset token that expires in 24 hours, send this with e-mail link
+            reset_token: str = create_access_token(
                 str(user.user_id), expires_delta=datetime.timedelta(hours=24)
             )
 
-            html_body = Template(
+            # Create the e-mail to send the user
+            html_body: Template = Template(
                 open("./email_templates/forgot_password.html").read()
             ).safe_substitute(
                 url=f"{os.environ.get('BASE_WEB_URL')}/reset?token={reset_token}"
             )
 
-            logger.info("Loaded HTML template successfully...")
-
-            message = Mail(
+            message: Mail = Mail(
                 from_email="hellospotlightai@gmail.com",
                 to_emails=email,
                 subject="SpotlightAI | Password Reset Request",
                 html_content=html_body,
             )
 
+            # Send the e-mail from a separate thread
             send_email(message)
             return
+
         except KeyError as err:
             abort(422, str(err))
 
 
 class ResetPassword(Resource):
-    def post(self):
+    @staticmethod
+    def post() -> None:
         """
         Resets password of a user.
         :return: None
         """
-        data = request.get_json(force=True)
+        data: dict = request.get_json(force=True)
 
         try:
-            password = data.get("password")
-            reset_token = data.get("reset_token")
+            password: str = data.get("password")
+            reset_token: str = data.get("reset_token")
 
-            user_id = decode_token(reset_token).get("identity")
+            # Verify token for identity, otherwise throw a key error
+            user_id: int = decode_token(reset_token).get("identity")
+            user: UserModel = UserModel.query.filter_by(user_id=user_id).first()
 
-            user = UserModel.query.filter_by(user_id=user_id).first()
-
+            # Set user's new password
             user.password = UserModel.hash_password(password)
-
             db.session.commit()
-
             return
         except KeyError as err:
             abort(422, str(err))

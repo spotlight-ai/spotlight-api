@@ -60,3 +60,4 @@ class AuthenticationErrors:
     MISSING_AUTH_HEADER = "Missing authentication header."
     UNAUTHORIZED_API_KEY = "Unauthorized API key."
     INCORRECT_API_KEY = "Incorrect API key."
+    INCORRECT_CREDS = "Incorrect credentials."
