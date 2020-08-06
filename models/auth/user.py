@@ -11,7 +11,7 @@ from itsdangerous import (
 from db import db
 from models.associations import DatasetOwner
 from models.auth.api_key import APIKeyModel
-from models.auth.util import add_valid_token, check_validity
+from models.auth.util import check_validity
 from models.datasets.base import DatasetModel
 
 class UserModel(db.Model):
@@ -42,7 +42,7 @@ class UserModel(db.Model):
         self.last_login = datetime.datetime.utcnow()
         self.created_ts = datetime.datetime.utcnow()
 
-    def generate_auth_token(self, ttl=604800):
+    def generate_auth_token(self, ttl=86400):
         """
         Generates an authorization token for the user upon login.
         :param ttl: Time from generation until the token expires.
@@ -52,8 +52,6 @@ class UserModel(db.Model):
         
         token = s.dumps({"id": self.user_id})
         
-        # Add token to an in-memory set
-        add_valid_token(self.user_id, token.decode("ascii"))
         return token
 
     def check_password(self, password):
@@ -84,8 +82,8 @@ class UserModel(db.Model):
         except BadSignature:
             return False, "Bad token received"  # Invalid token
         
-        # check if the hash of token is present in the memory to validate it.
-        if check_validity(data["id"], token):
+        # check if token is not being used after logout.
+        if check_validity(token):
             return True, data["id"]
         else:
             return False, "Invalid token received"

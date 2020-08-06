@@ -1,25 +1,27 @@
 import hashlib
+import datetime
 
-active_tokens = {}
+invalid_tokens = []
 
-def add_valid_token(user_id, token):
-    active_tokens[user_id] = {"token": hash_token(token), "valid": True}
-    return     
-
-def invalidate_token(user_id, token):
-    token_hash = hash_token(token)
-    if check_validity(user_id, token_hash):
-        return "Invalid token received"
-    else:
-        active_tokens[user_id]["valid"] = False
-        return "Token invalidated successfully"    
+def delete_expired_tokens():
+    curr_time = datetime.datetime.utcnow()
+    for token in invalid_tokens:
+        if token["expiry"] < curr_time :
+            invalid_tokens.remove(token)
+    return
         
-def check_validity(user_id, token):
+def add_invalid_token(token, expiry):
+    invalid_tokens.append({"token": hash_token(token), "expiry": expiry})
+    delete_expired_tokens()
+    return "Token invalidated successfully"
+
+def check_validity(token):
     token_hash = hash_token(token)
-    if user_id in active_tokens and active_tokens[user_id]["token"] == token_hash and active_tokens[user_id]["valid"]:
-        return True
-    else:
-        return False
+    is_valid = True
+    for token in invalid_tokens:
+        if (token["token"] == token_hash):
+            is_valid = False
+    return is_valid
 
 def hash_token(token):
     return hashlib.sha512(token.encode()).hexdigest()
