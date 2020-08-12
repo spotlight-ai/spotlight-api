@@ -33,9 +33,9 @@ def generate_presigned_download_link(
         aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
         aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
     )
-    raw_bucket = "uploaded-datasets"
-    redacted_bucket = "spotlightai-redacted-copies"
-    masked_bucket = "spotlightai-masked-copies"
+    raw_bucket: str = "uploaded-datasets"
+    redacted_bucket: str = "spotlightai-redacted-copies"
+    masked_bucket: str = "spotlightai-masked-copies"
 
     try:
         if permissions is None:
@@ -45,7 +45,7 @@ def generate_presigned_download_link(
                 ExpiresIn=expiration,
             )
         else:
-            permission_descriptions = [perm.description for perm in permissions]
+            permission_descriptions: list = [perm.description for perm in permissions]
             redacted_filepath = hashlib.sha1(
                 (object_name + str(permission_descriptions)).encode()
             ).hexdigest()
@@ -68,7 +68,7 @@ def generate_presigned_download_link(
                 )
 
             if markers:
-                markers = modify_markers(
+                markers: list = modify_markers(
                     markers, permission_descriptions, mask, object_name, s3_client
                 )
 
@@ -76,7 +76,7 @@ def generate_presigned_download_link(
 
     except ClientError as e:
         if e.response["ResponseMetadata"]["HTTPStatusCode"] == 404:
-            permission_descriptions = [perm.description for perm in permissions]
+            permission_descriptions: list = [perm.description for perm in permissions]
             redacted_filepath = hashlib.sha1(
                 (object_name + str(permission_descriptions)).encode()
             ).hexdigest()
@@ -86,23 +86,26 @@ def generate_presigned_download_link(
             )
             file = open(object_name.replace("/", "_"), "r+").read()
 
-            total_diff, i = 0, 0
-            sorted_markers = sorted(
+            total_diff: int = 0
+            i: int = 0
+            sorted_markers: list = sorted(
                 markers, key=lambda k: (k.start_location, -k.end_location)
             )
 
-            total_markers = len(sorted_markers)
+            total_markers: int = len(sorted_markers)
 
-            mask_class = Masks()
-            masks_dict = mask_class.masks
-
-            hash_pii_types = mask_class.hash_pii_types
+            hash_pii_types: set = Masks.HASH_PII_TYPES
 
             redaction_text = (
                 "<REDACTED>"  # The PII's will be replaced with this text if not masked.
             )
             marker_to_be_excluded = []
-
+            
+            """
+            Below is the algorithm to modify the marker co-ordinates after replacing the PII values
+            with the Redaction text or a randomly generated Hash value.
+            """
+            
             while i < len(sorted_markers):
                 marker_start = sorted_markers[i].start_location
                 marker_end = sorted_markers[i].end_location
@@ -135,9 +138,7 @@ def generate_presigned_download_link(
                                 file[file_start:file_end], sorted_markers[i].pii_type
                             )
                         else:
-                            masked_value = masks_dict.get(
-                                sorted_markers[i].pii_type, redaction_text
-                            )
+                            masked_value = redaction_text
                     else:
                         masked_value = redaction_text
                     marker_len = marker_end - marker_start
@@ -148,7 +149,9 @@ def generate_presigned_download_link(
                         sorted_markers[k].start_location -= total_diff
                         sorted_markers[k].end_location -= total_diff
                 i = j
-
+            
+            """ Return only the markers which are permitted """
+           
             modified_markers = [
                 marker
                 for i, marker in enumerate(sorted_markers)
@@ -242,6 +245,11 @@ def dataset_cleanup(filepath):
 
 
 def modify_markers(markers, permission_descriptions, mask, object_name, s3_client):
+    """
+    Below is the algorithm to modify the marker co-ordinates after replacing the PII values
+    with the Redaction text or a randomly generated Hash value.
+    """
+    
     if mask:
         s3_client.download_file(
             "uploaded-datasets", object_name, object_name.replace("/", "_")
@@ -253,10 +261,7 @@ def modify_markers(markers, permission_descriptions, mask, object_name, s3_clien
 
     total_markers = len(sorted_markers)
 
-    mask_class = Masks()
-    masks_dict = mask_class.masks
-
-    hash_pii_types = mask_class.hash_pii_types
+    hash_pii_types = Masks.HASH_PII_TYPES
 
     redaction_text = (
         "<REDACTED>"  # The PII's will be replaced with this text if not masked.
@@ -291,9 +296,7 @@ def modify_markers(markers, permission_descriptions, mask, object_name, s3_clien
                         file[file_start:file_end], sorted_markers[i].pii_type
                     )
                 else:
-                    masked_value = masks_dict.get(
-                        sorted_markers[i].pii_type, redaction_text
-                    )
+                    masked_value = redaction_text
             else:
                 masked_value = redaction_text
 
