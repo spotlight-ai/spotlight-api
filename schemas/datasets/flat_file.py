@@ -2,7 +2,7 @@ from db import ma
 from models.datasets.flat_file import FlatFileDatasetModel
 from schemas.job import JobSchema
 from schemas.pii.text_file import TextFilePIISchema
-
+from schemas.user import UserSchema
 
 class FlatFileDatasetSchema(ma.ModelSchema):
     class Meta:
@@ -23,3 +23,4 @@ class FlatFileDatasetSchema(ma.ModelSchema):
 
     jobs = ma.List(ma.Nested(JobSchema))
     markers = ma.List(ma.Nested(TextFilePIISchema))
+    owners = ma.List(ma.Nested(UserSchema, exclude=["owned_datasets"]))
