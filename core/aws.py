@@ -191,5 +191,5 @@ def modify_markers(markers, permission_descriptions, mask, object_name, s3_clien
     
     _, ext = os.path.splitext(output_location)
     modified_markers = redactor_factory.get_redactor(ext).redact_file(output_location, permission_descriptions, markers, mask)
-
+    os.remove(output_location)
     return modified_markers
