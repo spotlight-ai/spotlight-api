@@ -178,75 +178,18 @@ def modify_markers(markers, permission_descriptions, mask, object_name, s3_clien
     Below is the algorithm to modify the marker co-ordinates after replacing the PII values
     with the Redaction text or a randomly generated Hash value.
     """
-    
-    if mask:
-        s3_client.download_file(
-            "uploaded-datasets", object_name, object_name.replace("/", "_")
-        )
-        file = open(object_name.replace("/", "_"), "r+").read()
+    raw_bucket: str = "uploaded-datasets"
+    redacted_bucket: str = "spotlightai-redacted-copies"
+    masked_bucket: str = "spotlightai-masked-copies"
 
-    total_diff, i = 0, 0
-    sorted_markers = sorted(markers, key=lambda k: (k.start_location, -k.end_location))
-
-    total_markers = len(sorted_markers)
-
-    hash_pii_types = Masks.HASH_PII_TYPES
-
-    redaction_text = (
-        "<REDACTED>"  # The PII's will be replaced with this text if not masked.
+    s3_client.download_file(
+        raw_bucket, object_name, object_name.replace("/", "_")
     )
-    marker_to_be_excluded = []
 
-    while i < len(sorted_markers):
-        marker_start = sorted_markers[i].start_location
-        marker_end = sorted_markers[i].end_location
-        j = i
-        last_end = i
-        permit = True
-        while (j < total_markers) and (sorted_markers[j].start_location < marker_end):
-            if not permit:
-                marker_to_be_excluded.append(j)
-            elif permit and (sorted_markers[j].pii_type not in permission_descriptions):
-                permit = False
-                for k in range(i, j + 1):
-                    marker_to_be_excluded.append(k)
-            if sorted_markers[j].end_location > marker_end:
-                marker_end = sorted_markers[j].end_location
-                last_end = j
-            j += 1
-        if not permit:
-            file_start, file_end = (
-                marker_start - total_diff,
-                marker_end - total_diff,
-            )
-            if (i == last_end) and mask:
-                if sorted_markers[i].pii_type in hash_pii_types:
-                    masked_value = one_way_hash_mask(
-                        file[file_start:file_end], sorted_markers[i].pii_type
-                    )
-                else:
-                    masked_value = redaction_text
-            else:
-                masked_value = redaction_text
-
-            if mask:
-                file = (masked_value).join([file[:file_start], file[file_end:]])
-
-            marker_len = marker_end - marker_start
-            total_diff = total_diff + marker_len - len(masked_value)
-        else:
-            for k in range(i, j):
-                sorted_markers[k].start_location -= total_diff
-                sorted_markers[k].end_location -= total_diff
-        i = j
-
-    modified_markers = [
-        marker
-        for i, marker in enumerate(sorted_markers)
-        if i not in marker_to_be_excluded
-    ]
-
-    if mask:
-        os.remove(object_name.replace("/", "_"))
+    redactor_factory: FileRedactorCreator = FileRedactorCreator()
+    output_location: str = object_name.replace("/", "_")
+    
+    _, ext = os.path.splitext(output_location)
+    modified_markers = redactor_factory.get_redactor(ext).redact_file(output_location, permission_descriptions, markers, mask)
 
     return modified_markers
