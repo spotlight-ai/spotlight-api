@@ -4,6 +4,7 @@ from redactors.base import FileRedactor
 from core.constants import Masks
 from core.util import one_way_hash_mask
 
+from redactors.pdf_parser.map_pii import mapper
 from PyPDF2 import PdfFileReader, PdfFileWriter,PdfFileMerger
 from redactors.pdf_parser import pdf_redactor
 
@@ -98,21 +99,26 @@ class PdfFileRedactor(FileRedactor):
                 pdf_writer.write(out)
             dem_name = f'page_{page+1}.pdf'
             with open(dem_name, 'r') as file:
-                file_text,document,text_layer = self.parse_file_to_text(file)[0]
-                
-            current_page_pii = [self.format_marker(marker) for marker in markers if (marker.page_number == (page+1) and marker.pii_type not in permission_descriptions)]
-
-            self.parse_text_to_pdf(document, text_layer, current_page_pii, page) 
+                try:
+                    file_text,text_tok,document,text_layer = self.parse_file_to_text(file)
+                    current_page_pii = [self.format_marker(marker) for marker in markers if (marker.page_number == (page+1) and marker.pii_type not in permission_descriptions)]
+                    current_page_pii = mapper(file_text,text_tok,current_page_pii)
+                    self.parse_text_to_pdf(document, text_layer, current_page_pii, page) 
+                except Exception as e:
+                    os.system(f'mv page_{page+1}.pdf pager_{page+1}.pdf')
                 
         mergedObject = PdfFileMerger()
         for fileNumber in range(1, pdf.getNumPages()+1):
             mergedObject.append(PdfFileReader('pager_' + str(fileNumber)+ '.pdf', 'rb'))
         mergedObject.write(file_name)
         for fileNumber in range(1,pdf.getNumPages()+1):
-            f1 = f'page_{fileNumber}.pdf'
-            f2 = f'pager_{fileNumber}.pdf'
-            os.system(f'rm {f1}')
-            os.system(f'rm {f2}')
+            try :
+                f1 = f'page_{fileNumber}.pdf'
+                f2 = f'pager_{fileNumber}.pdf'
+                os.system(f'rm {f1}')
+                os.system(f'rm {f2}')
+            except :
+                continue
             
         return markers
     
@@ -120,13 +126,13 @@ class PdfFileRedactor(FileRedactor):
         return {"pii_type": marker.pii_type, "start_location": marker.start_location,
                 "end_location": marker.end_location, "confidence": marker.confidence}
                 
-    def parse_text_to_pdf(self, document,text_layer,pii,page):
+    def parse_text_to_pdf(self,document,text_layer,pii,page):
         text_layer = pdf_redactor.update_text_with_pii(*text_layer,pii)
         document = pdf_redactor.apply_updated_text(document,*text_layer)
         dem_name= f'pager_{page+1}.pdf'
         pdf_redactor.write_pdf(document,dem_name) 
         
-    def parse_file_to_text(self,file_obj) -> str:
+    def parse_file_to_text(self, file_obj) -> str:
         options = pdf_redactor.RedactorOptions()
         options.xmp_filters = [lambda xml: None]
         options.content_filters = [
@@ -135,9 +141,9 @@ class PdfFileRedactor(FileRedactor):
                 lambda m: "annotation?"
             )
         ]
-        output,document,text_layer = pdf_redactor.redactor(options, file_obj.name)
+        output,text_tok,document,text_layer = pdf_redactor.redactor(options, file_obj.name)
         # logger.debug(f"Parsed text output : {output}")
-        return output,document,text_layer
+        return output,text_tok,document,text_layer
 
         
 

@@ -102,8 +102,8 @@ def redactor(options,file_name):
 		text_layer = build_text_layer(document, options)
 
 		# Apply filters to the text stream.
-		output = update_text_layer(options, *text_layer,document,text_layer)
-		return output,document,text_layer
+		output,text_tok,document,text_layer = update_text_layer(options, *text_layer,document,text_layer,file_name)
+		return output,text_tok,document,text_layer
 		# # Replace page content streams with updated tokens.
 		apply_updated_text(document, *text_layer)
 
@@ -659,7 +659,7 @@ def toUnicode(string, font, fontcache):
 	elif font.Encoding == "/MacRomanEncoding":
 		return string.decode("mac_roman", "replace")
 	else:
-		return "?"
+		return "-"
 		#raise ValueError("Don't know how to decode data from font %s." % font)
 
 def fromUnicode(string, font, fontcache, options):
@@ -699,12 +699,38 @@ def fromUnicode(string, font, fontcache, options):
 	else:
 		raise ValueError("Don't know how to encode data to font %s." % font)
 
-def update_text_layer(options, text_tokens, page_tokens,document,text_layer):
+def update_text_layer(options, text_tokens, page_tokens,document,text_layer,file_name):
 	if len(text_tokens) == 0:
 		# No text content.
 		return
-	text_content = "".join(t.value for t in text_tokens)
-	return text_content,document,text_layer
+	
+
+	import io
+	from pdfminer.converter import TextConverter
+	from pdfminer.pdfinterp import PDFPageInterpreter
+	from pdfminer.pdfinterp import PDFResourceManager
+	from pdfminer.pdfpage import PDFPage
+	resource_manager = PDFResourceManager()
+	fake_file_handle = io.StringIO()
+	converter = TextConverter(resource_manager, fake_file_handle)
+	page_interpreter = PDFPageInterpreter(resource_manager, converter)
+    
+	with open(file_name, 'rb') as fh:
+		for page in PDFPage.get_pages(fh, 
+                                      caching=True,
+                                      check_extractable=True):
+			page_interpreter.process_page(page)
+            
+		text = fake_file_handle.getvalue()
+    
+    # close open handles
+	converter.close()
+	fake_file_handle.close()
+    
+	if text:
+		text_content =  text
+	text_tok = "".join(t.value for t in text_tokens)
+	return text_content,text_tok,document,text_layer
 
 def update_text_with_pii(text_tokens, page_tokens, pii):
 	for item in pii:   	
@@ -729,7 +755,7 @@ def update_text_with_pii(text_tokens, page_tokens, pii):
 		while(active_len <= tot_len) :
 			if ( len(text_tokens[flag].value[start:]) <  tot_len):
 				text_tokens[flag].value=list(text_tokens[flag].value)
-				text_tokens[flag].value[start:] = '*' * len(text_tokens[flag].value[start:])
+				text_tokens[flag].value[start:] = '-' * len(text_tokens[flag].value[start:])
 				flag += 1
 				start = 0
 				sr=''
@@ -738,13 +764,13 @@ def update_text_with_pii(text_tokens, page_tokens, pii):
 			elif ( len(text_tokens[flag].value[start:]) >  tot_len):
 				text_tokens[flag].value = list(text_tokens[flag].value)
 				sr=''
-				text_tokens[flag].value[start: start+(tot_len-1)] = '*' * tot_len
+				text_tokens[flag].value[start: start+(tot_len-1)] = '-' * tot_len
 				text_tokens[flag].value = sr.join(text_tokens[flag].value)
 				break
 			else :
 				sr=''
 				text_tokens[flag].value = list(text_tokens[flag].value)
-				text_tokens[flag].value[start:] = '*' * len( text_tokens[flag].value[start:])
+				text_tokens[flag].value[start:] = '-' * len( text_tokens[flag].value[start:])
 				text_tokens[flag].value = sr.join(text_tokens[flag].value)
 				break
 	for t in text_tokens:
@@ -770,6 +796,7 @@ def update_text_with_pii(text_tokens, page_tokens, pii):
 def apply_updated_text(document, text_tokens, page_tokens):
 	# Create a new content stream for each page by concatenating the
 	# tokens in the page_tokens lists.
+
 	from pdfrw import PdfArray
 	for i, page in enumerate(document.pages):
 		if page.Contents is None: continue # nothing was here
