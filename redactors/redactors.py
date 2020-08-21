@@ -100,7 +100,7 @@ class PdfFileRedactor(FileRedactor):
             with open(dem_name, 'r') as file:
                 file_text,document,text_layer = self.parse_file_to_text(file)[0]
                 
-            current_page_pii = [self.format_marker(marker) for marker in markers if (marker.page_number == page and marker.pii_type not in permission_descriptions)]
+            current_page_pii = [self.format_marker(marker) for marker in markers if (marker.page_number == (page+1) and marker.pii_type not in permission_descriptions)]
 
             self.parse_text_to_pdf(document, text_layer, current_page_pii, page) 
                 

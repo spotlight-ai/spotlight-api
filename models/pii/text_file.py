@@ -20,7 +20,7 @@ class TextFilePIIModel(db.Model):
     page_number = db.Column(db.Integer, nullable=False)
     last_updated_ts = db.Column(db.DateTime, nullable=False)
 
-    def __init__(self, dataset_id, pii_type, start_location, end_location, confidence, page_number=0):
+    def __init__(self, dataset_id, pii_type, start_location, end_location, confidence, page_number=1):
         self.dataset_id = dataset_id
         self.pii_type = pii_type
         self.start_location = start_location
