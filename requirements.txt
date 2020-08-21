@@ -43,6 +43,9 @@ psycopg2-binary==2.8.4
 pycparser==2.20
 PyJWT==1.7.1
 pylint==2.5.3
+pypdf2==1.26.0
+pdfrw==0.4
+pdfminer==20191125
 python-dateutil==2.8.1
 python-dotenv==0.12.0
 python-editor==1.0.4
