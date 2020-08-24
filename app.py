@@ -27,6 +27,7 @@ from resources.pii.text_file import (
     TextFilePIIDatasetCollection,
 )
 from resources.redact.text import RedactText
+from resources.mask.text import MaskText
 from resources.roles.role import Role, RoleCollection
 from resources.roles.role_dataset import RoleDatasetCollection
 from resources.roles.role_member import RoleMemberCollection
@@ -42,7 +43,6 @@ def create_app(config):
 
     api = Api(app)
     JWTManager(app)
-
     api.add_resource(DatasetActionHistoryCollection, "/audit/dataset")
     api.add_resource(APIKeyCollection, "/auth/api_key")
     api.add_resource(APIKeyRevokeCollection, "/auth/api_key/revoke")
@@ -66,6 +66,7 @@ def create_app(config):
     api.add_resource(NotificationSettingsCollection, "/settings/notification")
     api.add_resource(NotificationSettings, "/settings/notification/<int:setting_id>")
     api.add_resource(RedactText, "/redact/text")
+    api.add_resource(MaskText, "/mask/text")
     api.add_resource(ResetPassword, "/reset")
     api.add_resource(RoleCollection, "/role")
     api.add_resource(Role, "/role/<int:role_id>")
