@@ -58,3 +58,44 @@ class TextFilePII(Resource):
             db.session.rollback()
             abort(400, err)
         return
+    
+    @authenticate_token
+    def put(self, user_id, marker_id):
+        try:
+            data = request.get_json(force=True)
+            pii = TextFilePIIModel.query.filter_by(pii_id=marker_id).first()
+            
+            dataset = FlatFileDatasetModel.query.filter_by(
+                dataset_id=pii.dataset_id
+            ).first()
+            owners = [owner.user_id for owner in dataset.owners]
+            
+            if user_id not in owners:
+                abort(400, DatasetErrors.USER_DOES_NOT_OWN)
+            else:
+                pii.pii_type = data.get("pii_type", pii.pii_type)
+                pii.start_location = data.get("start_location", pii.start_location)
+                pii.end_location = data.get("end_location", pii.end_location)
+                pii.confidence = data.get("confidence", pii.confidence)
+                
+                db.session.commit()
+                
+            return text_file_pii_schema.dump(pii)
+        except ValidationError as err:
+            abort(422, err.messages)
+        except IntegrityError as err:
+            db.session.rollback()
+            abort(400, err)
+        return
+          
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
