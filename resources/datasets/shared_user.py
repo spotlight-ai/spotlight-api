@@ -1,9 +1,11 @@
 from flask import abort, request
 from flask_restful import Resource
 
+from core.constants import AuditConstants
 from core.constants import NotificationConstants
 from core.decorators import authenticate_token
 from db import db
+from models.audit.dataset_action_history import DatasetActionHistoryModel
 from models.auth.user import UserModel
 from models.datasets.base import DatasetModel
 from models.datasets.shared_user import SharedDatasetUserModel
@@ -81,6 +83,14 @@ class DatasetSharedUserCollection(Resource):
             notification.send_notification_email(permission_long_descriptions)
 
             db.session.add(notification)
+            db.session.add(
+                DatasetActionHistoryModel(
+                    user_id=shared_user_object.user_id,
+                    dataset_id=dataset_id,
+                    action=AuditConstants.DATASET_SHARED,
+                )
+            )
+
 
         db.session.commit()
 
