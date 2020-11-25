@@ -2,18 +2,18 @@ from flask import abort
 from flask_restful import Resource
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
-
+from sqlalchemy.sql.expression import true
 from core.decorators import authenticate_token
 from db import db
 from models.audit.dataset_action_history import DatasetActionHistoryModel
 from models.auth.user import UserModel
-from models.datasets.flat_file import FlatFileDatasetModel
+from models.datasets.base import DatasetModel
+
 from schemas.audit.dataset_action_history import DatasetActionHistorySchema
-from schemas.datasets.flat_file import FlatFileDatasetSchema
+from schemas.datasets.base import DatasetSchema
 
-flat_file_dataset_schema = FlatFileDatasetSchema()
 dataset_action_history_schema = DatasetActionHistorySchema()
-
+dataset_schema = DatasetSchema()
 
 class DatasetActionHistoryCollection(Resource):
     @authenticate_token
@@ -23,13 +23,14 @@ class DatasetActionHistoryCollection(Resource):
                 UserModel.user_id == user_id
             ).first()
 
-            owned_datasets = FlatFileDatasetModel.query.filter(
-                FlatFileDatasetModel.owners.contains(logged_in_user),
+            owned_datasets = DatasetModel.query.filter(
+                DatasetModel.verified == true(),
+                    DatasetModel.owners.contains(logged_in_user),
             ).all()
 
             owned_dataset_id = [
                 dataset.get("dataset_id")
-                for dataset in flat_file_dataset_schema.dump(owned_datasets, many=True)
+                for dataset in dataset_schema.dump(owned_datasets, many=True)
             ]
 
             if len(owned_dataset_id) == 0:

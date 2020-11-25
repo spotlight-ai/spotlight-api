@@ -37,6 +37,7 @@ class DatasetModel(db.Model):
     __mapper_args__ = {
         "polymorphic_identity": "dataset",
         "polymorphic_on": dataset_type,
+        "polymorphic_identity": "FLAT_FILE",
     }
 
     def __init__(self, dataset_name, dataset_type, uploader):

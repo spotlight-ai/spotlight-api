@@ -11,9 +11,10 @@ from models.audit.dataset_action_history import DatasetActionHistoryModel
 from models.auth.user import UserModel
 from models.datasets.flat_file import FlatFileDatasetModel
 from schemas.datasets.flat_file import FlatFileDatasetSchema
+from schemas.datasets.base import DatasetSchema
 
 flat_file_schema = FlatFileDatasetSchema()
-
+dataset_schema = DatasetSchema()
 
 class FlatFileCollection(Resource):
     @authenticate_token
@@ -36,35 +37,52 @@ class FlatFileCollection(Resource):
 
             # Upload Format: s3://{bucket}/{user_id}_{dataset}/{object_name}
             dataset_name = request_body["dataset_name"]
-            key = request_body["location"]
-            object_name = f"{user_id}_{dataset_name}/{key}"
 
-            request_body["uploader"] = user_id
-            request_body["location"] = object_name
+            request_body_for_dataset  = dict()
+            request_body_for_flatfile = dict()
+            response_urls = list()
 
-            dataset = flat_file_schema.load(request_body)
+            request_body_for_dataset['dataset_name'] = dataset_name
+            request_body_for_dataset['dataset_type'] = "FLAT_FILE"
+            request_body_for_dataset['uploader'] = user_id
+            request_body_for_dataset['verified'] = True
+
+            dataset = dataset_schema.load(request_body_for_dataset)
             owner = UserModel.query.get(user_id)
-
             dataset.owners.append(owner)
             db.session.add(dataset)
-
             db.session.commit()
 
-            response = generate_presigned_link(
-                bucket_name="uploaded-datasets", object_name=object_name
-            )
-            response["dataset_id"] = dataset.dataset_id
+            locations = request_body["location"]
 
-            db.session.add(
-                DatasetActionHistoryModel(
-                    user_id=user_id,
-                    dataset_id=dataset.dataset_id,
-                    action=AuditConstants.DATASET_CREATED,
+            for location in locations:
+                key = location["name"]
+                object_name = f"{user_id}_{dataset_name}/{key}"
+
+                request_body_for_flatfile["dataset_id"] = dataset.dataset_id
+                request_body_for_flatfile["location"] = object_name
+                flatfile_dataset = flat_file_schema.load(request_body_for_flatfile, session=db.session)
+
+                db.session.add(flatfile_dataset)
+                db.session.commit()
+
+                response = generate_presigned_link(
+                    bucket_name="uploaded-datasets", object_name=object_name
                 )
-            )
-            db.session.commit()
+                
+                response["dataset_id"] = dataset.dataset_id
+                response_urls.append(response)
 
-            return response
+                db.session.add(
+                    DatasetActionHistoryModel(
+                        user_id=user_id,
+                        dataset_id=dataset.dataset_id,
+                        action=AuditConstants.DATASET_CREATED,
+                    )
+                )
+                db.session.commit()
+
+            return response_urls
         except ValidationError as err:
             abort(422, err.messages)
         except IntegrityError as err:
