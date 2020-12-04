@@ -42,7 +42,7 @@ class TextFilePII(Resource):
     def delete(self, user_id, marker_id):
         try:
             pii = TextFilePIIModel.query.filter_by(pii_id=marker_id).first()
-            dataset = FlatFileDatasetModel.query.filter_by(
+            dataset = DatasetModel.query.filter_by(
                 dataset_id=pii.dataset_id
             ).first()
             owners = [owner.user_id for owner in dataset.owners]
@@ -65,7 +65,7 @@ class TextFilePII(Resource):
             data = request.get_json(force=True)
             pii = TextFilePIIModel.query.filter_by(pii_id=marker_id).first()
             
-            dataset = FlatFileDatasetModel.query.filter_by(
+            dataset = DatasetModel.query.filter_by(
                 dataset_id=pii.dataset_id
             ).first()
             owners = [owner.user_id for owner in dataset.owners]
@@ -87,15 +87,4 @@ class TextFilePII(Resource):
             db.session.rollback()
             abort(400, err)
         return
-          
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 

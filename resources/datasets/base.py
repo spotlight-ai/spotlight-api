@@ -106,7 +106,7 @@ class Dataset(Resource):
                         dataset = FlatFileDatasetModel.query.filter_by(
                             dataset_id=dataset_id
                         ).first()
-                        dataset.download_link, dataset.markers = None, []
+                        dataset.download_link, dataset.dataset.markers = None, []
                     return flat_file_dataset_schema.dump(dataset)
 
             user = UserModel.query.filter_by(user_id=user_id).first()
@@ -193,11 +193,11 @@ class Dataset(Resource):
                         if marker.pii_type in permission_descriptions:
                             new_markers.append(marker)
                 else:
-                    for marker in dataset.markers:
+                    for marker in dataset.dataset.markers:
                         if marker.pii_type in permission_descriptions:
                             new_markers.append(marker)
 
-                dataset.markers = new_markers
+                dataset.dataset.markers = new_markers
             return flat_file_dataset_schema.dump(dataset)
 
         return

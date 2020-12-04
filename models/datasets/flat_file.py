@@ -1,4 +1,6 @@
 from db import db
+from models.datasets.base import DatasetModel
+
 
 class FlatFileDatasetModel(db.Model):
     __tablename__ = "flat_file_dataset"
@@ -9,6 +11,8 @@ class FlatFileDatasetModel(db.Model):
         db.ForeignKey("dataset.dataset_id", ondelete="cascade"),
     )
     location = db.Column(db.String, unique=True)
+
+    dataset = db.relationship(DatasetModel, backref="dataset")
 
     # __mapper_args__ = {"polymorphic_identity": "FLAT_FILE"}
 
