@@ -157,48 +157,51 @@ class Dataset(Resource):
             permissions = []
             markers = []
 
+        response = list()
         if base_dataset.dataset_type == "FLAT_FILE":
-            dataset = FlatFileDatasetModel.query.filter_by(
+            datasets = FlatFileDatasetModel.query.filter_by(
                 dataset_id=dataset_id
-            ).first()
+            ).all()
 
-            parsed_path = urlparse(dataset.location)
-            s3_object_key = parsed_path.path[1:]
+            for dataset in datasets:
+                parsed_path = urlparse(dataset.location)
+                s3_object_key = parsed_path.path[1:]
 
-            # generate_presigned_download_link will return a presigned URL to share an S3 object and dataset markers with modified markers (if any)
-            if owned:
-                dataset.download_link, _ = generate_presigned_download_link(
-                    "uploaded-datasets", s3_object_key
-                )  # For owners, all PII's are permitted. Hence no redaction and therefore no modification in markers
-            elif shared:
+                # generate_presigned_download_link will return a presigned URL to share an S3 object and dataset markers with modified markers (if any)
+                if owned:
+                    dataset.download_link, _ = generate_presigned_download_link(
+                        "uploaded-datasets", s3_object_key
+                    )  # For owners, all PII's are permitted. Hence no redaction and therefore no modification in markers
+                elif shared:
 
-                # For shared users it returns markers with modified co-ordinates after redaction.
-                (
-                    dataset.download_link,
-                    modified_markers,
-                ) = generate_presigned_download_link(
-                    "spotlightai-redacted-copies",
-                    s3_object_key,
-                    permissions=permissions,
-                    markers=markers,
-                    mask=masked,
-                )
+                    # For shared users it returns markers with modified co-ordinates after redaction.
+                    (
+                        dataset.download_link,
+                        modified_markers,
+                    ) = generate_presigned_download_link(
+                        "spotlightai-redacted-copies",
+                        s3_object_key,
+                        permissions=permissions,
+                        markers=markers,
+                        mask=masked,
+                    )
 
-                new_markers = []
-                permission_descriptions = set(
-                    [perm.description for perm in permissions]
-                )
-                if modified_markers:
-                    for marker in modified_markers:
-                        if marker.pii_type in permission_descriptions:
-                            new_markers.append(marker)
-                else:
-                    for marker in dataset.dataset.markers:
-                        if marker.pii_type in permission_descriptions:
-                            new_markers.append(marker)
+                    new_markers = []
+                    permission_descriptions = set(
+                        [perm.description for perm in permissions]
+                    )
+                    if modified_markers:
+                        for marker in modified_markers:
+                            if marker.pii_type in permission_descriptions:
+                                new_markers.append(marker)
+                    else:
+                        for marker in dataset.dataset.markers:
+                            if marker.pii_type in permission_descriptions:
+                                new_markers.append(marker)
 
-                dataset.dataset.markers = new_markers
-            return flat_file_dataset_schema.dump(dataset)
+                    dataset.dataset.markers = new_markers
+                response.append(flat_file_dataset_schema.dump(dataset))
+            return response
 
         return
 
