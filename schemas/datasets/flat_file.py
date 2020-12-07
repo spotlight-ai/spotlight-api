@@ -10,5 +10,6 @@ class FlatFileDatasetSchema(ma.ModelSchema):
         fields = (
             "dataset_id",
             "location",
+            "id",
         )
         ordered = True
