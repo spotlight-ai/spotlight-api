@@ -13,14 +13,18 @@ class TextFilePIIModel(db.Model):
     dataset_id = db.Column(
         db.Integer, db.ForeignKey("dataset.dataset_id", ondelete="cascade")
     )
+    file_id = db.Column(
+        db.Integer, db.ForeignKey("flat_file_dataset.id")
+    )
     pii_type = db.Column(db.String, nullable=False)
     start_location = db.Column(db.Integer, nullable=False)
     end_location = db.Column(db.Integer, nullable=False)
     confidence = db.Column(db.Float, nullable=False)
     last_updated_ts = db.Column(db.DateTime, nullable=False)
     
-    def __init__(self, dataset_id, pii_type, start_location, end_location, confidence):
+    def __init__(self, dataset_id,file_id, pii_type, start_location, end_location, confidence):
         self.dataset_id = dataset_id
+        self.file_id = file_id
         self.pii_type = pii_type
         self.start_location = start_location
         self.end_location = end_location
