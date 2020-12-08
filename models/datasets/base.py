@@ -40,12 +40,12 @@ class DatasetModel(db.Model):
         "polymorphic_identity": "FLAT_FILE",
     }
 
-    def __init__(self, dataset_name, dataset_type, uploader):
+    def __init__(self, dataset_name, dataset_type, uploader, verified):
         self.dataset_name = dataset_name
         self.dataset_type = dataset_type
         self.uploader = uploader
         self.created_ts = datetime.datetime.now()
-        self.verified = False
+        self.verified = verified
 
     def __repr__(self):
         return f"<Dataset {self.dataset_name}>"
