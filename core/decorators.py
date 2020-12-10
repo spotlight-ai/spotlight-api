@@ -11,11 +11,15 @@ from models.auth.util import hash_token
 
 def is_dataset_owner(func):
     def wrapper(*args, **kwargs):
-        """Cheacking the ownership of current user"""
+        """Checking the ownership of current user"""
 
-        dataset_id=kwargs['dataset_id']
-        user_id=kwargs['user_id']
-        dataset= DatasetModel.query.filter_by(dataset_id=dataset_id).first()
+        dataset_id = kwargs.get('dataset_id',None)
+        user_id = kwargs.get('user_id',None)
+
+        if not dataset_id or not user_id:
+            abort(400, DatasetErrors.DOES_NOT_EXIST)
+
+        dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
 
         if not dataset:
             abort(400, DatasetErrors.DOES_NOT_EXIST)
