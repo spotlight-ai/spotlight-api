@@ -13,8 +13,11 @@ from models.datasets.flat_file import FlatFileDatasetModel
 from schemas.datasets.flat_file import FlatFileDatasetSchema
 from schemas.datasets.base import DatasetSchema
 
+from loguru import logger
+
 flat_file_schema = FlatFileDatasetSchema()
 dataset_schema = DatasetSchema()
+
 
 class FlatFileCollection(Resource):
     @authenticate_token
@@ -23,7 +26,7 @@ class FlatFileCollection(Resource):
         return flat_file_schema.dump(datasets, many=True)
 
     @authenticate_token
-    def post(self, user_id):
+    def post(self, user_id) -> None:
         """
         Generates a request to upload a new flat file. Returns a pre-signed S3 link for upload that is valid for
         a pre-determined amount of time.
@@ -33,54 +36,61 @@ class FlatFileCollection(Resource):
         :return: AWS S3 pre-signed upload link
         """
         try:
-            request_body = request.get_json(force=True)
+            request_body: dict = request.get_json(force=True)
 
             # Upload Format: s3://{bucket}/{user_id}_{dataset}/{object_name}
-            dataset_name = request_body["dataset_name"]
+            dataset_name: str = request_body.get("dataset_name")
+            location_body = request_body.get("location")
 
-            request_body_for_dataset  = dict()
-            request_body_for_flatfile = dict()
-            response_urls = list()
+            locations: list = location_body if type(location_body) == list else [
+                {"name": location_body}]
 
-            request_body_for_dataset['dataset_name'] = dataset_name
-            request_body_for_dataset['dataset_type'] = "FLAT_FILE"
-            request_body_for_dataset['uploader'] = user_id
-            request_body_for_dataset['verified'] = True
+            # Create dataset object to store in database
+            dataset_body: dict = {
+                "dataset_name": dataset_name,
+                "dataset_type": "FLAT_FILE",
+                "uploader": user_id,
+                "verified": False
+            }
 
-            dataset = dataset_schema.load(request_body_for_dataset)
-            owner = UserModel.query.get(user_id)
+            logger.info(f"Dataset Name: {dataset_name}")
+            logger.info(f"Locations: {locations}")
+
+            dataset = dataset_schema.load(dataset_body)
+            owner: UserModel = UserModel.query.get(user_id)
+
             dataset.owners.append(owner)
             db.session.add(dataset)
             db.session.commit()
 
-            locations = request_body["location"]
+            # Generate a series of presigned links for each location
+            response_urls: list = []
 
             for location in locations:
-                key = location["name"]
-                object_name = f"{user_id}_{dataset_name}/{key}"
+                object_name: str = f"{user_id}_{dataset_name}/{location.get('name')}"
 
-                request_body_for_flatfile["dataset_id"] = dataset.dataset_id
-                request_body_for_flatfile["location"] = object_name
-                flatfile_dataset = flat_file_schema.load(request_body_for_flatfile, session=db.session)
+                flat_file_body: dict = {
+                    "dataset_id": dataset.dataset_id,
+                    "location": object_name
+                }
 
-                db.session.add(flatfile_dataset)
-                db.session.commit()
+                flat_file_dataset = flat_file_schema.load(
+                    flat_file_body, session=db.session)
+
+                db.session.add(flat_file_dataset)
 
                 response = generate_presigned_link(
-                    bucket_name="uploaded-datasets", object_name=object_name
-                )
-                
+                    bucket_name="uploaded-datasets", object_name=object_name)
                 response["dataset_id"] = dataset.dataset_id
+
                 response_urls.append(response)
 
-                db.session.add(
-                    DatasetActionHistoryModel(
-                        user_id=user_id,
-                        dataset_id=dataset.dataset_id,
-                        action=AuditConstants.DATASET_CREATED,
-                    )
-                )
-                db.session.commit()
+                db.session.add(DatasetActionHistoryModel(
+                    user_id=user_id, dataset_id=dataset.dataset_id, action=AuditConstants.DATASET_CREATED))
+
+            db.session.commit()
+
+            logger.info(f"Response: {response_urls}")
 
             return response_urls
         except ValidationError as err:
