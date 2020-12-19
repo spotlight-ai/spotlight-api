@@ -15,7 +15,7 @@ from models.associations import RoleDataset, RolePermission, UserDatasetPermissi
 from models.audit.dataset_action_history import DatasetActionHistoryModel
 from models.auth.user import UserModel
 from models.datasets.base import DatasetModel
-from models.datasets.flat_file import FlatFileDatasetModel
+from models.datasets.file import FileModel
 from models.datasets.shared_user import SharedDatasetUserModel
 from models.job import JobModel
 from models.pii.pii import PIIModel
@@ -23,10 +23,10 @@ from models.pii.text_file import TextFilePIIModel
 from models.roles.role import RoleModel
 from models.roles.role_member import RoleMemberModel
 from schemas.datasets.base import DatasetSchema
-from schemas.datasets.flat_file import FlatFileDatasetSchema
+from schemas.datasets.file import FileSchema
 from schemas.job import JobSchema
 
-flat_file_dataset_schema = FlatFileDatasetSchema()
+flat_file_dataset_schema = FileSchema()
 dataset_schema = DatasetSchema()
 job_schema = JobSchema()
 
@@ -85,7 +85,20 @@ class DatasetCollection(Resource):
 class Dataset(Resource):
     @authenticate_token
     def get(self, user_id, dataset_id):
-        base_dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
+        dataset = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
+        
+        if not dataset:
+            abort(404, "Dataset not found")
+        
+        # TODO: Add code to check for role permissions
+        is_owner = user_id in {owner.user_id for owner in dataset.owners}
+        
+        if is_owner:
+            return dataset_schema.dump(dataset)
+        else:
+            abort(401, "This user is not authorized to view this dataset")
+        
+        ## Below is deprecated
         
         args = request.args
         masked = f'{args.get("masked", "false")}'
@@ -103,7 +116,7 @@ class Dataset(Resource):
             for job in jobs_json:
                 if job.get("job_status", "").lower() in ["pending", "failed"]:
                     if base_dataset.dataset_type == "FLAT_FILE":
-                        dataset = FlatFileDatasetModel.query.filter_by(
+                        dataset = FileModel.query.filter_by(
                             dataset_id=dataset_id
                         ).first()
                         dataset.download_link, dataset.dataset.markers = None, []
@@ -158,49 +171,34 @@ class Dataset(Resource):
             markers = []
         
         if base_dataset.dataset_type == "FLAT_FILE":
-            dataset = FlatFileDatasetModel.query.filter_by(
-                dataset_id=dataset_id
-            ).first()
+            flat_files = FileModel.query.filter_by(dataset_id=dataset_id).all()
             
-            parsed_path = urlparse(dataset.location)
-            s3_object_key = parsed_path.path[1:]
-            
-            # generate_presigned_download_link will return a presigned URL to share an S3 object and dataset markers
-            # with modified markers (if any)
-            if owned:
-                dataset.download_link, _ = generate_presigned_download_link(
-                    "uploaded-datasets", s3_object_key
-                )  # For owners, all PII's are permitted. Hence no redaction and therefore no modification in markers
-            elif shared:
+            for file in flat_files:
+                parsed_path = urlparse(file.location)
+                s3_object_key = parsed_path.path[1:]
                 
-                # For shared users it returns markers with modified co-ordinates after redaction.
-                (
-                    dataset.download_link,
-                    modified_markers,
-                ) = generate_presigned_download_link(
-                    "spotlightai-redacted-copies",
-                    s3_object_key,
-                    permissions=permissions,
-                    markers=markers,
-                    mask=masked,
-                )
+                if owned:
+                    file.download_link, _ = generate_presigned_download_link("uploaded-datasets", s3_object_key)
+                elif shared:
+                    file.download_link, modified_markers = generate_presigned_download_link(
+                        "spotlightai-redacted-copies", s3_object_key, permissions=permissions, markers=markers,
+                        mask=masked)
+                    
+                    new_markers = []
+                    permission_descriptions = set([perm.description for perm in permissions])
+                    
+                    if modified_markers:
+                        for marker in modified_markers:
+                            if marker.pii_type in permission_descriptions:
+                                new_markers.append(marker)
+                    else:
+                        for marker in file.dataset.markers:
+                            if marker.pii_type in permission_descriptions:
+                                new_markers.append(marker)
+                    
+                    file.markers = new_markers
                 
-                new_markers = []
-                permission_descriptions = set(
-                    [perm.description for perm in permissions]
-                )
-                if modified_markers:
-                    for marker in modified_markers:
-                        if marker.pii_type in permission_descriptions:
-                            new_markers.append(marker)
-                else:
-                    for marker in dataset.dataset.markers:
-                        if marker.pii_type in permission_descriptions:
-                            new_markers.append(marker)
-                
-                dataset.dataset.markers = new_markers
-            return flat_file_dataset_schema.dump(dataset)
-        
+                return flat_file_dataset_schema.dump(file, many=True)
         return
     
     @authenticate_token
@@ -245,7 +243,7 @@ class Dataset(Resource):
         if user_id not in owner_ids:
             abort(401, DatasetErrors.USER_DOES_NOT_OWN)
         
-        flat_files = FlatFileDatasetModel.query.filter_by(dataset_id=dataset_id).all()
+        flat_files = FileModel.query.filter_by(dataset_id=dataset_id).all()
         
         for file in flat_files:
             dataset_cleanup(file.location)

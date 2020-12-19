@@ -7,10 +7,10 @@ from db import db
 from models.auth.user import UserModel
 from resources.datasets.util import retrieve_datasets
 from resources.roles.util import retrieve_role, send_notifications
-from schemas.datasets.flat_file import FlatFileDatasetSchema
+from schemas.datasets.file import FileSchema
 from schemas.roles.role import RoleSchema
 
-flat_file_schema = FlatFileDatasetSchema()
+flat_file_schema = FileSchema()
 role_schema = RoleSchema()
 
 
@@ -25,7 +25,7 @@ class RoleDatasetCollection(Resource):
         """
         role = retrieve_role(user_id=user_id, role_id=role_id)
         return flat_file_schema.dump(role.datasets, many=True)
-
+    
     @authenticate_token
     def post(self, user_id, role_id):
         """
@@ -35,31 +35,31 @@ class RoleDatasetCollection(Resource):
         :return: None
         """
         role = retrieve_role(user_id=user_id, role_id=role_id)
-
+        
         data = request.get_json(force=True)
         datasets = retrieve_datasets(data.get("datasets", []))
-
+        
         user = UserModel.query.filter_by(user_id=user_id).first()
-
+        
         for dataset in datasets:
             if dataset in role.datasets:
                 abort(
                     400, f"{dataset.dataset_id}: {RoleErrors.DATASET_ALREADY_PRESENT}"
                 )
-
+            
             if user not in dataset.owners:
                 abort(401, f"{dataset.dataset_id}: {DatasetErrors.USER_DOES_NOT_OWN}")
-
+        
         role.datasets.extend(datasets)
-
+        
         role_datasets = flat_file_schema.dump(role.datasets, many=True)
         current_members = [member.user_id for member in role.members]
-
+        
         send_notifications(db.session, role, role_datasets, current_members)
-
+        
         db.session.commit()
         return None, 201
-
+    
     @authenticate_token
     def put(self, user_id, role_id):
         """
@@ -69,27 +69,27 @@ class RoleDatasetCollection(Resource):
         :return: Role object
         """
         role = retrieve_role(role_id=role_id, user_id=user_id)
-
+        
         data = request.get_json(force=True)
         datasets = retrieve_datasets(data.get("datasets", []))
-
+        
         user = UserModel.query.filter_by(user_id=user_id).first()
-
+        
         for dataset in datasets:
             if user not in dataset.owners:
                 abort(401, f"{dataset.dataset_id}: {DatasetErrors.USER_DOES_NOT_OWN}")
-
+        
         role.datasets = datasets
-
+        
         role_datasets = flat_file_schema.dump(role.datasets, many=True)
         current_members = [member.user_id for member in role.members]
-
+        
         send_notifications(db.session, role, role_datasets, current_members)
-
+        
         db.session.commit()
-
+        
         return role_schema.dump(role)
-
+    
     @authenticate_token
     def delete(self, user_id, role_id):
         """
@@ -99,19 +99,19 @@ class RoleDatasetCollection(Resource):
         :return: Role object
         """
         role = retrieve_role(user_id=user_id, role_id=role_id)
-
+        
         data = request.get_json(force=True)
         datasets = retrieve_datasets(data.get("datasets", []))
-
+        
         user = UserModel.query.filter_by(user_id=user_id).first()
-
+        
         for dataset in datasets:
             if user not in dataset.owners:
                 abort(401, f"{dataset.dataset_id}: {DatasetErrors.USER_DOES_NOT_OWN}")
             if dataset not in role.datasets:
                 abort(400, f"{dataset.dataset_id}: {RoleErrors.DATASET_NOT_PRESENT}")
             role.datasets.remove(dataset)
-
+        
         db.session.commit()
-
+        
         return role_schema.dump(role)

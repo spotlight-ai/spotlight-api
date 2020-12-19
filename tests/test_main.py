@@ -31,7 +31,7 @@ class BaseTest(unittest.TestCase):
             from models.roles.role import RoleModel
             from models.roles.role_member import RoleMemberModel
             from models.pii.pii import PIIModel
-            from models.datasets.flat_file import FlatFileDatasetModel
+            from models.datasets.file import FileModel
             from models.datasets.shared_user import SharedDatasetUserModel
             from models.notifications.notification import NotificationModel
             from models.pii.text_file import TextFilePIIModel
@@ -101,18 +101,18 @@ class BaseTest(unittest.TestCase):
             )
             
             # Create datasets
-            dataset_1 = FlatFileDatasetModel(
+            dataset_1 = FileModel(
                 dataset_name="Call Center Transcripts",
                 uploader=3,
                 location="dataset.txt",
             )
-            dataset_2 = FlatFileDatasetModel(
+            dataset_2 = FileModel(
                 dataset_name="Resumes", uploader=3, location="resumes.txt"
             )
-            dataset_3 = FlatFileDatasetModel(
+            dataset_3 = FileModel(
                 dataset_name="Drivers Licenses", uploader=3, location="drivers.txt"
             )
-            dataset_4 = FlatFileDatasetModel(
+            dataset_4 = FileModel(
                 dataset_name="Auto Loan", uploader=4, location="auto_loans.txt"
             )
             

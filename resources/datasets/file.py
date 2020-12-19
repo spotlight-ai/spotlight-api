@@ -1,28 +1,32 @@
+from urllib.parse import urlparse
+
 from flask import abort, request
 from flask_restful import Resource
 from loguru import logger
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from core.aws import generate_presigned_link
+from core.aws import generate_presigned_download_link
 from core.constants import AuditConstants
 from core.decorators import authenticate_token
+from core.errors import FileErrors
 from db import db
 from models.audit.dataset_action_history import DatasetActionHistoryModel
 from models.auth.user import UserModel
-from models.datasets.flat_file import FlatFileDatasetModel
+from models.datasets.base import DatasetModel
+from models.datasets.file import FileModel
 from schemas.datasets.base import DatasetSchema
-from schemas.datasets.flat_file import FlatFileDatasetSchema
+from schemas.datasets.file import FileSchema
 
-flat_file_schema = FlatFileDatasetSchema()
+file_schema = FileSchema()
 dataset_schema = DatasetSchema()
 
 
 class FlatFileCollection(Resource):
     @authenticate_token
     def get(self, user_id):
-        datasets = FlatFileDatasetModel.query.all()
-        return flat_file_schema.dump(datasets, many=True)
+        datasets = FileModel.query.all()
+        return file_schema.dump(datasets, many=True)
     
     @authenticate_token
     def post(self, user_id) -> None:
@@ -73,7 +77,7 @@ class FlatFileCollection(Resource):
                     "location": object_name
                 }
                 
-                flat_file_dataset = flat_file_schema.load(
+                flat_file_dataset = file_schema.load(
                     flat_file_body, session=db.session)
                 
                 db.session.add(flat_file_dataset)
@@ -97,3 +101,40 @@ class FlatFileCollection(Resource):
         except IntegrityError as err:
             db.session.rollback()
             abort(400, err)
+
+
+class File(Resource):
+    @authenticate_token
+    def get(self, user_id: int, dataset_id: int, file_id: int) -> dict:
+        """
+        Retrieves file object and generates pre-signed link if user requesting has access.
+        :param user_id: User ID requesting the file object
+        :param dataset_id: Dataset ID that the file belongs to
+        :param file_id: Unique file identifier
+        :return: File object
+        """
+        file: FileModel = FileModel.query.filter_by(file_id=file_id, dataset_id=dataset_id).first()
+        
+        if not file:
+            abort(404, FileErrors.FILE_NOT_FOUND)
+        
+        # Determine if the user requesting is an owner
+        dataset: DatasetModel = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
+        is_owner: bool = user_id in {user.user_id for user in dataset.owners}
+        
+        if is_owner:
+            # TODO: Need to add permissions for users who are shared the file.
+            filepath: str = urlparse(file.location).path[1:]
+            file.location: str = generate_presigned_download_link(filepath=filepath)
+            
+            ## Return the file location based on the file name, and permission level of the user requesting.
+            ## This function needs to give the
+            ## 1. File location
+            ## 2. Permissions requested, doesn't actually even need the role or anything... if it's an owner, they get
+            # all permissions
+            
+            file.location: str = generate_presigned_download_link(filepath=filepath)
+            return file_schema.dump(file)
+        
+        # Throw an error if the user is not an owner of the dataset, or has not had this dataset shared
+        abort(401, FileErrors.DOES_NOT_HAVE_PERMISSION)

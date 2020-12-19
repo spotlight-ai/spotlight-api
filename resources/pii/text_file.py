@@ -6,7 +6,6 @@ from sqlalchemy.exc import IntegrityError
 from core.decorators import authenticate_token
 from core.errors import DatasetErrors
 from db import db
-from models.datasets.flat_file import FlatFileDatasetModel
 from models.pii.text_file import TextFilePIIModel
 from schemas.pii.text_file import TextFilePIISchema
 
@@ -19,7 +18,7 @@ class TextFilePIICollection(Resource):
         try:
             data = request.get_json(force=True)
             text_file_pii = text_file_pii_schema.load(data)
-
+            
             db.session.add(text_file_pii)
             db.session.commit()
         except ValidationError as err:
@@ -79,7 +78,7 @@ class TextFilePII(Resource):
                 pii.confidence = data.get("confidence", pii.confidence)
                 
                 db.session.commit()
-                
+            
             return text_file_pii_schema.dump(pii)
         except ValidationError as err:
             abort(422, err.messages)
@@ -87,4 +86,3 @@ class TextFilePII(Resource):
             db.session.rollback()
             abort(400, err)
         return
-
