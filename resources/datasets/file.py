@@ -6,7 +6,7 @@ from loguru import logger
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from core.aws import generate_presigned_download_link
+from core.aws import generate_presigned_download_link, generate_presigned_link
 from core.constants import AuditConstants
 from core.decorators import authenticate_token
 from core.errors import FileErrors
@@ -15,11 +15,14 @@ from models.audit.dataset_action_history import DatasetActionHistoryModel
 from models.auth.user import UserModel
 from models.datasets.base import DatasetModel
 from models.datasets.file import FileModel
+from models.pii.text_file import TextFilePIIModel
 from schemas.datasets.base import DatasetSchema
 from schemas.datasets.file import FileSchema
+from schemas.pii.text_file import TextFilePIISchema
 
 file_schema = FileSchema()
 dataset_schema = DatasetSchema()
+text_file_pii_schema = TextFilePIISchema()
 
 
 class FlatFileCollection(Resource):
@@ -124,16 +127,12 @@ class File(Resource):
         
         if is_owner:
             # TODO: Need to add permissions for users who are shared the file.
+            markers = TextFilePIIModel.query.filter_by(file_id=file_id).all()
+            
             filepath: str = urlparse(file.location).path[1:]
-            file.location: str = generate_presigned_download_link(filepath=filepath)
+            file.location, file.markers = generate_presigned_download_link(filepath=filepath, markers=markers,
+                                                                           permissions=[])
             
-            ## Return the file location based on the file name, and permission level of the user requesting.
-            ## This function needs to give the
-            ## 1. File location
-            ## 2. Permissions requested, doesn't actually even need the role or anything... if it's an owner, they get
-            # all permissions
-            
-            file.location: str = generate_presigned_download_link(filepath=filepath)
             return file_schema.dump(file)
         
         # Throw an error if the user is not an owner of the dataset, or has not had this dataset shared

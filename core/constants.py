@@ -1,4 +1,4 @@
-import enum
+from enum import Enum, auto
 
 
 class AuditConstants:
@@ -13,9 +13,9 @@ class NotificationConstants:
     DATASET_SHARED_DETAIL = "You have been granted access to Dataset(s):"
 
 
-class AnonymizationTypes(enum.Enum):
-    REDACT: str = "REDACT"
-    MASK: str = "MASK"
+class AnonymizationType(Enum):
+    REDACT: str = auto()
+    MASK: str = auto()
 
 
 class UserConstants:
