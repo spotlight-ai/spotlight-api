@@ -8,6 +8,7 @@ from schemas.user import UserSchema
 
 class DatasetSchema(ma.ModelSchema):
     class Meta:
+        include_fk = True
         model = DatasetModel
         ordered = True
     

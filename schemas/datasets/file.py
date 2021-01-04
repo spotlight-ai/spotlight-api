@@ -5,6 +5,7 @@ from schemas.pii.text_file import TextFilePIISchema
 
 class FileSchema(ma.ModelSchema):
     class Meta:
+        include_fk = True
         model = FileModel
     
     markers = ma.List(ma.Nested(TextFilePIISchema, exclude=["file_id", "pii_id", "file"]))
