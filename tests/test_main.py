@@ -162,7 +162,7 @@ class BaseTest(unittest.TestCase):
                     last_name=user.get("last_name"),
                     email=user.get("email"),
                     password=user.get("password"),
-                    admin=user.get("admin"),
+                    admin=user.get("admin", False),
                 )
                 if user.email == "mary@spotlight.ai":
                     dataset_1.owners = [user]

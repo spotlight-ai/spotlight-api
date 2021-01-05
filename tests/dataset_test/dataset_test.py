@@ -1,5 +1,5 @@
 import json
-from unittest.mock import patch
+from unittest.mock import patch, ANY, PropertyMock
 
 from tests.test_main import BaseTest
 
@@ -48,6 +48,7 @@ class DatasetSharedUserResourceTest(BaseTest):
         self.assertEqual(res.status_code, 401)
 
     def test_owner_get_dataset(self):
+        """Verifies that an owner retrieves the original dataset."""
         headers = self.generate_auth_headers(user_id=3)
 
         res = self.client().get(f"{self.dataset_route}/1", headers=headers)
@@ -55,3 +56,26 @@ class DatasetSharedUserResourceTest(BaseTest):
         self.assertEqual(200, res.status_code)
 
         print(res.data.decode())
+
+    @patch("resources.datasets.base.generate_presigned_download_link")
+    def test_owner_get_dataset_redact(self, mock_download):
+        """Verifies that an owner retrieves a redacted version of dataset by request."""
+        headers = self.generate_auth_headers(user_id=3)
+        params = {
+            "redact": ["ssn"]
+        }
+        mock_download.return_value = ("download_link_url", [])
+        res = self.client().get(f"{self.dataset_route}/1", headers=headers, query_string=params)
+
+        mock_download.assert_called_with("spotlightai-redacted-copies", ANY, markers=ANY, mask=ANY, permissions=ANY)
+
+    @patch("resources.datasets.base.map")
+    @patch("resources.datasets.base.PIIModel")
+    def test_request_redact_not_found(self, model_mock, mock_map):
+        headers = self.generate_auth_headers(user_id=4)
+        params = {
+            "redact": ["ssn", "not_redact"]
+        }
+        mock_map.return_value = ["ssn"]
+        res = self.client().get(f"{self.dataset_route}/4", headers=headers, query_string=params)
+        self.assertEqual(404, res.status_code)

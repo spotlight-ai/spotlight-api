@@ -93,6 +93,7 @@ class Dataset(Resource):
             masked = True
         else:
             masked = False
+        redact = args.getlist("redact")
 
         if user_id != "MODEL":  # User is requesting
 
@@ -137,18 +138,30 @@ class Dataset(Resource):
             if not shared and not owned:
                 abort(401, "This user is not authorized to view this dataset")
 
-            individual_permissions = (
-                PIIModel.query.join(UserDatasetPermission)
-                .join(SharedDatasetUserModel)
-                .filter_by(dataset_id=dataset_id, user_id=user_id)
+            document_pii = (
+                PIIModel.query.join(TextFilePIIModel, PIIModel.pii_id == TextFilePIIModel.pii_id)
+                .filter_by(dataset_id=dataset_id)
             )
+            requested_redactions = document_pii.filter(PIIModel.description.in_(redact))
+
+            if self.permissions_not_found(redact, requested_redactions):
+                abort(404, "Requested PII to redact could not be found. ")
+
+            if owned:
+                individual_permissions = document_pii
+            else:
+                individual_permissions = (
+                    PIIModel.query.join(UserDatasetPermission)
+                    .join(SharedDatasetUserModel)
+                    .filter_by(dataset_id=dataset_id, user_id=user_id)
+                )
 
             role_permissions = (
                 PIIModel.query.join(RolePermission)
                 .join(RoleModel)
                 .filter(RoleModel.role_id.in_(role_ids))
             )
-            permissions = individual_permissions.union(role_permissions).all()
+            permissions = individual_permissions.union(role_permissions).except_(requested_redactions).all()
 
             markers = TextFilePIIModel.query.filter_by(dataset_id=dataset_id).all()
         else:  # Model is requesting
@@ -166,12 +179,11 @@ class Dataset(Resource):
             s3_object_key = parsed_path.path[1:]
 
             # generate_presigned_download_link will return a presigned URL to share an S3 object and dataset markers with modified markers (if any)
-            if owned:
+            if owned and not redact:
                 dataset.download_link, _ = generate_presigned_download_link(
                     "uploaded-datasets", s3_object_key
-                )  # For owners, all PII's are permitted. Hence no redaction and therefore no modification in markers
-            elif shared:
-
+                )
+            elif shared or (owned and redact):
                 # For shared users it returns markers with modified co-ordinates after redaction.
                 (
                     dataset.download_link,
@@ -201,6 +213,10 @@ class Dataset(Resource):
             return flat_file_dataset_schema.dump(dataset)
 
         return
+
+    def permissions_not_found(self, req_redact: list, db_redact):
+        db_list = list(map(lambda x: x.description, db_redact.all()))
+        return set(req_redact) != set(db_list)
 
     @authenticate_token
     def put(self, user_id, dataset_id):
