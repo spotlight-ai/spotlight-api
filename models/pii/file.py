@@ -3,8 +3,8 @@ from datetime import datetime
 from db import db
 
 
-class TextFilePIIModel(db.Model):
-    __tablename__ = "pii_text_file"
+class FilePIIModel(db.Model):
+    __tablename__ = "pii_file"
     __tableargs__ = db.UniqueConstraint(
         "pii_id", "dataset_id", "start_location", "end_location"
     )
@@ -19,8 +19,8 @@ class TextFilePIIModel(db.Model):
     confidence = db.Column(db.Float, nullable=False)
     last_updated_ts = db.Column(db.DateTime, nullable=False)
     
-    def __init__(self, dataset_id, pii_type, start_location, end_location, confidence):
-        self.dataset_id = dataset_id
+    def __init__(self, file_id, pii_type, start_location, end_location, confidence):
+        self.file_id = file_id
         self.pii_type = pii_type
         self.start_location = start_location
         self.end_location = end_location

@@ -19,7 +19,7 @@ from models.datasets.file import FileModel
 from models.datasets.shared_user import SharedDatasetUserModel
 from models.job import JobModel
 from models.pii.pii import PIIModel
-from models.pii.text_file import TextFilePIIModel
+from models.pii.file import FilePIIModel
 from models.roles.role import RoleModel
 from models.roles.role_member import RoleMemberModel
 from schemas.datasets.base import DatasetSchema
@@ -163,7 +163,7 @@ class Dataset(Resource):
             )
             permissions = individual_permissions.union(role_permissions).all()
             
-            markers = TextFilePIIModel.query.filter_by(dataset_id=dataset_id).all()
+            markers = FilePIIModel.query.filter_by(dataset_id=dataset_id).all()
         else:  # Model is requesting
             owned = True
             shared = False

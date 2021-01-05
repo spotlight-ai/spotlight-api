@@ -15,14 +15,14 @@ from models.audit.dataset_action_history import DatasetActionHistoryModel
 from models.auth.user import UserModel
 from models.datasets.base import DatasetModel
 from models.datasets.file import FileModel
-from models.pii.text_file import TextFilePIIModel
+from models.pii.file import FilePIIModel
 from schemas.datasets.base import DatasetSchema
 from schemas.datasets.file import FileSchema
-from schemas.pii.text_file import TextFilePIISchema
+from schemas.pii.file import FilePIISchema
 
 file_schema = FileSchema()
 dataset_schema = DatasetSchema()
-text_file_pii_schema = TextFilePIISchema()
+file_pii_schema = FilePIISchema()
 
 
 class FlatFileCollection(Resource):
@@ -127,7 +127,7 @@ class File(Resource):
         
         if is_owner:
             # TODO: Need to add permissions for users who are shared the file.
-            markers = TextFilePIIModel.query.filter_by(file_id=file_id).all()
+            markers = FilePIIModel.query.filter_by(file_id=file_id).all()
             
             filepath: str = urlparse(file.location).path[1:]
             file.location, file.markers = generate_presigned_download_link(filepath=filepath, markers=markers,

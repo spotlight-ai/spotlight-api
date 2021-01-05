@@ -1,5 +1,5 @@
 from db import db
-from models.pii.text_file import TextFilePIIModel
+from models.pii.file import FilePIIModel
 
 
 class FileModel(db.Model):
@@ -13,7 +13,7 @@ class FileModel(db.Model):
     location = db.Column(db.String, unique=True)
     
     markers = db.relationship(
-        TextFilePIIModel,
+        FilePIIModel,
         backref="file",
         lazy=True,
         cascade="save-update, merge, delete",

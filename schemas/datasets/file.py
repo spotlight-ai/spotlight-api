@@ -1,6 +1,6 @@
 from db import ma
 from models.datasets.file import FileModel
-from schemas.pii.text_file import TextFilePIISchema
+from schemas.pii.file import FilePIISchema
 
 
 class FileSchema(ma.ModelSchema):
@@ -8,4 +8,4 @@ class FileSchema(ma.ModelSchema):
         include_fk = True
         model = FileModel
     
-    markers = ma.List(ma.Nested(TextFilePIISchema, exclude=["file_id", "pii_id", "file"]))
+    markers = ma.List(ma.Nested(FilePIISchema, exclude=["file_id", "pii_id", "file"]))
