@@ -93,7 +93,7 @@ class Dataset(Resource):
         # TODO: Add code to check for role permissions
         is_owner = user_id in {owner.user_id for owner in dataset.owners}
         
-        if is_owner:
+        if is_owner or user_id == "MODEL":
             return dataset_schema.dump(dataset)
         else:
             abort(401, "This user is not authorized to view this dataset")
