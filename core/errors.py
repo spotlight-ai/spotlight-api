@@ -25,6 +25,11 @@ class DatasetErrors:
     )
 
 
+class FileErrors:
+    FILE_NOT_FOUND = "File was not found."
+    DOES_NOT_HAVE_PERMISSION = "User does not have permission to view this file."
+
+
 class UserErrors:
     USER_NOT_FOUND = "User or users not found."
     USER_ALREADY_EXISTS = "User already exists."

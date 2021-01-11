@@ -5,7 +5,29 @@ from flask import abort, request
 from core.errors import AuthenticationErrors
 from models.auth.api_key import APIKeyModel
 from models.auth.user import UserModel
+from models.datasets.base import  DatasetModel
 from models.auth.util import hash_token
+
+
+def is_dataset_owner(func):
+    def wrapper(*args, **kwargs):
+        """Cheacking the ownership of current user"""
+
+        dataset_id=kwargs['dataset_id']
+        user_id=kwargs['user_id']
+        dataset= DatasetModel.query.filter_by(dataset_id=dataset_id).first()
+
+        if not dataset:
+            abort(400, DatasetErrors.DOES_NOT_EXIST)
+
+        owners = [owner.user_id for owner in dataset.owners]
+
+        if user_id not in owners:
+            abort(400, DatasetErrors.USER_DOES_NOT_OWN)
+
+        return func(dataset=dataset,existing_owners=owners,*args, **kwargs)
+
+    return wrapper
 
 
 def authenticate_token(func):

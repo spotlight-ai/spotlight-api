@@ -3,121 +3,72 @@ import os
 from urllib.parse import urlparse
 
 import boto3
+from botocore import client
 from botocore.exceptions import ClientError
-from redactors.base import FileRedactorCreator
 
-def generate_presigned_download_link(
-    bucket_name,
-    object_name,
-    expiration=3600,
-    permissions=None,
-    markers=None,
-    mask=False,
-):
-    """
-    Generate a presigned URL to share an S3 object
-    Also modifies and returns marker coordinates for shared users with selective permission 
-    :param bucket_name: string
-    :param object_name: string
-    :param expiration: Time in seconds for the presigned URL to remain valid
-    :param permissions: PII that should be exposed to the requesting viewer
-    :param markers: PII markers detected in the dataset
-    :return: Presigned URL as string. If error, returns None.
-             Modified list of markers for shared users. Returns None for owners
-    """
-    s3_client = boto3.client(
-        "s3",
-        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-    )
-    raw_bucket: str = "uploaded-datasets"
-    redacted_bucket: str = "spotlightai-redacted-copies"
-    masked_bucket: str = "spotlightai-masked-copies"
+from core.anon import anonymize_file
+from core.constants import AnonymizationType
 
+
+def generate_anonymized_filepath(filepath: str, anon_method: AnonymizationType, permissions: list) -> str:
+    """
+    Utility method to generate a hashed filepath for anonymized files to reduce duplication.
+    :param filepath: Original filepath of the raw file.
+    :param anon_method: Anonymization method used.
+    :param permissions: List of permissions requested in the file.
+    :return: Hashed filepath
+    """
+    perm_descriptions: list = [perm.description for perm in permissions]
+    return hashlib.sha1((filepath + str(perm_descriptions) + anon_method.name).encode()).hexdigest()
+
+
+def generate_presigned_download_link(filepath: str, markers: list, expiration: int = 3600, permissions: list = None,
+                                     anon_method: AnonymizationType = AnonymizationType.REDACT):
+    s3_client: client = boto3.client("s3", aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+                                     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"))
+    
+    # Configurable S3 paths for raw files and ephemeral copies
+    raw_file_bucket: str = "uploaded-datasets"
+    anonymized_copy_bucket: str = "spotlight-anonymized-copies"
+    
     try:
-        if permissions is None:
+        if permissions is None:  # Owner has requested the file, return the raw version
             response = s3_client.generate_presigned_url(
                 "get_object",
-                Params={"Bucket": raw_bucket, "Key": object_name},
+                Params={"Bucket": raw_file_bucket, "Key": filepath},
                 ExpiresIn=expiration,
             )
         else:
-            permission_descriptions: list = [perm.description for perm in permissions]
-            redacted_filepath = hashlib.sha1(
-                (object_name + str(permission_descriptions)).encode()
-            ).hexdigest()
-
-            if not mask:
-                s3_client.head_object(Bucket=redacted_bucket, Key=redacted_filepath)
-
-                response = s3_client.generate_presigned_url(
-                    "get_object",
-                    Params={"Bucket": redacted_bucket, "Key": redacted_filepath},
-                    ExpiresIn=expiration,
-                )
-            else:
-                s3_client.head_object(Bucket=masked_bucket, Key=redacted_filepath)
-
-                response = s3_client.generate_presigned_url(
-                    "get_object",
-                    Params={"Bucket": masked_bucket, "Key": redacted_filepath},
-                    ExpiresIn=expiration,
-                )
-
-            if markers:
-                markers: list = modify_markers(
-                    markers, permission_descriptions, mask, object_name, s3_client
-                )
-
-        return response, markers
-
-    except ClientError as e:
-        if e.response["ResponseMetadata"]["HTTPStatusCode"] == 404:
-            permission_descriptions: list = [perm.description for perm in permissions]
-            redacted_filepath = hashlib.sha1(
-                (object_name + str(permission_descriptions)).encode()
-            ).hexdigest()
-
-            s3_client.download_file(
-                raw_bucket, object_name, object_name.replace("/", "_")
+            anonymized_filepath = generate_anonymized_filepath(filepath, anon_method, permissions)
+            
+            try:  # Check to see if this anonymized file has already been created
+                s3_client.head_object(Bucket=anonymized_copy_bucket, Key=anonymized_filepath)
+            except ClientError as e:  # Generate the anonymized file
+                if e.response["ResponseMetadata"]["HTTPStatusCode"] == 404:
+                    output_location: str = filepath.replace("/", "_")
+                    
+                    s3_client.download_file(raw_file_bucket, filepath, output_location)
+                    
+                    # Anonymizes the file and updates the marker positions
+                    markers: list = anonymize_file(output_location, markers, permissions, anon_method=anon_method)
+                    
+                    s3_client.upload_file(output_location, anonymized_copy_bucket, anonymized_filepath)
+                    os.remove(output_location)
+            
+            response = s3_client.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": anonymized_copy_bucket, "Key": anonymized_filepath},
+                ExpiresIn=expiration,
             )
-            
-            redactor_factory: FileRedactorCreator = FileRedactorCreator()
-            output_location: str = object_name.replace("/", "_")
-            
-            _, ext = os.path.splitext(output_location)
-            modified_markers = redactor_factory.get_redactor(ext).redact_file(output_location, permission_descriptions, markers, mask)
-
-            if not mask:
-                s3_client.upload_file(
-                    object_name.replace("/", "_"), redacted_bucket, redacted_filepath
-                )
-                os.remove(object_name.replace("/", "_"))
-                return (
-                    s3_client.generate_presigned_url(
-                        "get_object",
-                        Params={"Bucket": redacted_bucket, "Key": redacted_filepath},
-                        ExpiresIn=expiration,
-                    ),
-                    modified_markers,
-                )
-            else:
-                s3_client.upload_file(
-                    object_name.replace("/", "_"), masked_bucket, redacted_filepath
-                )
-                os.remove(object_name.replace("/", "_"))
-                return (
-                    s3_client.generate_presigned_url(
-                        "get_object",
-                        Params={"Bucket": masked_bucket, "Key": redacted_filepath},
-                        ExpiresIn=expiration,
-                    ),
-                    modified_markers,
-                )
+        
+        return response, markers
+    
+    except Exception as e:
+        print(e)
 
 
 def generate_presigned_link(
-    bucket_name, object_name, fields=None, conditions=None, expiration=3600
+        bucket_name, object_name, fields=None, conditions=None, expiration=3600
 ):
     """
     Generates an AWS pre-signed link to access files in S3 location.
@@ -146,7 +97,7 @@ def generate_presigned_link(
         )
     except ClientError as e:
         return None
-
+    
     return response
 
 
@@ -161,35 +112,13 @@ def dataset_cleanup(filepath):
         aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
         aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
     )
-
+    
     parsed_url = urlparse(filepath)
-
+    
     bucket = parsed_url.netloc.split(".")[0]
     key = parsed_url.path[1:]
-
+    
     try:
         s3_client.delete_objects(Bucket=bucket, Delete={"Objects": [{"Key": key}]})
     except ClientError:
         return None
-
-
-def modify_markers(markers, permission_descriptions, mask, object_name, s3_client):
-    """
-    Below is the algorithm to modify the marker co-ordinates after replacing the PII values
-    with the Redaction text or a randomly generated Hash value.
-    """
-    raw_bucket: str = "uploaded-datasets"
-    redacted_bucket: str = "spotlightai-redacted-copies"
-    masked_bucket: str = "spotlightai-masked-copies"
-
-    s3_client.download_file(
-        raw_bucket, object_name, object_name.replace("/", "_")
-    )
-
-    redactor_factory: FileRedactorCreator = FileRedactorCreator()
-    output_location: str = object_name.replace("/", "_")
-    
-    _, ext = os.path.splitext(output_location)
-    modified_markers = redactor_factory.get_redactor(ext).redact_file(output_location, permission_descriptions, markers, mask)
-    os.remove(output_location)
-    return modified_markers
