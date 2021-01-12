@@ -6,7 +6,7 @@ import models.datasets.file
 import models.job
 import models.notifications
 import models.pii.pii
-import models.pii.file
+import models.pii.marker_base
 import models.roles.role
 import models.roles.role_member
 import models.slack.slack_token

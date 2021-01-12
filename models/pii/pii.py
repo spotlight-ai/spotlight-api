@@ -3,7 +3,7 @@ from models.associations import RolePermission
 
 
 class PIIModel(db.Model):
-    __tablename__ = "pii_marker_base"
+    __tablename__ = "pii_base"
 
     pii_id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String, nullable=False)

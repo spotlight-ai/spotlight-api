@@ -1,4 +1,3 @@
-# from db import ma
 from models.notifications.notification import NotificationModel
 import marshmallow_sqlalchemy as ma
 

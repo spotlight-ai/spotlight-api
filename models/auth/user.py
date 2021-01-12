@@ -10,9 +10,7 @@ from itsdangerous import (
 
 from db import db
 from models.associations import DatasetOwner
-# from models.auth.api_key import APIKeyModel
 from models.auth.util import check_validity
-# from models.datasets.base import DatasetModel
 from models.workspaces.workspace import WorkspaceModel
 
 class UserModel(db.Model):

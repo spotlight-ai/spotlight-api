@@ -15,7 +15,7 @@ from models.roles.role_member import RoleMemberModel
 from models.pii.pii import PIIModel
 from models.datasets.file import FileModel
 from models.notifications.notification import NotificationModel
-from models.pii.file import FilePIIModel
+from models.pii.marker_base import PIIMarkerBaseModel
 from models.workspaces.workspace import WorkspaceModel
 from models.workspaces.workspace_member import WorkspaceMemberModel
 from dotenv import find_dotenv, load_dotenv
@@ -71,7 +71,7 @@ def database(app):
                 _file = FileModel(**file_info)
                 db.session.add(_file)
             for info in item.get("markers") or []:
-                marker = FilePIIModel(**info)
+                marker = PIIMarkerBaseModel(**info)
                 db.session.add(marker)
             db.session.add(dataset)
             dataset_list.append(dataset)
