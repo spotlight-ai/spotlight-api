@@ -1,4 +1,5 @@
 from urllib.parse import urlparse
+import os
 
 from flask import abort, request
 from flask_restful import Resource
@@ -15,14 +16,18 @@ from models.audit.dataset_action_history import DatasetActionHistoryModel
 from models.auth.user import UserModel
 from models.datasets.base import DatasetModel
 from models.datasets.file import FileModel
-from models.pii.file import FilePIIModel
+from models.pii.marker_file import PIIMarkerFileModel
+from models.pii.marker_image import PIIMarkerImageModel
 from schemas.datasets.base import DatasetSchema
 from schemas.datasets.file import FileSchema
-from schemas.pii.file import FilePIISchema
+from schemas.pii.marker_image import PIIMarkerImageSchema
+from schemas.pii.marker_file import PIIMarkerFilechema
+from core.constants import SupportedFiles
 
 file_schema = FileSchema()
 dataset_schema = DatasetSchema()
-file_pii_schema = FilePIISchema()
+pii_marker_file_schema = PIIMarkerFilechema()
+pii_marker_image_schema = PIIMarkerImageSchema()
 
 
 class FlatFileCollection(Resource):
@@ -127,9 +132,17 @@ class File(Resource):
         
         if is_owner:
             # TODO: Need to add permissions for users who are shared the file.
-            markers = FilePIIModel.query.filter_by(file_id=file_id).all()
             
             filepath: str = urlparse(file.location).path[1:]
+            _, ext = os.path.splitext(filepath)
+
+            if ext in SupportedFiles.CHARACTER_BASED:
+                markers = PIIMarkerFileModel.query.filter_by(file_id=file_id).all()
+            elif ext in SupportedFiles.IMAGE_BASED:
+                markers = PIIMarkerImageModel.query.filter_by(file_id=file_id).all()
+            else:
+                abort(400, "File extension not supported.")
+
             file.location, file.markers = generate_presigned_download_link(filepath=filepath, markers=markers,
                                                                            permissions=[])
             

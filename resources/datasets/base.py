@@ -19,7 +19,6 @@ from models.datasets.file import FileModel
 from models.datasets.shared_user import SharedDatasetUserModel
 from models.job import JobModel
 from models.pii.pii import PIIModel
-from models.pii.file import FilePIIModel
 from models.roles.role import RoleModel
 from models.roles.role_member import RoleMemberModel
 from schemas.datasets.base import DatasetSchema
@@ -100,75 +99,75 @@ class Dataset(Resource):
         
         ## Below is deprecated
         
-        args = request.args
-        masked = f'{args.get("masked", "false")}'
-        if masked.lower() == "true":
-            masked = True
-        else:
-            masked = False
+        # args = request.args
+        # masked = f'{args.get("masked", "false")}'
+        # if masked.lower() == "true":
+        #     masked = True
+        # else:
+        #     masked = False
         
-        if user_id != "MODEL":  # User is requesting
+        # if user_id != "MODEL":  # User is requesting
             
-            # Check if any job related to this dataset is PENDING or Failed in which case we can't reveal the dataset.
-            jobs = JobModel.query.filter(JobModel.dataset_id == dataset_id).all()
-            jobs_json = job_schema.dump(jobs, many=True)
+        #     # Check if any job related to this dataset is PENDING or Failed in which case we can't reveal the dataset.
+        #     jobs = JobModel.query.filter(JobModel.dataset_id == dataset_id).all()
+        #     jobs_json = job_schema.dump(jobs, many=True)
             
-            for job in jobs_json:
-                if job.get("job_status", "").lower() in ["pending", "failed"]:
-                    if base_dataset.dataset_type == "FLAT_FILE":
-                        dataset = FileModel.query.filter_by(
-                            dataset_id=dataset_id
-                        ).first()
-                        dataset.download_link, dataset.dataset.markers = None, []
-                    return flat_file_dataset_schema.dump(dataset)
+        #     for job in jobs_json:
+        #         if job.get("job_status", "").lower() in ["pending", "failed"]:
+        #             if base_dataset.dataset_type == "FLAT_FILE":
+        #                 dataset = FileModel.query.filter_by(
+        #                     dataset_id=dataset_id
+        #                 ).first()
+        #                 dataset.download_link, dataset.dataset.markers = None, []
+        #             return flat_file_dataset_schema.dump(dataset)
             
-            user = UserModel.query.filter_by(user_id=user_id).first()
+        #     user = UserModel.query.filter_by(user_id=user_id).first()
             
-            if not base_dataset:
-                abort(404, "Dataset not found")
+        #     if not base_dataset:
+        #         abort(404, "Dataset not found")
             
-            owned = user in base_dataset.owners
-            shared = (
-                True
-                if SharedDatasetUserModel.query.filter_by(
-                    dataset_id=dataset_id, user_id=user_id
-                ).first()
-                else False
-            )
-            role_ids = []
+        #     owned = user in base_dataset.owners
+        #     shared = (
+        #         True
+        #         if SharedDatasetUserModel.query.filter_by(
+        #             dataset_id=dataset_id, user_id=user_id
+        #         ).first()
+        #         else False
+        #     )
+        #     role_ids = []
             
-            if (
-                    not shared
-            ):  # Check for role sharing if it hasn't been shared individually
-                for role in base_dataset.roles:
-                    for member in role.members:
-                        if member.user_id == user_id:
-                            shared = True
-                            role_ids.append(role.role_id)
-                            break
+        #     if (
+        #             not shared
+        #     ):  # Check for role sharing if it hasn't been shared individually
+        #         for role in base_dataset.roles:
+        #             for member in role.members:
+        #                 if member.user_id == user_id:
+        #                     shared = True
+        #                     role_ids.append(role.role_id)
+        #                     break
             
-            if not shared and not owned:
-                abort(401, "This user is not authorized to view this dataset")
+        #     if not shared and not owned:
+        #         abort(401, "This user is not authorized to view this dataset")
             
-            individual_permissions = (
-                PIIModel.query.join(UserDatasetPermission)
-                    .join(SharedDatasetUserModel)
-                    .filter_by(dataset_id=dataset_id, user_id=user_id)
-            )
+        #     individual_permissions = (
+        #         PIIModel.query.join(UserDatasetPermission)
+        #             .join(SharedDatasetUserModel)
+        #             .filter_by(dataset_id=dataset_id, user_id=user_id)
+        #     )
             
-            role_permissions = (
-                PIIModel.query.join(RolePermission)
-                    .join(RoleModel)
-                    .filter(RoleModel.role_id.in_(role_ids))
-            )
-            permissions = individual_permissions.union(role_permissions).all()
+        #     role_permissions = (
+        #         PIIModel.query.join(RolePermission)
+        #             .join(RoleModel)
+        #             .filter(RoleModel.role_id.in_(role_ids))
+        #     )
+        #     permissions = individual_permissions.union(role_permissions).all()
             
-            markers = FilePIIModel.query.filter_by(dataset_id=dataset_id).all()
-        else:  # Model is requesting
-            owned = True
-            shared = False
-            permissions = []
-            markers = []
+        #     markers = FilePIIModel.query.filter_by(dataset_id=dataset_id).all()
+        # else:  # Model is requesting
+        #     owned = True
+        #     shared = False
+        #     permissions = []
+        #     markers = []
         
         if base_dataset.dataset_type == "FLAT_FILE":
             flat_files = FileModel.query.filter_by(dataset_id=dataset_id).all()

@@ -1,5 +1,5 @@
 from db import db
-from models.pii.file import FilePIIModel
+from models.pii.marker_base import PIIMarkerBaseModel
 
 
 class FileModel(db.Model):
@@ -13,7 +13,7 @@ class FileModel(db.Model):
     location = db.Column(db.String, unique=True)
     
     markers = db.relationship(
-        FilePIIModel,
+        PIIMarkerBaseModel,
         backref="file",
         lazy=True,
         cascade="save-update, merge, delete",
