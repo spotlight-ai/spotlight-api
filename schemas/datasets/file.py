@@ -8,4 +8,4 @@ class FileSchema(ma.ModelSchema):
         include_fk = True
         model = FileModel
     
-    markers = ma.List(ma.Nested(FilePIISchema, exclude=["file_id", "pii_id", "file"]))
+    markers = ma.List(ma.Nested(FilePIISchema, exclude=["file_id", "file"]))
