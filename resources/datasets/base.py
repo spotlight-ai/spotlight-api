@@ -11,12 +11,11 @@ from core.constants import AuditConstants
 from core.decorators import authenticate_token
 from core.errors import DatasetErrors, UserErrors
 from db import db
-from models.associations import RoleDataset, RolePermission, UserDatasetPermission
+from models.associations import RoleDataset, RolePermission
 from models.audit.dataset_action_history import DatasetActionHistoryModel
 from models.auth.user import UserModel
 from models.datasets.base import DatasetModel
 from models.datasets.file import FileModel
-from models.datasets.shared_user import SharedDatasetUserModel
 from models.job import JobModel
 from models.pii.pii import PIIModel
 from models.pii.file import FilePIIModel
