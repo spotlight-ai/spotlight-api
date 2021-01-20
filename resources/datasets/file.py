@@ -119,10 +119,11 @@ class File(Resource):
         # Determine if the user requesting is an owner
         dataset: DatasetModel = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
         is_owner: bool = user_id in {user.user_id for user in dataset.owners}
+
+        markers: list = FilePIIModel.query.filter_by(file_id=file_id).all()
         
         if is_owner:
             # TODO: Need to add permissions for users who are shared the file.
-            markers: list = FilePIIModel.query.filter_by(file_id=file_id).all()
             permissions: list = [marker.pii_type for marker in markers]
 
             filepath: str = urlparse(file.location).path[1:]

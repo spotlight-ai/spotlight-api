@@ -18,11 +18,10 @@ def generate_anonymized_filepath(filepath: str, anon_method: AnonymizationType, 
     :param permissions: List of permissions requested in the file.
     :return: Hashed filepath
     """
-    perm_descriptions: list = [perm.description for perm in permissions]
-    return hashlib.sha1((filepath + str(perm_descriptions) + anon_method.name).encode()).hexdigest()
+    return hashlib.sha1((filepath + str(permissions) + anon_method.name).encode()).hexdigest()
 
 
-def generate_presigned_download_link(filepath: str, markers: list, expiration: int = 3600, permissions: list = None,
+def generate_presigned_download_link(filepath: str, markers: list, permissions: list, expiration: int = 3600,
                                      anon_method: AnonymizationType = AnonymizationType.REDACT):
     s3_client: client = boto3.client("s3", aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
                                      aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"))
@@ -30,41 +29,31 @@ def generate_presigned_download_link(filepath: str, markers: list, expiration: i
     # Configurable S3 paths for raw files and ephemeral copies
     raw_file_bucket: str = "uploaded-datasets"
     anonymized_copy_bucket: str = "spotlight-anonymized-copies"
+    anonymized_filepath = generate_anonymized_filepath(filepath, anon_method, permissions)
     
-    try:
-        if permissions is None:  # Owner has requested the file, return the raw version
-            response = s3_client.generate_presigned_url(
-                "get_object",
-                Params={"Bucket": raw_file_bucket, "Key": filepath},
-                ExpiresIn=expiration,
-            )
-        else:
-            anonymized_filepath = generate_anonymized_filepath(filepath, anon_method, permissions)
-            
-            try:  # Check to see if this anonymized file has already been created
-                s3_client.head_object(Bucket=anonymized_copy_bucket, Key=anonymized_filepath)
-            except ClientError as e:  # Generate the anonymized file
-                if e.response["ResponseMetadata"]["HTTPStatusCode"] == 404:
-                    output_location: str = filepath.replace("/", "_")
-                    
-                    s3_client.download_file(raw_file_bucket, filepath, output_location)
-                    
-                    # Anonymizes the file and updates the marker positions
-                    markers: list = anonymize_file(output_location, markers, permissions, anon_method=anon_method)
-                    
-                    s3_client.upload_file(output_location, anonymized_copy_bucket, anonymized_filepath)
-                    os.remove(output_location)
-            
-            response = s3_client.generate_presigned_url(
-                "get_object",
-                Params={"Bucket": anonymized_copy_bucket, "Key": anonymized_filepath},
-                ExpiresIn=expiration,
-            )
-        
-        return response, markers
-    
-    except Exception as e:
-        print(e)
+    try:  # Check to see if this anonymized file has already been created
+        s3_client.head_object(Bucket=anonymized_copy_bucket, Key=anonymized_filepath)
+
+        response = s3_client.generate_presigned_url("get_object", Params={"Bucket": anonymized_copy_bucket, "Key": anonymized_filepath}, ExpiresIn=expiration)
+    except ClientError as e:  # Generate the anonymized file
+        if e.response["ResponseMetadata"]["HTTPStatusCode"] == 404:
+            output_location: str = filepath.replace("/", "_")
+
+            s3_client.download_file(raw_file_bucket, filepath, output_location)
+
+            # Anonymizes the file and updates the marker positions
+            markers: list = anonymize_file(output_location, markers, permissions, anon_method=anon_method)
+
+            s3_client.upload_file(output_location, anonymized_copy_bucket, anonymized_filepath)
+            os.remove(output_location)
+
+        response = s3_client.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": anonymized_copy_bucket, "Key": anonymized_filepath},
+            ExpiresIn=expiration,
+        )
+
+    return response, markers
 
 
 def generate_presigned_link(
