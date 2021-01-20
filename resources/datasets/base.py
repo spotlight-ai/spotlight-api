@@ -32,25 +32,25 @@ job_schema = JobSchema()
 
 class DatasetCollection(Resource):
     @authenticate_token
-    def get(self, user_id):
+    def get(self, user_id) -> list:
         """
         Returns a list of datasets that are owned by and shared with the currently logged in user.
         Note: This will only return datasets that have been verified.
         :param user_id: Currently logged in user ID
         :return: List of datasets
         """
-        logged_in_user = UserModel.query.filter_by(user_id=user_id).first()
+        logged_in_user: UserModel = UserModel.query.filter_by(user_id=user_id).first()
         
-        all_datasets = []
+        all_datasets: list = []
         
         # Retrieve all datasets that the user owns
-        owned_datasets = DatasetModel.query.filter(
+        owned_datasets: list = DatasetModel.query.filter(
             DatasetModel.verified == true(),
             DatasetModel.owners.contains(logged_in_user),
         ).all()
         
-        owned_datasets_json = dataset_schema.dump(owned_datasets, many=True)
-        owned_dataset_ids = [
+        owned_datasets_json: list = dataset_schema.dump(owned_datasets, many=True)
+        owned_dataset_ids: list = [
             dataset.get("dataset_id") for dataset in owned_datasets_json
         ]
         for dataset in owned_datasets_json:
@@ -58,19 +58,12 @@ class DatasetCollection(Resource):
         all_datasets.extend(owned_datasets_json)
         
         # Retrieve datasets the user may access via role permissions
-        shared_by_role = (
+        shared: list = (
             DatasetModel.query.join(RoleDataset)
-                .join(RoleModel)
-                .join(RoleMemberModel)
-                .filter(RoleMemberModel.user_id == user_id)
+            .join(RoleModel)
+            .join(RoleMemberModel)
+            .filter(RoleMemberModel.user_id == user_id)
         )
-        
-        # Retrieve datasets the user may access via individual permissions/sharing
-        shared_by_user = DatasetModel.query.join(SharedDatasetUserModel).filter(
-            SharedDatasetUserModel.user_id == user_id
-        )
-        
-        shared = shared_by_role.union(shared_by_user).distinct()
         
         shared_json = dataset_schema.dump(shared, many=True)
         for dataset in shared_json:

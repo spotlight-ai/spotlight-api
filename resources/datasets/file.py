@@ -27,11 +27,6 @@ file_pii_schema = FilePIISchema()
 
 class FlatFileCollection(Resource):
     @authenticate_token
-    def get(self, user_id):
-        datasets = FileModel.query.all()
-        return file_schema.dump(datasets, many=True)
-    
-    @authenticate_token
     def post(self, user_id) -> None:
         """
         Generates a request to upload a new flat file. Returns a pre-signed S3 link for upload that is valid for
@@ -127,11 +122,12 @@ class File(Resource):
         
         if is_owner:
             # TODO: Need to add permissions for users who are shared the file.
-            markers = FilePIIModel.query.filter_by(file_id=file_id).all()
-            
+            markers: list = FilePIIModel.query.filter_by(file_id=file_id).all()
+            permissions: list = [marker.pii_type for marker in markers]
+
             filepath: str = urlparse(file.location).path[1:]
             file.location, file.markers = generate_presigned_download_link(filepath=filepath, markers=markers,
-                                                                           permissions=[])
+                                                                           permissions=permissions)
             
             return file_schema.dump(file)
         
