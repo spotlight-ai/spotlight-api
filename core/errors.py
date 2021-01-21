@@ -15,6 +15,7 @@ class RoleErrors:
 
 
 class DatasetErrors:
+    ALL_DATASETS_ALREADY_VERIFIED: str = "All datasets have already been previously verified."
     COULD_NOT_CREATE_JOB: str = "Unforseen error when attempting to create a job for the model."
     DOES_NOT_EXIST: str = "Dataset does not exist."
     GIVEN_USERS_DO_NOT_OWN: str = (
@@ -22,7 +23,7 @@ class DatasetErrors:
         "dataset."
     )
     MUST_HAVE_OWNER: str = "Dataset must have at least one owner."
-
+    MUST_SUPPLY_USER_ID: str = "Must supply user ID to perform this operation."
     NO_NEW_OWNERS: str = "No new owners to be added."
     NOT_AUTHORIZED: str = "This user is not authorized to access metadata for this dataset."
     USER_DOES_NOT_OWN: str = "User does not own this dataset."

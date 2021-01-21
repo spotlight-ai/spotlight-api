@@ -1,7 +1,5 @@
 import typing
-import os
 
-import requests
 from flask import abort, request
 from flask_restful import Resource
 from loguru import logger
@@ -31,7 +29,7 @@ job_schema = JobSchema()
 
 class DatasetCollection(Resource):
     @authenticate_token
-    def get(self, user_id) -> list:
+    def get(self, user_id: int) -> list:
         """
         Returns a list of datasets that are owned by and shared with the currently logged in user.
         Note: This will only return datasets that have been verified.
@@ -161,7 +159,7 @@ class DatasetVerification(Resource):
         job_ids: list = []
         
         for dataset in datasets:
-            if dataset.verified:
+            if not dataset.verified:
                 dataset.verified = True
 
                 job: JobModel = JobModel(dataset.dataset_id)
@@ -186,5 +184,8 @@ class DatasetVerification(Resource):
                     )
                 )
                 db.session.commit()
+
+        if len(job_ids) == 0:
+            abort(400, DatasetErrors.ALL_DATASETS_ALREADY_VERIFIED)
 
         return {"job_ids": job_ids}

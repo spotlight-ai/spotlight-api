@@ -1,7 +1,10 @@
+import typing
 import os
 
 from loguru import logger
 import requests
+from sqlalchemy import orm
+from sqlalchemy.sql import true
 
 from core.errors import DatasetErrors
 from models.associations import RoleDataset
@@ -45,14 +48,29 @@ def delete_datasets(dataset_ids: list) -> None:
     DatasetModel.query.filter((DatasetModel.dataset_id.in_(dataset_ids))).delete()
 
 
-def retrieve_datasets(dataset_ids: list) -> list:
+def retrieve_datasets(dataset_ids: list, owner_only: bool = False, user_id: typing.Optional[int] = None,
+                      verified_only: bool = False) -> list:
     """
     Retrieves a list of datasets by their IDs.
     :param dataset_ids: Dataset IDs to retrieve.
+    :param owner_only: Retrieve datasets that are owned by a particular user
+    :param user_id: Required if owner_only is True
+    :param verified_only: Retrieve only verified datasets
     :return: List of datasets
     """
     logger.info(f"Retrieving datasets: {dataset_ids}")
-    datasets: list = DatasetModel.query.filter((DatasetModel.dataset_id.in_(dataset_ids))).all()
+
+    query: orm.query = DatasetModel.query.filter(DatasetModel.dataset_id.in_(dataset_ids))
+
+    if owner_only:
+        if not user_id:
+            raise ValueError(DatasetErrors.MUST_SUPPLY_USER_ID)
+        query.filter(DatasetModel.owners.contains(user_id))
+
+    if verified_only:
+        query.filter(DatasetModel.verified == true())
+
+    datasets: list = query.all()
 
     if len(datasets) == 0:
         raise ValueError(DatasetErrors.DOES_NOT_EXIST, dataset_ids)
