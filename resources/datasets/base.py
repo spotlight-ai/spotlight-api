@@ -1,3 +1,4 @@
+import typing
 import os
 
 import requests
@@ -15,6 +16,7 @@ from models.associations import RoleDataset
 from models.audit.dataset_action_history import DatasetActionHistoryModel
 from models.auth.user import UserModel
 from models.datasets.base import DatasetModel
+from models.job import JobModel
 from models.roles.role import RoleModel
 from models.roles.role_member import RoleMemberModel
 from resources.datasets import util as dataset_util
@@ -72,6 +74,9 @@ class DatasetCollection(Resource):
 
 
 class Dataset(Resource):
+    """
+    Resource for manipulating individual dataset objects.
+    """
     @authenticate_token
     def get(self, user_id: int, dataset_id: int) -> dict:
         """
@@ -82,7 +87,7 @@ class Dataset(Resource):
         """
         is_model: bool = user_id == "MODEL"  # Is the model requesting the metadata?
 
-        dataset: DatasetModel | None = None
+        dataset: typing.Optional[DatasetModel] = None
 
         try:
             dataset = dataset_util.retrieve_dataset(dataset_id)
@@ -110,7 +115,7 @@ class Dataset(Resource):
         :param dataset_id: Dataset unique identifier to delete
         :return: None
         """
-        dataset: DatasetModel | None = None
+        dataset: typing.Optional[DatasetModel] = None
 
         try:
             dataset = dataset_util.retrieve_dataset(dataset_id)
@@ -133,42 +138,46 @@ class Dataset(Resource):
 
 
 class DatasetVerification(Resource):
+    """
+    Resource for validating that a dataset has been successfully uploaded to an external source.
+    """
     @authenticate_token
-    def post(self, user_id):
+    def post(self, user_id: int) -> dict:
         """
         Verifies that a dataset has been uploaded. Accepts a list of dataset IDs that are to be verified, and checks
         dataset upload on AWS S3.
         :param user_id: Currently logged in user ID
         :return: None
         """
-        request_body = request.get_json(force=True)
-        dataset_ids = request_body["dataset_ids"]
+        dataset_ids: list = request.get_json(force=True).get("dataset_ids", [])  # Datasets to verify
+        datasets: typing.Optional[list] = None
+
+        try:
+            datasets = dataset_util.retrieve_datasets(dataset_ids)
+        except ValueError as e:
+            logger.error(e.args)
+            abort(404, e.args[0])
         
-        datasets = DatasetModel.query.filter(
-            DatasetModel.dataset_id.in_(dataset_ids)
-        ).all()
-        
-        job_ids = []
+        job_ids: list = []
         
         for dataset in datasets:
-            if not dataset.verified:
-                # TODO: Add S3 verification.
-                # TODO: Add API call to model API to run job that is created.
-                # TODO: Add Kafka messaging queue implementation for job queueing.
-                job = job_schema.load({"dataset_id": dataset.dataset_id})
-                db.session.add(job)
+            if dataset.verified:
                 dataset.verified = True
-                
-                db.session.flush()
-                db.session.refresh(job)
-                
+
+                job: JobModel = JobModel(dataset.dataset_id)
+                db.session.add(job)
                 db.session.commit()
-                
-                url = f'http://{os.getenv("MODEL_HOST")}:{os.getenv("MODEL_PORT")}/predict/file'
-                payload = {"job_id": job.job_id}
-                
-                job_ids.append(job.job_id)
-                requests.post(url, json=payload)
+
+                try:
+                    dataset_util.send_job(job.job_id)
+                    job_ids.append(job.job_id)
+                except SystemExit as e:
+                    logger.error(e.args)
+                    abort(500, DatasetErrors.COULD_NOT_CREATE_JOB)
+                except ValueError as e:
+                    logger.error(e.args)
+                    abort(500, e.args[0])
+
                 db.session.add(
                     DatasetActionHistoryModel(
                         user_id=user_id,
@@ -176,6 +185,6 @@ class DatasetVerification(Resource):
                         action=AuditConstants.DATASET_VERIFIED,
                     )
                 )
-        
-        db.session.commit()
+                db.session.commit()
+
         return {"job_ids": job_ids}

@@ -1,4 +1,7 @@
+import os
+
 from loguru import logger
+import requests
 
 from core.errors import DatasetErrors
 from models.associations import RoleDataset
@@ -6,6 +9,8 @@ from models.datasets.base import DatasetModel
 from models.datasets.file import FileModel
 from models.roles.role import RoleModel
 from models.roles.role_member import RoleMemberModel
+
+JOB_URL = f'http://{os.getenv("MODEL_HOST")}:{os.getenv("MODEL_PORT")}/predict/file'
 
 
 def check_dataset_ownership(dataset: DatasetModel, user_id: int) -> bool:
@@ -80,4 +85,24 @@ def retrieve_files(dataset_id: int) -> list:
     logger.info(f"Retrieving files for dataset {dataset_id}")
 
     return FileModel.query.filter_by(dataset_id=dataset_id).all()
+
+
+def send_job(job_id: int) -> None:
+    """
+    Sends a job request to the model server via an API call.
+    :param job_id: Job ID to be initiated
+    :return: None
+    """
+    logger.info(f"Sending job request {job_id} to model server...")
+
+    payload: dict = {"job_id": job_id}
+
+    try:
+        r: requests.Response = requests.post(JOB_URL, json=payload)
+
+        if not r.ok:
+            raise ValueError(DatasetErrors.COULD_NOT_CREATE_JOB, job_id)
+
+    except requests.exceptions.RequestException as e:
+        raise SystemExit(e)
 
