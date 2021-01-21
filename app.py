@@ -46,12 +46,12 @@ def create_app(config):
     api.add_resource(APIKeyCollection, "/auth/api_key")
     api.add_resource(APIKeyRevokeCollection, "/auth/api_key/revoke")
 
-    api.add_resource(DatasetCollection, "/dataset")
-    api.add_resource(Dataset, "/dataset/<int:dataset_id>")
-    api.add_resource(DatasetVerification, "/dataset/verification")
+    api.add_resource(DatasetCollection, "/dataset")  # GET
+    api.add_resource(Dataset, "/dataset/<int:dataset_id>")  # GET, DELETE
+    api.add_resource(DatasetVerification, "/dataset/verification")  # POST
 
-    api.add_resource(FlatFileCollection, "/dataset/file")
     api.add_resource(DatasetOwners, "/dataset/<int:dataset_id>/owner")
+    api.add_resource(FlatFileCollection, "/dataset/file")
     api.add_resource(File, "/dataset/<int:dataset_id>/file/<int:file_id>")
     api.add_resource(ForgotPassword, "/forgot")
     api.add_resource(JobCollection, "/job")

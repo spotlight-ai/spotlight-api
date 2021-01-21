@@ -1,3 +1,4 @@
+import typing
 from urllib.parse import urlparse
 
 from flask import abort, request
@@ -16,6 +17,7 @@ from models.auth.user import UserModel
 from models.datasets.base import DatasetModel
 from models.datasets.file import FileModel
 from models.pii.file import FilePIIModel
+from resources.datasets import util as dataset_util
 from schemas.datasets.base import DatasetSchema
 from schemas.datasets.file import FileSchema
 from schemas.pii.file import FilePIISchema
@@ -102,6 +104,9 @@ class FlatFileCollection(Resource):
 
 
 class File(Resource):
+    """
+    Resource for manipulating a single File resource.
+    """
     @authenticate_token
     def get(self, user_id: int, dataset_id: int, file_id: int) -> dict:
         """
@@ -111,26 +116,43 @@ class File(Resource):
         :param file_id: Unique file identifier
         :return: File object
         """
-        file: FileModel = FileModel.query.filter_by(file_id=file_id, dataset_id=dataset_id).first()
-        
-        if not file:
-            abort(404, FileErrors.FILE_NOT_FOUND)
+        file: typing.Optional[FileModel] = None
+        dataset: typing.Optional[DatasetModel] = None
+
+        try:
+            file: FileModel = dataset_util.retrieve_file(file_id, dataset_id)
+            dataset: DatasetModel = dataset_util.retrieve_dataset(dataset_id)
+        except ValueError as e:
+            logger.error(e.args)
+            abort(404, e.args[0])
         
         # Determine if the user requesting is an owner
-        dataset: DatasetModel = DatasetModel.query.filter_by(dataset_id=dataset_id).first()
-        is_owner: bool = user_id in {user.user_id for user in dataset.owners}
+        is_owner: bool = dataset_util.check_dataset_ownership(dataset, user_id)
 
-        markers: list = FilePIIModel.query.filter_by(file_id=file_id).all()
+        markers: list = file.markers
+        filepath: str = urlparse(file.location).path[1:]
         
         if is_owner:
-            # TODO: Need to add permissions for users who are shared the file.
             permissions: list = [marker.pii_type for marker in markers]
+        else:
+            is_shared, roles = dataset_util.check_dataset_role_permissions(dataset_id, user_id)
 
-            filepath: str = urlparse(file.location).path[1:]
-            file.location, file.markers = generate_presigned_download_link(filepath=filepath, markers=markers,
-                                                                           permissions=permissions)
-            
-            return file_schema.dump(file)
-        
-        # Throw an error if the user is not an owner of the dataset, or has not had this dataset shared
-        abort(401, FileErrors.DOES_NOT_HAVE_PERMISSION)
+            if not is_shared:
+                abort(401, FileErrors.DOES_NOT_HAVE_PERMISSION)
+
+            perm_list: list = []
+            for role in roles:
+                perm_list.extend(role.permissions)
+
+            permissions: list = [{x.description for x in perm_list}]
+
+        logger.debug(markers)
+        logger.debug(permissions)
+
+        file.location, file.markers = generate_presigned_download_link(filepath=filepath, markers=markers,
+                                                                       permissions=permissions)
+
+        logger.debug(file.markers)
+
+        return file_schema.dump(file)
+

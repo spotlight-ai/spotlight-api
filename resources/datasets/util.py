@@ -6,7 +6,8 @@ import requests
 from sqlalchemy import orm
 from sqlalchemy.sql import true
 
-from core.errors import DatasetErrors
+from core.errors import DatasetErrors, FileErrors
+from db import db
 from models.associations import RoleDataset
 from models.datasets.base import DatasetModel
 from models.datasets.file import FileModel
@@ -19,10 +20,10 @@ JOB_URL = f'http://{os.getenv("MODEL_HOST")}:{os.getenv("MODEL_PORT")}/predict/f
 def check_dataset_ownership(dataset: DatasetModel, user_id: int) -> bool:
     logger.info(f"Checking dataset ownership for dataset {dataset.dataset_id} and user {user_id}")
 
-    return user_id in {x for x in dataset.owners}
+    return user_id in {x.user_id for x in dataset.owners}
 
 
-def check_dataset_role_permissions(dataset_id: int, user_id: int) -> bool:
+def check_dataset_role_permissions(dataset_id: int, user_id: int) -> tuple:
     """
     Check if the user is a member of a role that has access to a dataset.
     :param dataset_id: Dataset identifier to be accessed
@@ -32,10 +33,10 @@ def check_dataset_role_permissions(dataset_id: int, user_id: int) -> bool:
     logger.info(f"Checking permissions on dataset {dataset_id} for user {user_id}...")
 
     # Generate a list of roles that the user is a member of and that have access to the requested dataset
-    roles: int = RoleModel.query.join(RoleMemberModel).join(RoleDataset)\
-        .filter((user_id == user_id) & (dataset_id == dataset_id)).count()
+    roles: list = RoleModel.query.join(RoleMemberModel).join(RoleDataset)\
+        .filter((user_id == user_id) & (dataset_id == dataset_id)).all()
 
-    return roles > 0
+    return len(roles) > 0, roles
 
 
 def delete_datasets(dataset_ids: list) -> None:
@@ -45,7 +46,8 @@ def delete_datasets(dataset_ids: list) -> None:
     :return: None
     """
     logger.info(f"Deleting datasets: {dataset_ids}")
-    DatasetModel.query.filter((DatasetModel.dataset_id.in_(dataset_ids))).delete()
+    DatasetModel.query.filter(DatasetModel.dataset_id.in_(dataset_ids)).delete(synchronize_session=False)
+    db.session.commit()
 
 
 def retrieve_datasets(dataset_ids: list, owner_only: bool = False, user_id: typing.Optional[int] = None,
@@ -103,6 +105,23 @@ def retrieve_files(dataset_id: int) -> list:
     logger.info(f"Retrieving files for dataset {dataset_id}")
 
     return FileModel.query.filter_by(dataset_id=dataset_id).all()
+
+
+def retrieve_file(file_id: int, dataset_id: int) -> FileModel:
+    """
+    Retrieves a single File object.
+    :param file_id: File identifier to be requested
+    :param dataset_id: Dataset identifier that maintains the file
+    :return: File object
+    """
+    logger.info(f"Retrieving file {file_id}...")
+
+    file: FileModel = FileModel.query.filter_by(file_id=file_id, dataset_id=dataset_id).first()
+
+    if not file:
+        raise ValueError(FileErrors.FILE_NOT_FOUND, file_id)
+
+    return file
 
 
 def send_job(job_id: int) -> None:

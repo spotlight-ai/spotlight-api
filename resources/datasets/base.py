@@ -27,9 +27,72 @@ dataset_schema = DatasetSchema()
 job_schema = JobSchema()
 
 
+class Dataset(Resource):
+    """
+    Resource for manipulating individual Dataset objects.
+    """
+
+    @authenticate_token
+    def get(self, user_id: int, dataset_id: int) -> dict:
+        """
+        Retrieves metadata for a dataset.
+        :param user_id: User ID requesting the dataset information
+        :param dataset_id: Dataset identifier to be retrieved
+        :return: Dataset metadata object
+        """
+        is_model: bool = user_id == "MODEL"  # Is the model requesting the metadata?
+
+        dataset: typing.Optional[DatasetModel] = None
+
+        try:
+            dataset = dataset_util.retrieve_dataset(dataset_id)
+        except ValueError as e:
+            logger.error(e.args)
+            abort(404, e.args[0])
+
+        is_owner: bool = dataset_util.check_dataset_ownership(dataset, user_id)
+
+        if is_model or is_owner:
+            return dataset_schema.dump(dataset)
+        else:
+            is_shared, _ = dataset_util.check_dataset_role_permissions(dataset_id, user_id)
+
+            if is_shared:
+                return dataset_schema.dump(dataset)
+
+        abort(401, DatasetErrors.NOT_AUTHORIZED)
+
+    @authenticate_token
+    def delete(self, user_id: int, dataset_id: int) -> tuple:
+        """
+        Deletes a dataset from the system.
+        :param user_id: Currently logged in user ID.
+        :param dataset_id: Dataset unique identifier to delete
+        :return: None
+        """
+        dataset: typing.Optional[DatasetModel] = None
+
+        try:
+            dataset = dataset_util.retrieve_dataset(dataset_id)
+        except ValueError as e:
+            logger.error(e.args)
+            abort(404, e.args[0])
+
+        if not dataset_util.check_dataset_ownership(dataset, user_id):
+            abort(401, DatasetErrors.USER_DOES_NOT_OWN)
+
+        files: list = dataset_util.retrieve_files(dataset_id)
+
+        for file_object in files:
+            aws_util.dataset_cleanup(file_object.location)
+
+        dataset_util.delete_datasets([dataset_id])
+        return None, 202
+
+
 class DatasetCollection(Resource):
     """
-    Resource for viewing multiple dataset objects at once.
+    Resource for viewing multiple Dataset objects at once.
     """
     @authenticate_token
     def get(self, user_id: int) -> list:
@@ -74,73 +137,9 @@ class DatasetCollection(Resource):
         return all_datasets
 
 
-class Dataset(Resource):
-    """
-    Resource for manipulating individual dataset objects.
-    """
-    @authenticate_token
-    def get(self, user_id: int, dataset_id: int) -> dict:
-        """
-        Retrieves metadata for a dataset.
-        :param user_id: User ID requesting the dataset information
-        :param dataset_id: Dataset identifier to be retrieved
-        :return: Dataset metadata object
-        """
-        is_model: bool = user_id == "MODEL"  # Is the model requesting the metadata?
-
-        dataset: typing.Optional[DatasetModel] = None
-
-        try:
-            dataset = dataset_util.retrieve_dataset(dataset_id)
-        except ValueError as e:
-            logger.error(e.args)
-            abort(404, e.args[0])
-
-        is_owner: bool = dataset_util.check_dataset_ownership(dataset, user_id)
-
-        if is_model or is_owner:
-            return dataset_schema.dump(dataset)
-        else:
-            is_shared = dataset_util.check_dataset_role_permissions(dataset_id, user_id)
-
-            if is_shared:
-                return dataset_schema.dump(dataset)
-
-        abort(401, DatasetErrors.NOT_AUTHORIZED)
-    
-    @authenticate_token
-    def delete(self, user_id: int, dataset_id: int) -> tuple:
-        """
-        Deletes a dataset from the system.
-        :param user_id: Currently logged in user ID.
-        :param dataset_id: Dataset unique identifier to delete
-        :return: None
-        """
-        dataset: typing.Optional[DatasetModel] = None
-
-        try:
-            dataset = dataset_util.retrieve_dataset(dataset_id)
-        except ValueError as e:
-            logger.error(e.args)
-            abort(404, e.args[0])
-
-        if not dataset_util.check_dataset_ownership(dataset, user_id):
-            abort(401, DatasetErrors.USER_DOES_NOT_OWN)
-        
-        files: list = dataset_util.retrieve_files(dataset_id)
-        
-        for file_object in files:
-            aws_util.dataset_cleanup(file_object.location)
-
-        dataset_util.delete_datasets([dataset_id])
-
-        db.session.commit()
-        return None, 202
-
-
 class DatasetVerification(Resource):
     """
-    Resource for validating that a dataset has been successfully uploaded to an external source.
+    Resource for validating that a Dataset has been successfully uploaded to an external source.
     """
     @authenticate_token
     def post(self, user_id: int) -> dict:
