@@ -1,4 +1,4 @@
-from models.datasets.file import FileModel
+from models.datasets.base import DatasetModel
 
 
 def retrieve_datasets(dataset_ids) -> list:
@@ -7,6 +7,6 @@ def retrieve_datasets(dataset_ids) -> list:
     :param dataset_ids: Dataset IDs to retrieve.
     :return: List of datasets
     """
-    return FileModel.query.filter(
-        (FileModel.dataset_id.in_(dataset_ids))
+    return DatasetModel.query.filter(
+        (DatasetModel.dataset_id.in_(dataset_ids))
     ).all()
