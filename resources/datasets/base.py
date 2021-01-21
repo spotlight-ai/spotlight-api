@@ -8,7 +8,7 @@ from sqlalchemy.sql.expression import true
 from core import aws as aws_util
 from core.constants import AuditConstants
 from core.decorators import authenticate_token
-from core.errors import DatasetErrors, UserErrors
+from core.errors import DatasetErrors
 from db import db
 from models.associations import RoleDataset
 from models.audit.dataset_action_history import DatasetActionHistoryModel
@@ -28,6 +28,9 @@ job_schema = JobSchema()
 
 
 class DatasetCollection(Resource):
+    """
+    Resource for viewing multiple dataset objects at once.
+    """
     @authenticate_token
     def get(self, user_id: int) -> list:
         """
