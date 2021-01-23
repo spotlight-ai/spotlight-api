@@ -15,14 +15,18 @@ class RoleErrors:
 
 
 class DatasetErrors:
-    USER_DOES_NOT_OWN = "User does not own this dataset."
-    MUST_HAVE_OWNER = "Dataset must have at least one owner."
-    DOES_NOT_EXIST = "Dataset does not exist."
-    NO_NEW_OWNERS = "No new owners to be added."
-    GIVEN_USERS_DO_NOT_OWN = (
+    ALL_DATASETS_ALREADY_VERIFIED: str = "All datasets have already been previously verified."
+    COULD_NOT_CREATE_JOB: str = "Unforseen error when attempting to create a job for the model."
+    DOES_NOT_EXIST: str = "Dataset does not exist."
+    GIVEN_USERS_DO_NOT_OWN: str = (
         "Cannot process this request as user(s) {not_an_owner} are not the owner(s) of this "
         "dataset."
     )
+    MUST_HAVE_OWNER: str = "Dataset must have at least one owner."
+    MUST_SUPPLY_USER_ID: str = "Must supply user ID to perform this operation."
+    NO_NEW_OWNERS: str = "No new owners to be added."
+    NOT_AUTHORIZED: str = "This user is not authorized to access metadata for this dataset."
+    USER_DOES_NOT_OWN: str = "User does not own this dataset."
 
 
 class FileErrors:

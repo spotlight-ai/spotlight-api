@@ -38,8 +38,6 @@ def anonymize_file(filepath: str, markers: list, perms: list,
             marker.end = end
             new_markers.append(marker)
     
-    print(file, flush=True)
-    
     open(filepath, "w").write(file)
     
     return new_markers

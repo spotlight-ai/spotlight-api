@@ -37,19 +37,3 @@ DatasetOwner = db.Table(
         "owner_id", db.Integer, db.ForeignKey("user.user_id", ondelete="cascade")
     ),
 )
-
-# Table to store permissions for individual users on a dataset (many-to-many relationship).
-UserDatasetPermission = db.Table(
-    "shared_dataset_user_permissions",
-    db.Column("id", db.Integer, primary_key=True),
-    db.Column(
-        "dataset_user_id",
-        db.Integer,
-        db.ForeignKey("shared_dataset_user.id", ondelete="cascade", onupdate="cascade"),
-    ),
-    db.Column(
-        "pii_id",
-        db.Integer,
-        db.ForeignKey("pii_marker_base.pii_id", ondelete="cascade", onupdate="cascade"),
-    ),
-)

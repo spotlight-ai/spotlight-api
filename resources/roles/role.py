@@ -44,10 +44,9 @@ class RoleCollection(Resource):
             # Add currently logged in user as the creator
             data = request.get_json(force=True)
 
-            # Create the role object
-            role = role_schema.load(
-                {"role_name": data.get("role_name"), "creator_id": user_id}
-            )
+            data["creator_id"] = user_id
+
+            role = role_schema.load(data)
 
             db.session.add(role)
             db.session.flush()

@@ -12,7 +12,6 @@ class UserSchema(ma.ModelSchema):
             "role",
             "role_member",
             "owned_datasets",
-            "shared_datasets",
             "api_keys",
         )
         ordered = True

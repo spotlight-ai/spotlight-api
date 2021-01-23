@@ -1,6 +1,5 @@
 from db import db
-from models.associations import RolePermission, UserDatasetPermission
-from models.datasets.shared_user import SharedDatasetUserModel
+from models.associations import RolePermission
 
 
 class PIIModel(db.Model):
@@ -13,11 +12,6 @@ class PIIModel(db.Model):
 
     roles = db.relationship(
         "RoleModel", secondary=RolePermission, back_populates="permissions"
-    )
-    shared_datasets = db.relationship(
-        SharedDatasetUserModel,
-        secondary=UserDatasetPermission,
-        back_populates="permissions",
     )
 
     def __init__(self, description, long_description, category):
