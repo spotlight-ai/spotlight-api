@@ -1,5 +1,5 @@
 import json
-
+from unittest.mock import patch
 from tests.test_main import BaseTest
 
 
@@ -21,10 +21,10 @@ class DatasetSharedUserResourceTest(BaseTest):
 
         self.assertEqual(res.status_code, 401)
 
-    def test_add_dataset_shared_user(self):
+    @patch("resources.datasets.shared_user.NotificationModel.send_notification_email")
+    def test_add_dataset_shared_user(self, mock_send_notif):
         """Owners should be able to add individual users to access their dataset."""
         headers = self.generate_auth_headers(user_id=3)
-
         res = self.client().post(
             f"{self.dataset_route}/1/user", headers=headers, json=[{"user_id": 5}]
         )
@@ -77,7 +77,8 @@ class DatasetSharedUserResourceTest(BaseTest):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(len(shared_users), 0)
 
-    def test_add_dataset_shared_user_with_permissions(self):
+    @patch("resources.datasets.shared_user.NotificationModel.send_notification_email")
+    def test_add_dataset_shared_user_with_permissions(self, mock_send_notif):
         headers = self.generate_auth_headers(user_id=3)
 
         res = self.client().post(

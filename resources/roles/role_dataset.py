@@ -26,8 +26,8 @@ class RoleDatasetCollection(Resource):
         :return: List of datasets.
         """
         role = retrieve_role(user_id=user_id, role_id=role_id)
-        return file_schema.dump(role.datasets, many=True)
-    
+        return dataset_schema.dump(role.datasets, many=True)
+
     @authenticate_token
     def post(self, user_id, role_id):
         """
@@ -83,7 +83,7 @@ class RoleDatasetCollection(Resource):
         
         role.datasets = datasets
         
-        role_datasets = file_schema.dump(role.datasets, many=True)
+        role_datasets = dataset_schema.dump(role.datasets, many=True)
         current_members = [member.user_id for member in role.members]
         
         send_notifications(db.session, role, role_datasets, current_members)

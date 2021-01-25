@@ -53,5 +53,3 @@ class DatasetSharedUserResourceTest(BaseTest):
         res = self.client().get(f"{self.dataset_route}/1", headers=headers)
 
         self.assertEqual(200, res.status_code)
-
-        print(res.data.decode())

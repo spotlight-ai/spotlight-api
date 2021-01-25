@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 from tests.test_main import BaseTest
 
@@ -61,7 +62,8 @@ class RoleMemberResourceTest(BaseTest):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(len(members), 4)
 
-    def test_add_members(self):
+    @patch("resources.roles.role_member.send_notifications")
+    def test_add_members(self, mock_notif):
         """Adds multiple members to a role."""
         headers = self.generate_auth_headers(user_id=4)
 
@@ -87,10 +89,13 @@ class RoleMemberResourceTest(BaseTest):
 
         self.assertEqual(owner_count, 2)
 
-    def test_add_combo(self):
+    @patch("resources.roles.role_member.send_notifications")
+    def test_add_combo(self, mock_notif):
         """Adds a combination of users and owners."""
         headers = self.generate_auth_headers(user_id=4)
 
+        res = self.client().get(f"{self.role_route}/1/member", headers=headers)
+        members = json.loads(res.data.decode())
         res = self.client().post(
             f"{self.role_route}/1/member",
             json={"owners": [5], "users": [2]},
@@ -113,23 +118,25 @@ class RoleMemberResourceTest(BaseTest):
 
         self.assertEqual(owner_count, 3)
 
-    def test_replace_combo(self):
+    @patch("resources.roles.role_member.send_notifications")
+    def test_replace_combo(self, mock_notif):
         """Replaces role members and owners with new sets."""
-        headers = self.generate_auth_headers(user_id=4)
+        headers = self.generate_auth_headers(user_id=3)
+        member_path = f"{self.role_route}/1/member"
 
         res = self.client().put(
-            f"{self.role_route}/1/member",
+            member_path,
             json={"owners": [2, 3], "users": [4]},
             headers=headers,
         )
 
-        self.assertEqual(res.status_code, 200)
+        self.assertEqual(200, res.status_code)
 
-        res = self.client().get(f"{self.role_route}/1/member", headers=headers)
+        res = self.client().get(member_path, headers=headers)
         members = json.loads(res.data.decode())
 
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(len(members), 3)
+        self.assertEqual(200, res.status_code)
+        self.assertEqual(3, len(members))
 
         owner_count = 0
 

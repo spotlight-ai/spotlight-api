@@ -13,7 +13,7 @@ class NotificationTest(BaseTest):
         notifications = json.loads(res.data.decode())
 
         self.assertEqual(200, res.status_code)
-        self.assertEqual(2, len(notifications))
+        self.assertEqual(3, len(notifications))
         self.assertIn("created_ts", notifications[0])
         self.assertIn("viewed", notifications[0])
         self.assertIn("last_updated_ts", notifications[0])
@@ -21,8 +21,9 @@ class NotificationTest(BaseTest):
         self.assertIn("title", notifications[0])
         self.assertIn("detail", notifications[0])
 
-        for notification in notifications:
-            self.assertFalse(notification.get("viewed"))
+        self.assertFalse(notifications[0].get("viewed"))
+        self.assertFalse(notifications[1].get("viewed"))
+        self.assertTrue(notifications[2].get("viewed"))
 
     def test_retrieve_notifications_user_with_none(self):
         """Verifies that a user with no notifications returns an empty list."""
@@ -36,7 +37,7 @@ class NotificationTest(BaseTest):
         self.assertEqual(0, len(notifications))
 
     def test_retrieve_notifications_all_viewed(self):
-        """Verifies that an error is thrown when notifications are fetched for a user that doesn't exist."""
+        """Verifies that all viewed notifications are retrieved."""
         headers = self.generate_auth_headers(user_id=2)
 
         res = self.client().get(self.notification_route, headers=headers)
@@ -44,7 +45,9 @@ class NotificationTest(BaseTest):
         notifications = json.loads(res.data.decode())
 
         self.assertEqual(200, res.status_code)
-        self.assertEqual(0, len(notifications))
+        self.assertEqual(1, len(notifications))
+        for notification in notifications:
+            self.assertTrue(True, notification.get("viewed"))
 
     def test_update_notifications(self):
         """Verifies that a notification can be updated."""

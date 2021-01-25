@@ -1,5 +1,5 @@
 import json
-
+from core.errors import AuthenticationErrors
 from tests.test_main import BaseTest
 
 
@@ -53,20 +53,20 @@ class RoleResourceTest(BaseTest):
         """Ensures that role endpoints require authentication."""
         res = self.client().post(self.role_route, json=self.role_object)
         self.assertEqual(res.status_code, 400)
-        self.assertIn("Missing authorization header", res.data.decode())
+        self.assertIn(AuthenticationErrors.MISSING_AUTH_HEADER, res.data.decode())
 
         res = self.client().get(self.role_route)
 
         self.assertEqual(res.status_code, 400)
-        self.assertIn("Missing authorization header", res.data.decode())
+        self.assertIn(AuthenticationErrors.MISSING_AUTH_HEADER, res.data.decode())
 
         res = self.client().get(f"{self.role_route}/1")
         self.assertEqual(res.status_code, 400)
-        self.assertIn("Missing authorization header", res.data.decode())
+        self.assertIn(AuthenticationErrors.MISSING_AUTH_HEADER, res.data.decode())
 
         res = self.client().delete(f"{self.role_route}/1")
         self.assertEqual(res.status_code, 400)
-        self.assertIn("Missing authorization header", res.data.decode())
+        self.assertIn(AuthenticationErrors.MISSING_AUTH_HEADER, res.data.decode())
 
     def test_get_roles(self):
         """Tests GET /role endpoint. Should return only roles owned by the requester."""

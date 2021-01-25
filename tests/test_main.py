@@ -34,7 +34,8 @@ class BaseTest(unittest.TestCase):
             from models.datasets.file import FileModel
             from models.datasets.shared_user import SharedDatasetUserModel
             from models.notifications.notification import NotificationModel
-            from models.pii.text_file import TextFilePIIModel
+            from models.pii.file import FilePIIModel
+            from models.datasets.base import DatasetModel
             
             db.create_all()
             
@@ -101,27 +102,72 @@ class BaseTest(unittest.TestCase):
             )
             
             # Create datasets
-            dataset_1 = FileModel(
-                dataset_name="Call Center Transcripts",
+            # dataset_1 = FileModel(
+            #     dataset_name="Call Center Transcripts",
+            #     uploader=3,
+            #     location="dataset.txt",
+            # )
+            # dataset_2 = FileModel(
+            #     dataset_name="Resumes", uploader=3, location="resumes.txt"
+            # )
+            # dataset_3 = FileModel(
+            #     dataset_name="Drivers Licenses", uploader=3, location="drivers.txt"
+            # )
+            # dataset_4 = FileModel(
+            #     dataset_name="Auto Loan", uploader=4, location="auto_loans.txt"
+            # )
+            self.dataset_1_name = "Call Center Transcript"
+            dataset_1 = DatasetModel(
+                dataset_name=self.dataset_1_name,
+                dataset_type="FLAT_FILE",
                 uploader=3,
-                location="dataset.txt",
+                verified=False,
             )
-            dataset_2 = FileModel(
-                dataset_name="Resumes", uploader=3, location="resumes.txt"
+
+            file_1 = FileModel(
+                dataset_id=1,
+                location="dataset.txt"
             )
-            dataset_3 = FileModel(
-                dataset_name="Drivers Licenses", uploader=3, location="drivers.txt"
+
+            dataset_2 = DatasetModel(
+                dataset_name="Resumes",
+                dataset_type="FLAT_FILE",
+                uploader=3,
+                verified=False,
             )
-            dataset_4 = FileModel(
-                dataset_name="Auto Loan", uploader=4, location="auto_loans.txt"
+            file_2 = FileModel(
+                dataset_id=2,
+                location="resumes.txt",
             )
-            
+
+            dataset_3 = DatasetModel(
+                dataset_name="Drivers Licenses",
+                dataset_type="FLAT_FILE",
+                uploader=4,
+                verified=False,
+            )
+            file_3 = FileModel(
+                dataset_id=3,
+                location="drivers.txt",
+            )
+
+            dataset_4 = DatasetModel(
+                dataset_name="Auto Loan",
+                dataset_type="FLAT_FILE",
+                uploader=4,
+                verified=False,
+            )
+            file_4 = FileModel(
+                dataset_id=3,
+                location="auto_loans.txt",
+            )
+
             dataset_1_shared_user_1 = SharedDatasetUserModel(dataset_id=1, user_id=1)
             dataset_1_shared_user_1.permissions = [pii_ssn]
             dataset_1_shared_user_2 = SharedDatasetUserModel(dataset_id=1, user_id=2)
             
-            text_file_pii_1 = TextFilePIIModel(
-                dataset_id=1,
+            text_file_pii_1 = FilePIIModel(
+                file_id=1,
                 pii_type="ssn",
                 start_location=12,
                 end_location=21,
@@ -174,33 +220,33 @@ class BaseTest(unittest.TestCase):
                 
                 db.session.add(user)
             
-            # db.session.add(dataset_1)
-            # db.session.add(dataset_2)
-            # db.session.add(dataset_3)
-            # db.session.add(dataset_4)
-            #
-            # db.session.add(dataset_1_shared_user_1)
-            # db.session.add(dataset_1_shared_user_2)
-            #
-            # # Add permissions to roles
-            # role_1.permissions = [pii_ssn]
-            # role_2.permissions = [pii_name, pii_address]
-            #
-            # # Store all objects in database
-            # db.session.add(role_1)
-            # db.session.add(role_2)
-            # db.session.add(role_1_owner_1)
-            # db.session.add(role_1_owner_2)
-            # db.session.add(role_1_user_1)
-            # db.session.add(role_2_owner_1)
-            # db.session.add(role_2_user_1)
-            #
-            # # Store notifications
-            # db.session.add(notification_1)
-            # db.session.add(notification_2)
-            # db.session.add(notification_3)
-            # db.session.add(notification_4)
-            #
+            db.session.add(dataset_1)
+            db.session.add(dataset_2)
+            db.session.add(dataset_3)
+            db.session.add(dataset_4)
+
+            db.session.add(dataset_1_shared_user_1)
+            db.session.add(dataset_1_shared_user_2)
+
+            # Add permissions to roles
+            role_1.permissions = [pii_ssn]
+            role_2.permissions = [pii_name, pii_address]
+
+            # Store all objects in database
+            db.session.add(role_1)
+            db.session.add(role_2)
+            db.session.add(role_1_owner_1)
+            db.session.add(role_1_owner_2)
+            db.session.add(role_1_user_1)
+            db.session.add(role_2_owner_1)
+            db.session.add(role_2_user_1)
+
+            # Store notifications
+            db.session.add(notification_1)
+            db.session.add(notification_2)
+            db.session.add(notification_3)
+            db.session.add(notification_4)
+
             db.session.commit()
     
     def tearDown(self):

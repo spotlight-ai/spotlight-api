@@ -1,6 +1,6 @@
 import json
 import os
-
+from core.errors import AuthenticationErrors
 from tests.test_main import BaseTest
 
 
@@ -59,7 +59,7 @@ class JobResourceTest(BaseTest):
         res = self.client().get(self.job_route)
 
         self.assertEqual(res.status_code, 400)
-        self.assertIn("Missing authorization header", res.data.decode())
+        self.assertIn(AuthenticationErrors.MISSING_AUTH_HEADER, res.data.decode())
 
     def test_incorrect_auth_retrieve_all_jobs(self):
         """Ensures that if the individual trying to retrieve all jobs associated with the Dataset is

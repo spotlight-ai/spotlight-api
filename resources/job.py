@@ -4,6 +4,7 @@ from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import UnmappedInstanceError
 
+from core.constants import UserConstants
 from core.decorators import authenticate_token
 from db import db
 from models.associations import DatasetOwner
@@ -108,7 +109,10 @@ class Job(Resource):
         """
         job = JobModel.query.filter_by(job_id=job_id).first()
 
-        if user_id != "MODEL":
+        if not job:
+            abort(404, "Job not found.")
+
+        if user_id != UserConstants.MODEL:
             datasets_owned = [
                 dataset.dataset_id
                 for dataset in DatasetModel.query.join(DatasetOwner)
@@ -121,9 +125,6 @@ class Job(Resource):
 
             if not user.admin and job.dataset_id not in datasets_owned:
                 abort(401, "Not authorized to view this job.")
-
-        if not job:
-            abort(404, "Job not found.")
 
         return job_schema.dump(job)
 
@@ -140,7 +141,7 @@ class Job(Resource):
         if not job:
             abort(404, "Job not found.")
 
-        if user_id != "MODEL":
+        if user_id != UserConstants.MODEL:
             datasets_owned = [
                 dataset.dataset_id
                 for dataset in DatasetModel.query.join(DatasetOwner)

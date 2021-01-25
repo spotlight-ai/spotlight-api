@@ -6,7 +6,7 @@ from loguru import logger
 from sqlalchemy.sql.expression import true
 
 from core import aws as aws_util
-from core.constants import AuditConstants
+from core.constants import AuditConstants, UserConstants
 from core.decorators import authenticate_token
 from core.errors import DatasetErrors
 from db import db

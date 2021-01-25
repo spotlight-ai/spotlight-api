@@ -1,5 +1,5 @@
 import json
-
+from unittest.mock import patch
 from tests.test_main import BaseTest
 
 
@@ -10,11 +10,11 @@ class RoleDatasetResourceTest(BaseTest):
 
         res = self.client().get(f"{self.role_route}/1/dataset", headers=headers)
 
-        self.assertEqual(res.status_code, 200)
+        self.assertEqual(200, res.status_code)
         datasets = json.loads(res.data.decode())
 
-        self.assertEqual(len(datasets), 1)
-        self.assertEqual(datasets[0].get("dataset_name"), "Call Center Transcripts")
+        self.assertEqual(1, len(datasets))
+        self.assertEqual(self.dataset_1_name, datasets[0].get("dataset_name"))
 
     def test_get_role_datasets_unowned_role(self):
         """User of an unowned role should not be able to see dataset details."""
@@ -24,7 +24,8 @@ class RoleDatasetResourceTest(BaseTest):
 
         self.assertEqual(res.status_code, 401)
 
-    def test_add_new_role_dataset(self):
+    @patch("resources.roles.role_dataset.send_notifications")
+    def test_add_new_role_dataset(self, mock_notif):
         """Tests that a role owner can add an individual dataset to a role."""
         headers = self.generate_auth_headers(user_id=3)
 
@@ -40,7 +41,8 @@ class RoleDatasetResourceTest(BaseTest):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(len(datasets), 2)
 
-    def test_add_multiple_datasets(self):
+    @patch("resources.roles.role_dataset.send_notifications")
+    def test_add_multiple_datasets(self, mock_notif):
         """Verify that owners can add multiple datasets at once to a role."""
         headers = self.generate_auth_headers(user_id=3)
 
@@ -54,7 +56,7 @@ class RoleDatasetResourceTest(BaseTest):
         permissions = json.loads(res.data.decode())
 
         self.assertEqual(res.status_code, 200)
-        self.assertEqual(len(permissions), 3)
+        self.assertEqual(3, len(permissions))
 
     def test_add_same_dataset(self):
         """Owners should not be able to add the same dataset to a role."""
@@ -76,7 +78,8 @@ class RoleDatasetResourceTest(BaseTest):
 
         self.assertEqual(res.status_code, 401)
 
-    def test_update_role_datasets(self):
+    @patch("resources.roles.role_dataset.send_notifications")
+    def test_update_role_datasets(self, mock_notif):
         """Owners should be able to overwrite role datasets."""
         headers = self.generate_auth_headers(user_id=3)
 
@@ -87,7 +90,7 @@ class RoleDatasetResourceTest(BaseTest):
         self.assertEqual(res.status_code, 200)
         datasets = json.loads(res.data.decode()).get("datasets")
 
-        self.assertEqual(len(datasets), 2)
+        self.assertEqual(2, len(datasets))
 
     def test_remove_role_dataset(self):
         """Owners should be able to remove role datasets."""

@@ -142,4 +142,3 @@ def send_job(job_id: int) -> None:
 
     except requests.exceptions.RequestException as e:
         raise SystemExit(e)
-
