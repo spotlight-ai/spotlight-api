@@ -5,6 +5,7 @@ venv/
 .env
 .DS_Store
 secrets.yml
+prod-secrets.yml
 .coverage
 .coveragerc
 htmlcov/
