@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - develop
+    - master
 
 env:
   AWS_DEFAULT_REGION: us-east-1
@@ -11,7 +12,7 @@ env:
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  CONTAINER_IMAGE: spotlight-api:${{ github.sha }}
+  CONTAINER_IMAGE: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/spotlight-api
 
 jobs:
   build-and-push:
@@ -19,38 +20,64 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+    - name: Set environment for branch
+      run: |
+        if [[ $GITHUB_REF == 'refs/heads/master' ]]; then
+            echo "DEPLOY_ENV=prod" >> "$GITHUB_ENV"
+        else
+            echo "DEPLOY_ENV=dev" >> "$GITHUB_ENV"
+        fi
+
     - name: Checkout
       uses: actions/checkout@master
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
+        aws-access-key-id: env.AWS_ACCESS_KEY_ID
+        aws-secret-access-key: env.AWS_SECRET_ACCESS_KEY
+        aws-region: env.AWS_DEFAULT_REGION
 
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Build and tag the image
+    - name: Build and tag the Prerelease image
+      if: github.ref == 'refs/heads/develop'
       run: |
         docker build \
           -t $CONTAINER_IMAGE \
-          -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$CONTAINER_IMAGE .
+          -t $CONTAINER_IMAGE:${{ github.sha }} \
+          .
 
-    - name: Push
+    - name: Push Prerelease to ECR
       if: github.ref == 'refs/heads/develop'
       run: |
-        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$CONTAINER_IMAGE
+        docker push $CONTAINER_IMAGE && \
+        docker push $CONTAINER_IMAGE:${{ github.sha }}
 
-    - name: Update kubeconfig with dev cluster
+    - name: Pull Latest Image Manifest to Deploy to Prod
+      if: github.ref == 'refs/heads/master'
       run: |
-        aws eks --region us-east-1 update-kubeconfig --name spotlight-dev-cluster
+        MANIFEST=$(aws ecr batch-get-image \
+          --repository-name spotlight-api \
+          --image-ids imageTag=latest \
+          --query 'images[].imageManifest' \
+          --output text) && \
+
+          aws ecr put-image \
+          --repository-name spotlight-api \
+          --image-tag production \
+          --image-manifest "$MANIFEST"
+
+
+    - name: Update kubeconfig with cluster
+      run: |
+        aws eks --region ${{ env.AWS_DEFAULT_REGION }} update-kubeconfig --name spotlight-${DEPLOY_ENV}-cluster
 
     - name: Update images
       run: |
         kubectl set image deployments/api-deployment \
-        spotlight-api=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$CONTAINER_IMAGE
+        spotlight-api=$CONTAINER_IMAGE:latest
 
 
