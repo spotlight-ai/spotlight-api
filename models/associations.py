@@ -37,10 +37,3 @@ DatasetOwner = db.Table(
         "owner_id", db.Integer, db.ForeignKey("user.user_id", ondelete="cascade")
     ),
 )
-
-WorkspaceMember = db.Table(
-    "workspace_member",
-    db.Column("workspace_id", db.Integer, db.ForeignKey("workspace.workspace_id", ondelete="cascade")),
-    db.Column("user_id", db.Integer, db.ForeignKey("user.user_id", ondelete="cascade")),
-    db.Column("is_owner", db.Boolean, default=False)
-)
