@@ -11,6 +11,7 @@ load_dotenv(find_dotenv())
 @pytest.mark.usefixtures("db")
 @pytest.mark.usefixtures("client")
 class BaseTest(unittest.TestCase):
+    def setUp(self):
         self.role_object = {"role_name": "Test Role"}
         
         self.user_route = "/user"
