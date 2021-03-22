@@ -7,8 +7,7 @@ from app import create_app, db
 
 load_dotenv(find_dotenv())
 
-@pytest.mark.usefixtures("load_db_test_data")
-@pytest.mark.usefixtures("db")
+@pytest.mark.usefixtures("db_session")
 @pytest.mark.usefixtures("client")
 class BaseTest(unittest.TestCase):
     def setUp(self):
@@ -79,7 +78,7 @@ class BaseTest(unittest.TestCase):
     def generate_auth_headers(self, client, user_id=1):
         """Logs in for user and generates authentication token."""
         user = self.users[user_id - 1]
-        
+        from models.auth.user import UserModel
         creds = {"email": user.get("email"), "password": user.get("password")}
         
         login_res = client.post(self.login_route, json=creds)

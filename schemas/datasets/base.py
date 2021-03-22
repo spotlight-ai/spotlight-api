@@ -15,6 +15,6 @@ class DatasetSchema(ma.SQLAlchemyAutoSchema):
 
     jobs = ma.List(ma.Nested("JobSchema"))
     markers = ma.List(ma.Nested("FilePIISchema"))
-    owners = ma.List(ma.Nested("UserSchema", exclude=["owned_datasets", "dataset_action_history"]))
-    files = ma.List(ma.Nested("FileSchema", exclude=["dataset"]))
+    owners = ma.List(ma.Nested("UserSchema", exclude=["owned_datasets"]))
+    files = ma.List(ma.Nested("FileSchema"))
     roles = ma.List(ma.Nested("RoleSchema", exclude=("datasets", "creator")))

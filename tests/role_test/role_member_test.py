@@ -1,250 +1,243 @@
 import json
 from unittest.mock import patch
 
-from tests.test_main import BaseTest
+from tests.conftest import generate_auth_headers
+from tests.conftest import role_route
 
 
-class RoleMemberResourceTest(BaseTest):
-    def test_get_role_members(self):
-        """Retrieves all members for a given role."""
-        headers = self.generate_auth_headers(self.client, user_id=3)
+def test_get_role_members(client, db_session):
+    """Retrieves all members for a given role."""
+    headers = generate_auth_headers(client, user_id=3)
 
-        res = self.client.get(f"{self.role_route}/1/member", headers=headers)
+    res = client.get(f"{role_route}/1/member", headers=headers)
 
-        members = json.loads(res.data.decode())
+    members = json.loads(res.data.decode())
 
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(len(members), 3)
+    assert res.status_code == 200
+    assert len(members) == 3
 
-    def test_get_role_members_missing_role(self):
-        """Verifies that an error is thrown when requested role does not exist."""
-        headers = self.generate_auth_headers(self.client)
+def test_get_role_members_missing_role(client, db_session):
+    """Verifies that an error is thrown when requested role does not exist."""
+    headers = generate_auth_headers(client)
 
-        res = self.client.get(f"{self.role_route}/10/member", headers=headers)
+    res = client.get(f"{role_route}/10/member", headers=headers)
 
-        self.assertEqual(res.status_code, 401)
-        self.assertIn(
-            "Role either does not exist or user does not have permissions.",
-            res.data.decode(),
-        )
+    assert res.status_code == 401
+    assert "Role either does not exist or user does not have permissions." in res.data.decode()
 
-    def test_add_owner_to_unowned_role(self):
-        """Verifies that an error is thrown if a user tries to add an owner to a role they don't own."""
-        headers = self.generate_auth_headers(self.client)
 
-        res = self.client.post(
-            f"{self.role_route}/2/member",
-            json={"owners": [2], "users": [3]},
-            headers=headers,
-        )
+def test_add_owner_to_unowned_role(client, db_session):
+    """Verifies that an error is thrown if a user tries to add an owner to a role they don't own."""
+    headers = generate_auth_headers(client)
 
-        self.assertEqual(res.status_code, 401)
-        self.assertIn(
-            "Role either does not exist or user does not have permissions.",
-            res.data.decode(),
-        )
+    res = client.post(
+        f"{role_route}/2/member",
+        json={"owners": [2], "users": [3]},
+        headers=headers,
+    )
 
-    def test_add_owner(self):
-        """Adds an owner to a role."""
-        headers = self.generate_auth_headers(self.client, user_id=4)
+    assert res.status_code == 401
+    assert "Role either does not exist or user does not have permissions." in res.data.decode()
 
-        res = self.client.post(
-            f"{self.role_route}/1/member",
-            json={"owners": [2], "users": []},
-            headers=headers,
-        )
 
-        self.assertEqual(res.status_code, 201)
+def test_add_owner(client, db_session):
+    """Adds an owner to a role."""
+    headers = generate_auth_headers(client, user_id=4)
 
-        res = self.client.get(f"{self.role_route}/1/member", headers=headers)
-        members = json.loads(res.data.decode())
+    res = client.post(
+        f"{role_route}/1/member",
+        json={"owners": [2], "users": []},
+        headers=headers,
+    )
 
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(len(members), 4)
+    assert res.status_code == 201
 
-    @patch("resources.roles.role_member.send_notifications")
-    def test_add_members(self, mock_notif):
-        """Adds multiple members to a role."""
-        headers = self.generate_auth_headers(self.client, user_id=4)
+    res = client.get(f"{role_route}/1/member", headers=headers)
+    members = json.loads(res.data.decode())
 
-        res = self.client.post(
-            f"{self.role_route}/1/member",
-            json={"owners": [], "users": [5, 6]},
-            headers=headers,
-        )
+    assert res.status_code == 200
+    assert len(members) == 4
 
-        self.assertEqual(res.status_code, 201)
+@patch("resources.roles.role_member.send_notifications")
+def test_add_members(self, mock_notif):
+    """Adds multiple members to a role."""
+    headers = generate_auth_headers(client, user_id=4)
 
-        res = self.client.get(f"{self.role_route}/1/member", headers=headers)
-        members = json.loads(res.data.decode())
+    res = client.post(
+        f"{role_route}/1/member",
+        json={"owners": [], "users": [5, 6]},
+        headers=headers,
+    )
 
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(len(members), 5)
+    assert res.status_code == 201
 
-        owner_count = 0
+    res = client.get(f"{role_route}/1/member", headers=headers)
+    members = json.loads(res.data.decode())
 
-        for member in members:
-            if member.get("is_owner"):
-                owner_count += 1
+    assert res.status_code == 200
+    assert len(members) == 5
 
-        self.assertEqual(owner_count, 2)
+    owner_count = 0
 
-    @patch("resources.roles.role_member.send_notifications")
-    def test_add_combo(self, mock_notif):
-        """Adds a combination of users and owners."""
-        headers = self.generate_auth_headers(self.client, user_id=4)
+    for member in members:
+        if member.get("is_owner"):
+            owner_count += 1
 
-        res = self.client.get(f"{self.role_route}/1/member", headers=headers)
-        members = json.loads(res.data.decode())
-        res = self.client.post(
-            f"{self.role_route}/1/member",
-            json={"owners": [5], "users": [2]},
-            headers=headers,
-        )
+    assert owner_count == 2
 
-        self.assertEqual(res.status_code, 201)
+@patch("resources.roles.role_member.send_notifications")
+def test_add_combo(self, mock_notif):
+    """Adds a combination of users and owners."""
+    headers = generate_auth_headers(client, user_id=4)
 
-        res = self.client.get(f"{self.role_route}/1/member", headers=headers)
-        members = json.loads(res.data.decode())
+    res = client.get(f"{role_route}/1/member", headers=headers)
+    members = json.loads(res.data.decode())
+    res = client.post(
+        f"{role_route}/1/member",
+        json={"owners": [5], "users": [2]},
+        headers=headers,
+    )
 
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(len(members), 5)
+    assert res.status_code == 201
 
-        owner_count = 0
+    res = client.get(f"{role_route}/1/member", headers=headers)
+    members = json.loads(res.data.decode())
 
-        for member in members:
-            if member.get("is_owner"):
-                owner_count += 1
+    assert res.status_code == 200
+    assert len(members) == 5
 
-        self.assertEqual(owner_count, 3)
+    owner_count = 0
 
-    @patch("resources.roles.role_member.send_notifications")
-    def test_replace_combo(self, mock_notif):
-        """Replaces role members and owners with new sets."""
-        headers = self.generate_auth_headers(self.client, user_id=3)
-        member_path = f"{self.role_route}/1/member"
+    for member in members:
+        if member.get("is_owner"):
+            owner_count += 1
 
-        res = self.client.put(
-            member_path,
-            json={"owners": [2, 3], "users": [4]},
-            headers=headers,
-        )
+    assert owner_count == 3
 
-        self.assertEqual(200, res.status_code)
+@patch("resources.roles.role_member.send_notifications")
+def test_replace_combo(self, mock_notif):
+    """Replaces role members and owners with new sets."""
+    headers = generate_auth_headers(client, user_id=3)
+    member_path = f"{role_route}/1/member"
 
-        res = self.client.get(member_path, headers=headers)
-        members = json.loads(res.data.decode())
+    res = client.put(
+        member_path,
+        json={"owners": [2, 3], "users": [4]},
+        headers=headers,
+    )
 
-        self.assertEqual(200, res.status_code)
-        self.assertEqual(3, len(members))
+    assert 200 == res.status_code
 
-        owner_count = 0
+    res = client.get(member_path, headers=headers)
+    members = json.loads(res.data.decode())
 
-        for member in members:
-            if member.get("is_owner"):
-                owner_count += 1
+    assert 200 == res.status_code
+    assert 3 == len(members)
 
-        self.assertEqual(owner_count, 2)
+    owner_count = 0
 
-    def test_add_existing_combo(self):
-        """Should not be able to add owners or members that already exist."""
-        headers = self.generate_auth_headers(self.client, user_id=4)
+    for member in members:
+        if member.get("is_owner"):
+            owner_count += 1
 
-        res = self.client.post(
-            f"{self.role_route}/1/member",
-            json={"owners": [4], "users": [2]},
-            headers=headers,
-        )
+    assert owner_count == 2
 
-        self.assertEqual(res.status_code, 400)
-        self.assertIn("Role member already exists.", res.data.decode())
+def test_add_existing_combo(client, db_session):
+    """Should not be able to add owners or members that already exist."""
+    headers = generate_auth_headers(client, user_id=4)
 
-    def test_wrong_key(self):
-        """Validates that an error is thrown when the wrong key is placed in the request body."""
-        headers = self.generate_auth_headers(self.client)
+    res = client.post(
+        f"{role_route}/1/member",
+        json={"owners": [4], "users": [2]},
+        headers=headers,
+    )
 
-        res = self.client.post(
-            f"{self.role_route}/1/member",
-            json={"owners": [2], "members": [3]},
-            headers=headers,
-        )
+    assert res.status_code == 400
+    assert "Role member already exists." == res.data.decode()
 
-        self.assertEqual(res.status_code, 422)
-        self.assertIn(
-            "Body must have only the accepted keys: ['owners', 'users']",
-            res.data.decode(),
-        )
+def test_wrong_key(client, db_session):
+    """Validates that an error is thrown when the wrong key is placed in the request body."""
+    headers = generate_auth_headers(client)
 
-    def test_delete_all_owners(self):
-        """Validates that an error is thrown when all owners are deleted."""
-        headers = self.generate_auth_headers(self.client, user_id=4)
+    res = client.post(
+        f"{role_route}/1/member",
+        json={"owners": [2], "members": [3]},
+        headers=headers,
+    )
 
-        res = self.client.delete(
-            f"{self.role_route}/1/member",
-            json={"owners": [3, 4], "members": []},
-            headers=headers,
-        )
+    assert res.status_code == 422
+    assert "Body must have only the accepted keys: ['owners', 'users']" in res.data.decode()
 
-        self.assertEqual(res.status_code, 400)
-        self.assertIn("Role must have at least one owner.", res.data.decode())
+def test_delete_all_owners(client, db_session):
+    """Validates that an error is thrown when all owners are deleted."""
+    headers = generate_auth_headers(client, user_id=4)
 
-    def test_delete_owner(self):
-        """Validates that an owner may be deleted by another owner."""
-        headers = self.generate_auth_headers(self.client, user_id=4)
+    res = client.delete(
+        f"{role_route}/1/member",
+        json={"owners": [3, 4], "members": []},
+        headers=headers,
+    )
 
-        res = self.client.delete(
-            f"{self.role_route}/1/member",
-            json={"owners": [3], "members": []},
-            headers=headers,
-        )
+    assert res.status_code == 400
+    assert "Role must have at least one owner." == res.data.decode()
 
-        self.assertEqual(res.status_code, 200)
+def test_delete_owner(client, db_session):
+    """Validates that an owner may be deleted by another owner."""
+    headers = generate_auth_headers(client, user_id=4)
 
-        res = self.client.get(f"{self.role_route}/1/member", headers=headers)
-        members = json.loads(res.data.decode())
+    res = client.delete(
+        f"{role_route}/1/member",
+        json={"owners": [3], "members": []},
+        headers=headers,
+    )
 
-        self.assertEqual(len(members), 2)
+    assert res.status_code == 200
 
-        owner_count = 0
-        for member in members:
-            if member.get("is_owner"):
-                owner_count += 1
+    res = client.get(f"{role_route}/1/member", headers=headers)
+    members = json.loads(res.data.decode())
 
-        self.assertEqual(owner_count, 1)
+    assert len(members) == 2
 
-    def test_delete_combo(self):
-        """Validates that multiple members may be deleted at once."""
-        headers = self.generate_auth_headers(self.client, user_id=4)
+    owner_count = 0
+    for member in members:
+        if member.get("is_owner"):
+            owner_count += 1
 
-        res = self.client.delete(
-            f"{self.role_route}/1/member",
-            json={"owners": [3], "members": [1]},
-            headers=headers,
-        )
+    assert owner_count == 1
 
-        self.assertEqual(res.status_code, 200)
+def test_delete_combo(client, db_session):
+    """Validates that multiple members may be deleted at once."""
+    headers = generate_auth_headers(client, user_id=4)
 
-        res = self.client.get(f"{self.role_route}/1/member", headers=headers)
-        members = json.loads(res.data.decode())
+    res = client.delete(
+        f"{role_route}/1/member",
+        json={"owners": [3], "members": [1]},
+        headers=headers,
+    )
 
-        self.assertEqual(len(members), 1)
+    assert res.status_code == 200
 
-        owner_count = 0
-        for member in members:
-            if member.get("is_owner"):
-                owner_count += 1
+    res = client.get(f"{role_route}/1/member", headers=headers)
+    members = json.loads(res.data.decode())
 
-        self.assertEqual(owner_count, 1)
+    assert len(members) == 1
 
-    def test_put_empty_owners(self):
-        """Validates that a blank owner list is not replacing the old owner list."""
-        headers = self.generate_auth_headers(self.client, user_id=4)
+    owner_count = 0
+    for member in members:
+        if member.get("is_owner"):
+            owner_count += 1
 
-        res = self.client.put(
-            f"{self.role_route}/1/member",
-            json={"owners": [], "users": [4]},
-            headers=headers,
-        )
+    assert owner_count == 1
 
-        self.assertEqual(res.status_code, 400)
-        self.assertIn("Role must have at least one owner.", res.data.decode())
+def test_put_empty_owners(client, db_session):
+    """Validates that a blank owner list is not replacing the old owner list."""
+    headers = generate_auth_headers(client, user_id=4)
+
+    res = client.put(
+        f"{role_route}/1/member",
+        json={"owners": [], "users": [4]},
+        headers=headers,
+    )
+
+    assert res.status_code == 400
+    assert "Role must have at least one owner." == res.data.decode()

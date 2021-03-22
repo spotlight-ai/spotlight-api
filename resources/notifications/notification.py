@@ -62,9 +62,10 @@ class Notification(Resource):
             abort(401, NotificationErrors.USER_DOES_NOT_HAVE_PERMISSION)
 
         try:
-            notification_schema.load(data, instance=notification, partial=True)
-            notification.last_updated_ts = datetime.utcnow()
-            db.session.commit()
+            if data:
+                notification = notification_schema.load(data, instance=notification, partial=True)
+                notification.last_updated_ts = datetime.utcnow()
+                db.session.commit()
 
             return notification_schema.dump(notification)
         except ValidationError as err:

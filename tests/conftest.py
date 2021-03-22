@@ -1,3 +1,4 @@
+
 import json
 
 import pytest
@@ -5,7 +6,7 @@ from dotenv import load_dotenv
 from pytest_factoryboy import register
 
 from app import create_app
-from app import db as _db
+from app import db as app_db
 from models.auth.user import UserModel
 from models.datasets.base import DatasetModel
 from models.roles.role import RoleModel
@@ -14,11 +15,18 @@ from models.pii.pii import PIIModel
 from models.datasets.file import FileModel
 from models.notifications.notification import NotificationModel
 from models.pii.file import FilePIIModel
-# from tests.factories import UserFactory
 from dotenv import find_dotenv, load_dotenv
+import sqlalchemy as sa
+from sqlalchemy import create_engine, event
 
-
-# register(UserFactory)
+user_route = "/user"
+role_route = "/role"
+login_route = "/login"
+job_route = "/job"
+dataset_route = "/dataset"
+flatfile_route = "/dataset/flat_file"
+pii_route = "/pii"
+notification_route = "/notification"
 
 
 @pytest.fixture(scope="session")
@@ -26,48 +34,40 @@ def app():
     # load_dotenv(".testenv")
     load_dotenv(find_dotenv())
     app = create_app("config.TestingConfig")
-    return app
-
-@pytest.fixture
-def client(app, request):
-    with app.test_client() as client:
-        request.cls.client = client
-        yield client
-
-@pytest.fixture(scope="session")
-def db(app):
-    _db.app = app
-
     with app.app_context():
-        _db.create_all()
+        yield app
 
-    yield _db
-
-    _db.session.close()
-    _db.drop_all()
-
-
+user_info_list = []
+user_list = []
+dataset_list = []
 @pytest.fixture(scope="session")
-def load_db_test_data(db):
+def database(app):
+    app_db.app = app
+    app_db.drop_all()
+    db = app_db
+    db.create_all()
     with open("tests/setup/user_info.json") as f_user:
         user_info = json.loads(f_user.read())
         for info in user_info:
+            user_info_list.append(info)
             user = UserModel(**info)
             db.session.add(user)
+            user_list.append(user)
     
-    dataset_list = []
     with open("tests/setup/dataset_info.json") as f_dataset:
         related_info = json.loads(f_dataset.read())
         for item in related_info:
             dataset = DatasetModel(**item["dataset"])
-            db.session.add(dataset)
-            dataset_list.append(dataset)
+            for owner in item.get("owners") or []:
+                dataset.owners.append(user_list[owner-1])
             for file_info in item.get("files") or []:
                 _file = FileModel(**file_info)
                 db.session.add(_file)
             for info in item.get("markers") or []:
                 marker = FilePIIModel(**info)
                 db.session.add(marker)
+            db.session.add(dataset)
+            dataset_list.append(dataset)
 
     with open("tests/setup/notification_info.json") as f_notification:
         notification_info = json.loads(f_notification.read())
@@ -88,12 +88,13 @@ def load_db_test_data(db):
         for item in related_info:
             role = RoleModel(**item["role"])
             role_datasets = []
-            print(dataset_list)
             for ind in item.get("datasets") or []:
                 role_datasets.append(dataset_list[ind])
             role_permissions = []
             for perm in item.get("permissions") or []:
                 role_permissions.append(pii_list[perm])
+            role.datasets = role_datasets
+            role.permissions = role_permissions
             db.session.add(role)
 
     with open("tests/setup/role_user_info.json") as f_role_user:
@@ -101,7 +102,20 @@ def load_db_test_data(db):
         for info in role_user_info:
             role_user = RoleMemberModel(**info)
             db.session.add(role_user)
-
     db.session.commit()
-    print("checking db")
-    print(UserModel.query.filter(UserModel.user_id == 1).first())
+
+    return db
+
+
+@pytest.fixture(scope="session")
+def _db(database):
+    return database
+
+
+def generate_auth_headers(client, user_id=1):
+        """Logs in for user and generates authentication token."""
+        user = user_info_list[user_id - 1]
+        creds = {"email": user.get("email"), "password": user.get("password")}
+        login_res = client.post("/login", json=creds)
+        token = json.loads(login_res.data.decode()).get("token")
+        return {"Authorization": f"Bearer {token}"}

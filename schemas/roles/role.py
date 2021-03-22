@@ -22,4 +22,4 @@ class RoleSchema(SQLAlchemyAutoSchema):
         "UserSchema", exclude=["created_ts", "last_login", "owned_datasets"]
     )
     permissions = ma.List(ma.Nested("PIISchema"))
-    datasets = ma.List(ma.Nested("DatasetSchema", exclue=("roles")))
+    datasets = ma.List(ma.Nested("DatasetSchema", exclude=["roles"]))

@@ -31,6 +31,7 @@ class RoleCollection(Resource):
                 & (RoleMemberModel.is_owner == true())
             )
         ).all()
+        print(roles)
         return role_schema.dump(roles, many=True)
 
     @authenticate_token
@@ -43,11 +44,11 @@ class RoleCollection(Resource):
         try:
             # Add currently logged in user as the creator
             data = request.get_json(force=True)
-            print("inside request")
             print(data)
 
             data["creator_id"] = user_id
 
+            print(data)
             role = role_schema.load(data)
             print(type(role))
             db.session.add(role)

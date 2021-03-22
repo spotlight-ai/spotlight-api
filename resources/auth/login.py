@@ -32,7 +32,6 @@ class Login(Resource):
             # Look up user in DB using the supplied e-mail address
             data: dict = login_schema.load(request.get_json(force=True))
             user: UserModel = UserModel.query.filter_by(email=data.get("email")).first()
-
             if not user:
                 abort(404, UserErrors.USER_NOT_FOUND)
 
