@@ -3,7 +3,7 @@ from models.roles.role_member import RoleMemberModel
 from schemas.user import UserSchema
 
 
-class RoleMemberSchema(ma.ModelSchema):
+class RoleMemberSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         include_fk = True
         model = RoleMemberModel

@@ -1,12 +1,13 @@
 from db import ma
 from models.roles.role import RoleModel
-from schemas.datasets.file import FileSchema
-from schemas.pii.pii import PIISchema
-from schemas.roles.role_member import RoleMemberSchema
-from schemas.user import UserSchema
+# from schemas.datasets.file import FileSchema
+# from schemas.pii.pii import PIISchema
+# from schemas.roles.role_member import RoleMemberSchema
+# from schemas.user import UserSchema
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
+# from schemas.datasets.base import DatasetSchema
 
-
-class RoleSchema(ma.ModelSchema):
+class RoleSchema(SQLAlchemyAutoSchema):
     class Meta:
         include_fk = True
         model = RoleModel
@@ -14,11 +15,11 @@ class RoleSchema(ma.ModelSchema):
     
     members = ma.List(
         ma.Nested(
-            RoleMemberSchema, exclude=["role_id", "role", "role_member_id", "user_id"]
+            "RoleMemberSchema", exclude=["role_id", "role", "role_member_id", "user_id"]
         )
     )
     creator = ma.Nested(
-        UserSchema, exclude=["created_ts", "last_login", "owned_datasets"]
+        "UserSchema", exclude=["created_ts", "last_login", "owned_datasets"]
     )
-    permissions = ma.List(ma.Nested(PIISchema))
-    datasets = ma.List(ma.Nested(FileSchema))
+    permissions = ma.List(ma.Nested("PIISchema"))
+    datasets = ma.List(ma.Nested("DatasetSchema", exclue=("roles")))

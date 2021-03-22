@@ -7,7 +7,7 @@ from schemas.roles.role import RoleSchema
 from schemas.user import UserSchema
 
 
-class DatasetSchema(ma.ModelSchema):
+class DatasetSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = DatasetModel
         include_fk = True
@@ -17,4 +17,4 @@ class DatasetSchema(ma.ModelSchema):
     markers = ma.List(ma.Nested(FilePIISchema))
     owners = ma.List(ma.Nested(UserSchema, exclude=["owned_datasets", "dataset_action_history"]))
     files = ma.List(ma.Nested(FileSchema, exclude=["dataset"]))
-    roles = ma.List(ma.Nested(RoleSchema, exclude=["datasets", "creator"]))
+    roles = ma.List(ma.Nested(RoleSchema, exclude=("datasets", "creator")))

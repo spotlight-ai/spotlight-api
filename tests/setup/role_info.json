@@ -1,0 +1,17 @@
+[
+    {
+        "role": {
+            "creator_id": 4,
+            "role_name": "Financial Developers"
+        },
+        "permissions": ["ssn"],
+        "datasets": [0]
+    },
+    {
+        "role": {
+            "creator_id": 4,
+            "role_name": "Personal Developers"
+        },
+        "permissions": ["name", "address"]
+    }
+]

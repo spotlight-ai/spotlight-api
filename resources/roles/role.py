@@ -43,11 +43,13 @@ class RoleCollection(Resource):
         try:
             # Add currently logged in user as the creator
             data = request.get_json(force=True)
+            print("inside request")
+            print(data)
 
             data["creator_id"] = user_id
 
             role = role_schema.load(data)
-
+            print(type(role))
             db.session.add(role)
             db.session.flush()
 

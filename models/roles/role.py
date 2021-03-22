@@ -2,8 +2,8 @@ import datetime
 
 from db import db
 from models.associations import RoleDataset, RolePermission
-from models.pii.pii import PIIModel
-from models.roles.role_member import RoleMemberModel
+# from models.pii.pii import PIIModel
+# from models.roles.role_member import RoleMemberModel
 
 
 class RoleModel(db.Model):
@@ -28,16 +28,16 @@ class RoleModel(db.Model):
     created_ts = db.Column(db.DateTime)
     updated_ts = db.Column(db.DateTime)
 
-    members = db.relationship(RoleMemberModel, cascade="all, delete", backref="role")
+    members = db.relationship("RoleMemberModel", cascade="all, delete", backref="role")
     creator = db.relationship("UserModel", backref="role")
     datasets = db.relationship(
         "DatasetModel",
         secondary=RoleDataset,
         cascade="all, delete",
-        back_populates="roles",
+        back_populates="roles", lazy=True
     )
     permissions = db.relationship(
-        PIIModel, secondary=RolePermission, back_populates="roles"
+        "PIIModel", secondary=RolePermission, back_populates="roles"
     )
 
     def __init__(self, creator_id, role_name, individual_role=False):

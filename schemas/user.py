@@ -5,7 +5,7 @@ from db import ma
 from models.auth.user import UserModel
 
 
-class UserSchema(ma.ModelSchema):
+class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = UserModel
         exclude = (

@@ -3,7 +3,7 @@ from models.datasets.file import FileModel
 from schemas.pii.file import FilePIISchema
 
 
-class FileSchema(ma.ModelSchema):
+class FileSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         include_fk = True
         model = FileModel

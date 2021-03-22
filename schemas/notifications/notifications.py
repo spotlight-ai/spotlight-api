@@ -2,7 +2,7 @@ from db import ma
 from models.notifications.notification import NotificationModel
 
 
-class NotificationSchema(ma.ModelSchema):
+class NotificationSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = NotificationModel
         ordered = True

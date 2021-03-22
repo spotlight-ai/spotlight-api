@@ -6,8 +6,8 @@ from tests.test_main import BaseTest
 class DatasetSharedUserResourceTest(BaseTest):
     def test_get_dataset_shared_users(self):
         """Verify that owners are able to retrieve a list of users that have access to a dataset that they own."""
-        headers = self.generate_auth_headers(user_id=3)
-        res = self.client().get(f"{self.dataset_route}/1/user", headers=headers)
+        headers = self.generate_auth_headers(self.client, user_id=3)
+        res = self.client.get(f"{self.dataset_route}/1/user", headers=headers)
 
         self.assertEqual(res.status_code, 200)
         shared_users = json.loads(res.data.decode())
@@ -16,22 +16,22 @@ class DatasetSharedUserResourceTest(BaseTest):
 
     def test_get_unowned_dataset_shared_users(self):
         """Users should not be able to view access for datasets they do not own."""
-        headers = self.generate_auth_headers(user_id=1)
-        res = self.client().get(f"{self.dataset_route}/1/user", headers=headers)
+        headers = self.generate_auth_headers(self.client, user_id=1)
+        res = self.client.get(f"{self.dataset_route}/1/user", headers=headers)
 
         self.assertEqual(res.status_code, 401)
 
     @patch("resources.datasets.shared_user.NotificationModel.send_notification_email")
     def test_add_dataset_shared_user(self, mock_send_notif):
         """Owners should be able to add individual users to access their dataset."""
-        headers = self.generate_auth_headers(user_id=3)
-        res = self.client().post(
+        headers = self.generate_auth_headers(self.client, user_id=3)
+        res = self.client.post(
             f"{self.dataset_route}/1/user", headers=headers, json=[{"user_id": 5}]
         )
 
         self.assertEqual(res.status_code, 201)
 
-        res = self.client().get(f"{self.dataset_route}/1/user", headers=headers)
+        res = self.client.get(f"{self.dataset_route}/1/user", headers=headers)
 
         self.assertEqual(res.status_code, 200)
         shared_users = json.loads(res.data.decode())
@@ -39,9 +39,9 @@ class DatasetSharedUserResourceTest(BaseTest):
         self.assertEqual(len(shared_users), 3)
 
     def test_add_dataset_shared_user_already_owner(self):
-        headers = self.generate_auth_headers(user_id=3)
+        headers = self.generate_auth_headers(self.client, user_id=3)
 
-        res = self.client().post(
+        res = self.client.post(
             f"{self.dataset_route}/2/user", headers=headers, json=[{"user_id": 4}]
         )
 
@@ -49,9 +49,9 @@ class DatasetSharedUserResourceTest(BaseTest):
         self.assertIn("cannot be shared with owner", res.data.decode())
 
     def test_add_dataset_shared_user_already_shared(self):
-        headers = self.generate_auth_headers(user_id=3)
+        headers = self.generate_auth_headers(self.client, user_id=3)
 
-        res = self.client().post(
+        res = self.client.post(
             f"{self.dataset_route}/1/user",
             headers=headers,
             json=[{"user_id": 1}, {"user_id": 2}],
@@ -61,9 +61,9 @@ class DatasetSharedUserResourceTest(BaseTest):
         self.assertIn("already shared", res.data.decode())
 
     def test_remove_dataset_shared_users(self):
-        headers = self.generate_auth_headers(user_id=3)
+        headers = self.generate_auth_headers(self.client, user_id=3)
 
-        res = self.client().delete(
+        res = self.client.delete(
             f"{self.dataset_route}/1/user",
             headers=headers,
             json=[{"user_id": 1}, {"user_id": 2}],
@@ -71,7 +71,7 @@ class DatasetSharedUserResourceTest(BaseTest):
 
         self.assertEqual(res.status_code, 204)
 
-        res = self.client().get(f"{self.dataset_route}/1/user", headers=headers)
+        res = self.client.get(f"{self.dataset_route}/1/user", headers=headers)
         shared_users = json.loads(res.data.decode())
 
         self.assertEqual(res.status_code, 200)
@@ -79,9 +79,9 @@ class DatasetSharedUserResourceTest(BaseTest):
 
     @patch("resources.datasets.shared_user.NotificationModel.send_notification_email")
     def test_add_dataset_shared_user_with_permissions(self, mock_send_notif):
-        headers = self.generate_auth_headers(user_id=3)
+        headers = self.generate_auth_headers(self.client, user_id=3)
 
-        res = self.client().post(
+        res = self.client.post(
             f"{self.dataset_route}/1/user",
             headers=headers,
             json=[
@@ -92,7 +92,7 @@ class DatasetSharedUserResourceTest(BaseTest):
 
         self.assertEqual(res.status_code, 201)
 
-        res = self.client().get(f"{self.dataset_route}/1/user", headers=headers)
+        res = self.client.get(f"{self.dataset_route}/1/user", headers=headers)
 
         self.assertEqual(res.status_code, 200)
         shared_users = json.loads(res.data.decode())
