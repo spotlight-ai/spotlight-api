@@ -4,7 +4,7 @@ venv/
 .idea/
 .env
 .DS_Store
-secrets.yml
+*secrets.yml
 .coverage
 .coveragerc
 htmlcov/

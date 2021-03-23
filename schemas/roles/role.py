@@ -1,10 +1,13 @@
-from db import ma
-from models.roles.role import RoleModel
 # from schemas.datasets.file import FileSchema
 # from schemas.pii.pii import PIISchema
 # from schemas.roles.role_member import RoleMemberSchema
 # from schemas.user import UserSchema
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+
+from db import ma
+from models.roles.role import RoleModel
+
+
 # from schemas.datasets.base import DatasetSchema
 
 class RoleSchema(SQLAlchemyAutoSchema):
@@ -12,6 +15,7 @@ class RoleSchema(SQLAlchemyAutoSchema):
         include_fk = True
         model = RoleModel
         load_only = ("creator_id", "user_id")
+        load_instance = True
     
     members = ma.List(
         ma.Nested(
