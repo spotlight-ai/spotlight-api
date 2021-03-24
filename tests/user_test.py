@@ -117,16 +117,6 @@ def test_invalid_email_format(client, db_session):
     assert 422 == res.status_code
     assert "Not a valid email address." in res.data.decode()
 
-def test_invalid_user_update(client, db_session):
-    """Validates that user e-mails cannot be updated."""
-    headers = generate_auth_headers(client, user_id=1)
-    res = client.patch(
-        f"{user_route}/1", json={"email": "new@spotlight.ai"}, headers=headers,
-    )
-
-    assert 400 == res.status_code
-    assert "Cannot edit this field." in res.data.decode()
-
 def test_retrieve_all_users(client, db_session):
     """Verifies that all users can be successfully retrieved."""
     headers = generate_auth_headers(client, user_id=2)
@@ -236,6 +226,25 @@ def test_get_individual_user(client, db_session):
     user = json.loads(res.data.decode())
     assert "doug@spotlightai.com" == user.get("email")
 
+def test_get_user_doesnt_exist(client, db_session):
+    """Verifies that an error is thrown when a non-existent user is fetched."""
+    headers = generate_auth_headers(client, user_id=1)
+
+    res = client.get(f"{user_route}/0", headers=headers)
+
+    assert 404 == res.status_code
+
+def test_invalid_user_update(client, db_session):
+    """Validates that user e-mails cannot be updated."""
+    headers = generate_auth_headers(client, user_id=1)
+    res = client.patch(
+        f"{user_route}/1", json={"email": "new@spotlight.ai"}, headers=headers,
+    )
+
+    assert 400 == res.status_code
+    assert "Cannot edit this field." in res.data.decode()
+    print("Reached end of test")
+
 def test_update_user_invalid_input(client, db_session):
     """Verifies that fields are valid when updating a user."""
     headers = generate_auth_headers(client, user_id=1)
@@ -245,14 +254,6 @@ def test_update_user_invalid_input(client, db_session):
 
     assert 422 == res.status_code
     assert "Shorter than minimum length 1." in res.data.decode()
-
-def test_get_user_doesnt_exist(client, db_session):
-    """Verifies that an error is thrown when a non-existent user is fetched."""
-    headers = generate_auth_headers(client, user_id=1)
-
-    res = client.get(f"{user_route}/0", headers=headers)
-
-    assert 404 == res.status_code
 
 def test_patch_user_doesnt_exist(client, db_session):
     """Verifies that an error is thrown when a non-existent user is updated."""

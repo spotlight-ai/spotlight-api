@@ -15,6 +15,7 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
             "api_keys",
         )
         ordered = True
+        load_instance = True
 
     email = fields.Email(required=True)
     password = fields.String(required=True, load_only=True, validate=Length(min=8))
