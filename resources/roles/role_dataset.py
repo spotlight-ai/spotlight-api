@@ -42,16 +42,13 @@ class RoleDatasetCollection(Resource):
         datasets = retrieve_datasets(data.get("datasets", []))
         
         user = UserModel.query.filter_by(user_id=user_id).first()
-        print(user.user_id)
-        print(user_id)
+
         for dataset in datasets:
-            print(dataset.dataset_name)
             if dataset in role.datasets:
                 abort(
                     400, f"{dataset.dataset_id}: {RoleErrors.DATASET_ALREADY_PRESENT}"
                 )
             
-            print(dataset.owners)
             if user not in dataset.owners:
                 abort(401, f"{dataset.dataset_id}: {DatasetErrors.USER_DOES_NOT_OWN}")
         
