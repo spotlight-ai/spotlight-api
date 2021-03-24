@@ -11,7 +11,7 @@ from schemas.datasets.file import FileSchema
 from schemas.datasets.base import DatasetSchema
 from schemas.roles.role import RoleSchema
 
-file_schema = FileSchema()
+# file_schema = FileSchema()
 dataset_schema = DatasetSchema()
 role_schema = RoleSchema()
 
@@ -42,7 +42,7 @@ class RoleDatasetCollection(Resource):
         datasets = retrieve_datasets(data.get("datasets", []))
         
         user = UserModel.query.filter_by(user_id=user_id).first()
-        
+
         for dataset in datasets:
             if dataset in role.datasets:
                 abort(

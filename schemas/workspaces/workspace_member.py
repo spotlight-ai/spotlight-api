@@ -1,7 +1,7 @@
 from db import ma
 from models.workspaces.workspace_member import WorkspaceMemberModel
 
-class WorkspaceMemberSchema(ma.ModelSchema):
+class WorkspaceMemberSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = WorkspaceMemberModel
         include_fk = True

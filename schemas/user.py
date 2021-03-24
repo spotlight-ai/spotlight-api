@@ -5,7 +5,7 @@ from db import ma
 from models.auth.user import UserModel
 
 
-class UserSchema(ma.ModelSchema):
+class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = UserModel
         exclude = (
@@ -15,6 +15,7 @@ class UserSchema(ma.ModelSchema):
             "api_keys",
         )
         ordered = True
+        load_instance = True
 
     email = fields.Email(required=True)
     password = fields.String(required=True, load_only=True, validate=Length(min=8))

@@ -2,7 +2,7 @@ from db import ma
 from models.pii.file import FilePIIModel
 
 
-class FilePIISchema(ma.ModelSchema):
+class FilePIISchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = FilePIIModel
         include_fk = True

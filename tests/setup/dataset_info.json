@@ -1,0 +1,75 @@
+[
+    {
+        "dataset": {
+            "dataset_type": "FLAT_FILE",
+            "dataset_name": "Call Center Transcript",
+            "uploader": 3,
+            "verified": false
+            
+        },
+        "owners": [3],
+        "markers": [
+            {
+                "file_id": 1,
+                "pii_type": "ssn",
+                "start_location": 12,
+                "end_location": 21,
+                "confidence": 0.9
+            }
+        ],
+        "files": [
+            {
+                "dataset_id": 1,
+                "location": "dataset.txt"
+            }
+        ]
+    },
+    {
+        "dataset": {
+            "dataset_type": "FLAT_FILE",
+            "dataset_name": "Resumes",
+            "uploader": 3,
+            "verified": false
+            
+        },
+        "owners": [3],
+        "files": [
+            {
+                "dataset_id": 2,
+                "location": "resumes.txt"
+            }
+        ]
+    },
+    {
+        "dataset": {
+            "dataset_type": "FLAT_FILE",
+            "dataset_name": "Drivers Licenses",
+            "uploader": 4,
+            "verified": false
+            
+        },
+        "owners": [4, 3],
+        "files": [
+            {
+                "dataset_id": 3,
+                "location": "drivers.txt"
+            }
+        ]
+    },
+    {
+        "dataset": {
+            "dataset_type": "FLAT_FILE",
+            "dataset_name": "Auto Loan",
+            "uploader": 4,
+            "verified": false
+            
+        },
+        "owners": [4],
+        "files": [
+            {
+                "dataset_id": 4,
+                "location": "auto_loans.txt"
+            }
+        ]
+    }
+]

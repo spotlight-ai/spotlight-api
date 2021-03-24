@@ -4,7 +4,6 @@ from db import db
 from models.associations import DatasetOwner, RoleDataset
 from models.datasets.file import FileModel
 from models.job import JobModel
-from models.roles.role import RoleModel
 
 
 class DatasetModel(db.Model):
@@ -22,7 +21,12 @@ class DatasetModel(db.Model):
     files = db.relationship(FileModel, backref="dataset", lazy=True)
     jobs = db.relationship(JobModel, backref="dataset", lazy=True)
     
-    roles = db.relationship(RoleModel, secondary=RoleDataset, back_populates="datasets")
+    roles = db.relationship(
+        "RoleModel", 
+        secondary=RoleDataset, 
+        back_populates="datasets", 
+        lazy=True,
+    )
     owners = db.relationship(
         "UserModel",
         secondary=DatasetOwner,
@@ -38,4 +42,4 @@ class DatasetModel(db.Model):
         self.verified = verified
     
     def __repr__(self):
-        return f"<datadataset {self.dataset_name}>"
+        return f"<dataset {self.dataset_name}>"
