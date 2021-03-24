@@ -24,7 +24,6 @@ class RolePermissionCollection(Resource):
         :return: List of role permissions.
         """
         role = retrieve_role(role_id=role_id, user_id=user_id)
-        print(role.permissions)
 
         return pii_schema.dump(role.permissions, many=True)
 
@@ -73,17 +72,14 @@ class RolePermissionCollection(Resource):
         role = retrieve_role(role_id=role_id, user_id=user_id)
 
         permission_descriptions = request.get_json(force=True).get("permissions", [])
-        print(permission_descriptions)
 
         # Retrieve PII marker objects based on descriptions passed in the POST body
         role.permissions = PIIModel.query.filter(
             (PIIModel.description.in_(permission_descriptions))
         ).all()
         db.session.commit()
-        for dataset in role.datasets:
-            print(dataset.files)
+
         response = role_schema.dump(role)
-        print(response)
         return response
 
     @authenticate_token
