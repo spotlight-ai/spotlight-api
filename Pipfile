@@ -42,10 +42,8 @@ pylint = "*"
 pdfrw = "*"
 pdfminer = "*"
 pytest = "*"
-pytest-flask = "*"
+pytest-cov = "*"
 pytest-flask-sqlalchemy = "*"  
-pytest-runner = "*"
-pytest-factoryboy = "*"
 python-dateutil = "*"
 python-dotenv = "*"
 python-editor = "*"
@@ -74,10 +72,7 @@ PyJWT = "*"
 PyPDF2 = "*"
 SQLAlchemy = "==1.3.23"
 Werkzeug = "*"
-passlib = "*"
-apispec = {extras = ["yaml"], version = "*"}
-apispec-webframeworks = "*"
-tox = "*"
+
 
 [requires]
 python_version = "3.8"

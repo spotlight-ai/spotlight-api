@@ -46,11 +46,11 @@ class RoleCollection(Resource):
             # If owners are not given, default to the currently logged in user
             if "owners" in data:
                 owner_ids = data["owners"]
+                if user_id not in owner_ids:
+                    abort(400, RoleErrors.CREATOR_MUST_BE_OWNER)
                 del data["owners"]
             else:
                 owner_ids = [user_id]
-            if user_id not in owner_ids:
-                abort(400, RoleErrors.CREATOR_MUST_BE_OWNER)
 
             data["creator_id"] = user_id
 
