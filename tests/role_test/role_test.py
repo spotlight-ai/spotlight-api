@@ -50,7 +50,7 @@ def test_create_role_creator_not_owner(client, db_session):
     
     res = client.post(role_route, json=new_role, headers=headers)
     assert res.status_code == 400
-    assert "Creator must be listed as a dataset owner." == res.data.decode()
+    assert "Creator must be listed as a dataset owner." in res.data.decode()
 
 
 def test_create_role_authentication(client, db_session):
