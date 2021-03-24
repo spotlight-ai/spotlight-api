@@ -48,7 +48,7 @@
             "verified": false
             
         },
-        "owners": [4],
+        "owners": [4, 3],
         "files": [
             {
                 "dataset_id": 3,
@@ -64,6 +64,7 @@
             "verified": false
             
         },
+        "owners": [4],
         "files": [
             {
                 "dataset_id": 4,

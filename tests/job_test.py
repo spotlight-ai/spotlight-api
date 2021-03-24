@@ -41,7 +41,7 @@ def test_missing_field_job_creation(client, db_session):
     res = client.post(job_route, headers=headers, json={})
     
     assert res.status_code == 422
-    assert "Missing data for required field." in res.data.decode()
+    assert "Missing data for required field" in res.data.decode()
 
 
 def test_retrieve_all_jobs(client, db_session):

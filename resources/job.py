@@ -1,3 +1,5 @@
+import re
+
 from flask import abort, request
 from flask_restful import Resource
 from marshmallow import ValidationError
@@ -91,9 +93,15 @@ class JobCollection(Resource):
             return None, 201
         except ValidationError as err:
             abort(422, err.messages)
+        except TypeError as err:
+            arg = re.match(".*positional argument.*'(.+)'", str(err)).group(1)
+            abort(422, f"Missing data for required field: {arg}")
         except IntegrityError as err:
             db.session.rollback()
             abort(400, err)
+        except Exception as err:
+            print(err)
+            raise
 
 
 class Job(Resource):
