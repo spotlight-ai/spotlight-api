@@ -243,7 +243,6 @@ def test_invalid_user_update(client, db_session):
 
     assert 400 == res.status_code
     assert "Cannot edit this field." in res.data.decode()
-    print("Reached end of test")
 
 def test_update_user_invalid_input(client, db_session):
     """Verifies that fields are valid when updating a user."""

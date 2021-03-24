@@ -14,7 +14,7 @@ def test_create_role(client, db_session):
     )
     
     assert 201 == res.status_code
-    assert role_object.get("role_name") == res.data.decode()
+    assert role_object.get("role_name") in res.data.decode()
     
     res = client.get(role_route, headers=headers)
     members = json.loads(res.data.decode())[0].get("members")

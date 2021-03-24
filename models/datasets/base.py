@@ -42,4 +42,4 @@ class DatasetModel(db.Model):
         self.verified = verified
     
     def __repr__(self):
-        return f"<datadataset {self.dataset_name}>"
+        return f"<dataset {self.dataset_name}>"

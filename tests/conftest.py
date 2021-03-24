@@ -37,9 +37,12 @@ def app():
     with app.app_context():
         yield app
 
+
 user_info_list = []
 user_list = []
 dataset_list = []
+
+
 @pytest.fixture(scope="session")
 def database(app):
     app_db.app = app
@@ -112,6 +115,7 @@ def _db(database):
     return database
 
 
+@pytest.mark.usefixtures("user_info")
 def generate_auth_headers(client, user_id=1):
         """Logs in for user and generates authentication token."""
         user = user_info_list[user_id - 1]

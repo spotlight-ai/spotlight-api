@@ -9,5 +9,6 @@ class RoleMemberSchema(ma.SQLAlchemyAutoSchema):
         model = RoleMemberModel
         exclude = ["role_member_id", "role"]
         load_only = ["user_id"]
+        load_instance = True
 
     user = ma.Nested(UserSchema, exclude=["last_login", "created_ts"])

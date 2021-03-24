@@ -21,7 +21,6 @@ def retrieve_role(role_id, user_id):
             (RoleMemberModel.user_id == user_id) & (RoleMemberModel.is_owner == true())
         )
     ).first()
-    print(role)
 
     if not role:
         abort(401, RoleErrors.MISSING_NO_PERMISSIONS)

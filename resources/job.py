@@ -99,9 +99,6 @@ class JobCollection(Resource):
         except IntegrityError as err:
             db.session.rollback()
             abort(400, err)
-        except Exception as err:
-            print(err)
-            raise
 
 
 class Job(Resource):

@@ -12,7 +12,6 @@ def test_get_role_permissions(client, db_session):
 
     assert res.status_code == 200
     permissions = json.loads(res.data.decode())
-    print(permissions)
     assert len(permissions) == 1
     assert permissions[0].get("description") == "ssn"
 

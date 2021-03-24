@@ -1,5 +1,5 @@
 import json
-from unittest.mock import patch
+import pytest
 
 from tests.conftest import generate_auth_headers, role_route
 
@@ -59,8 +59,12 @@ def test_add_owner(client, db_session):
     assert len(members) == 4
 
 
-@patch("resources.roles.role_member.send_notifications")
-def test_add_members(self, mock_notif):
+@pytest.fixture
+def mock_notif(mocker):
+    return mocker.patch("resources.roles.role_member.send_notifications")
+
+
+def test_add_members(client, db_session, mock_notif):
     """Adds multiple members to a role."""
     headers = generate_auth_headers(client, user_id=4)
     
@@ -87,8 +91,7 @@ def test_add_members(self, mock_notif):
     assert owner_count == 2
 
 
-@patch("resources.roles.role_member.send_notifications")
-def test_add_combo(self, mock_notif):
+def test_add_combo(client, db_session, mock_notif):
     """Adds a combination of users and owners."""
     headers = generate_auth_headers(client, user_id=4)
     
@@ -117,8 +120,7 @@ def test_add_combo(self, mock_notif):
     assert owner_count == 3
 
 
-@patch("resources.roles.role_member.send_notifications")
-def test_replace_combo(self, mock_notif):
+def test_replace_combo(client, db_session, mock_notif):
     """Replaces role members and owners with new sets."""
     headers = generate_auth_headers(client, user_id=3)
     member_path = f"{role_route}/1/member"
