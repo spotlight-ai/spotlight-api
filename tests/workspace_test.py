@@ -95,19 +95,13 @@ class WorkspaceMemberCollectionTest:
         # Verify expected response: unauthorized request
 
         # Verify owner not in database
-
-
-    def test_owner_id_in_token_behavior(client, db_session):
-        ???
-
-    def test_workspace_id_in_token_behavior(client, db_session):
-        ???
+        
 
     def test_member_already_exists_admin(client, db_session):
         """Verify that app sends conflict when owner is added, checks email exists"""
         # Setup Test
         
-        # Verify owner with email in database
+        # Verify owner in member table
 
         # Add owner to workspace
 
@@ -118,84 +112,126 @@ class WorkspaceMemberCollectionTest:
     def test_member_promoted_to_owner(client, db_session):
         """Verify app updates database with user as non-owner to owner, keeps one row for user."""
 
+        workspace_id = 1
+        user_id = 2
+        member = _get_member_in_workspace(workspace_id, user_id)
+        assert len(member) == 1
+        member = member[0]
+        assert member.is_owner == False
+
+        token = {
+            "workspace_id": workspace_id,
+            "email": member.email,
+            "is_owner": True,
+        }
+
+        headers = generate_auth_headers(client, user_id=user_id)
+        url = f"{workspace_route}/{workspace_id}/member"
+
     def test_member_already_exists_non_owner(client, db_session):
         """Verify that app sends conflict response when email already exists."""
         # Setup Test
+        workspace_id = 1
+        user_id = 2
 
-        # Verify user with email in database
+        member = _get_member_in_workspace(workspace_id, user_id)
+        assert len(member) == 1
+        member = member[0]
+        assert member is not None
 
-        # Add user to workspace
+        token = {
+            "workspace_id": workspace_id,
+            "email": member.email,
+            "is_owner": False,
 
-        # Verify expected response: error with conflict
+        }
+        headers = generate_auth_headers(client, user_id=user_id)
+        url = f"{workspace_route}/{workspace_id}/member"
+        res = client.post(url, json=body, headers=headers)
+
         assert res.status_code == 409
-
-        # Verify user in database once, not more
-
-    def test_add_owner_success(client, db_session):
-        """Verify that app adds workspace owner via token."""
-        # Setup Test with owner token
-
-        # Verify owner not in database
-
-        # Add owner to workspace
-
-        # Verify expected response: successful resource added
-
-        # Verify owner in database
+        assert "exists" in json.loads(res.data.decode())
+        assert user_id in json.loads(res.data.decode())
+        assert _get_member_in_workspace(workspace_id, user_id) is len(1)
 
 
-    def test_add_member_success(client, db_session):
+    def test_add_member_success(self, client, db_session):
         """Verify that app adds member to database via token."""
-        # Setup Test with invite token
+        workspace_id = 1
+        expected_status = 204
+        expected_message = None
 
-        # Verify member not in database
+        user_id = 5
+        is_owner = True
+        self._assert_test_add_member_success(client, workspace_id, user_id, is_owner, expected_status, expected_message)
+        
+        user_id = 4
+        is_owner = False
+        self._assert_test_add_member_success(client, workspace_id, user_id, is_owner, expected_status, expected_message)
 
-        # Add user to workspace
+    def _assert_test_add_member_success(client, workspace_id, user_id, is_owner, expected_status, expected_message):
+        assert _get_member_in_workspace(workspace_id, user_id) is None
+        owner = UserModel.query.filter_by(user_id=user_id).first()
+        owner_token = {
+            "workspace_id": workspace_id,
+            "email": owner.email,
+            "is_owner": True,
+        }
 
-        # Verify expected response: successful resource added
-        assert res.status_code == 201
+        # TODO: import create_access_token?
 
-        # Verify member in database
+        body = {"token": owner_token}
+        headers = generate_auth_headers(client, user_id=user_id)
+        res = client.post(f"{workspace_route}/{workspace_id}/member", json=body, headers=headers)
+        assert res.status_code == expected_status
+        assert json.loads(res.data.decode()) == expected_message
+        assert _get_member_in_workspace(workspace_id, user_id) is not None
+
 
     # DELETE WorkspaceMember
-    def test_delete_member_unauthorized(client, db_session):
+    def test_delete_member_unauthorized(self, client, db_session):
         """Verify that non-owner is not authorized to delete members from workspaces."""
-        # Setup Test
+        workspace_id = 1
+        user_id = 2
+        test_delete_id = 1
 
-        # Verify user is not owner of workspace, member to delete is in database
-
-        # Attempt deletion of other member
-
-        # Verify expected response: unauthorized
-
-        # Verify member was not deleted from database
+        assert _get_member_in_workspace(workspace_id, user_id).is_owner is False .
+        res = self._delete_member(client, workspace_id, user_id, test_delete_id)
+        assert res.status_code == 401
+        assert json.loads(res.data.decode()) is None
+        assert _get_member_in_workspace(workspace_id, test_delete_id) is not None
         
 
-    def test_delete_member_does_not_exist(client, db_session):
-        """Verify that app returns successful even when member did not exist previously."""
-        # Setup Test
-
-        # Verify member NOT in database
-
-        # Delete member
-
-        # Verify expected response: successful as if member was in table
-
-        # Verify member not in database
-
-        assert res.status_code == 204
-    
-    def test_delete_member_success(client, db_session):
-        """Verify successful deletion of member that was in workspace."""
-
-        # Setup Test
-        owner_id = 1
-        test_delete_id = 2
+    def test_delete_member_success(self, client, db_session):
+        """Verify that app returns successful response if user exists in database or not.."""
+        
+        def _assert_delete_member_success(res, workspace_id, test_delete_id):
+            assert res.status_code == 204
+            assert json.loads(res.data.decode()) is None
+            assert self._get_member_in_workspace(workspace_id, test_delete_id) is None
+        
+        # Test for user that exists
         workspace_id = 1
+        user_id = 1
+        test_delete_id = 2
 
-        headers = generate_auth_headers(client, user_id=owner_id)
+        assert self._get_member_in_workspace(workspace_id, test_delete_id) is not None
+        res = self._delete_member(client, workspace_id, user_id, test_delete_id)
+        _assert_delete_member_success(res, workspace_id, test_delete_id)
 
-        # Verify member in database
+        # Test for user that does not exist
+        workspace_id = 1
+        user_id = 1
+        test_delete_id = 900
+
+        member_query = self._get_member_in_workspace(workspace_id, test_delete_id)
+        
+        res = self._delete_member(client, workspace_id, user_id, test_delete_id)
+        _assert_delete_member_success(res, workspace_id, test_delete_id)
+    
+    def _delete_member(client, workspace_id, user_id, test_delete_id):
+        
+        headers = generate_auth_headers(client, user_id=user_id)
 
         # Delete Member
         res = client.delete(
@@ -205,12 +241,21 @@ class WorkspaceMemberCollectionTest:
             },
             headers=headers
         )
+        return res
 
-        # Verify expected response: successful delete with no content response
-        assert res.status_code == 204
-        assert "deleted" in json.loads(res.data.decode())
-        assert test_delete_id in json.loads(res.data.decode())
+    def _get_member_in_workspace(workspace_id, user_id):
+        return WorkspaceMemberModel.query.filter(
+            WorkspaceMemberModel.workspace_id == workspace_id,
+            WorkspaceMemberModel.user_id == user_id,
+        ).all()
 
-        # Verify member not in database
-        workspace_members = WorkspaceMemberModel.query.filter_by(workspace_id=workspace_id).all()
-        assert test_delete_id not in map(lambda x: x.user_id, workspace_members)
+    def _assert_member_exists(result):
+        assert result is not None
+        assert type(result) is list
+        assert len(result) == 1
+
+    def _assert_member_does_not_exist(result):
+        if result:
+            assert len(result) == 0
+        else:
+            assert True
