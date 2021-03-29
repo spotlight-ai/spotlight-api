@@ -78,8 +78,13 @@ def create_app(config):
     api.add_resource(SlackToken, "/slack_token/<string:team_id>")
     api.add_resource(UserCollection, "/user")
     api.add_resource(User, "/user/<int:user_query_id>")
+
     api.add_resource(WorkspaceCollection, "/workspace")
     api.add_resource(WorkspaceUserCollection, "/workspace/<int:workspace_id>/member")
+
+    api.add_resource(WorkspaceInvitation, "/workspace/invite")  # POST sends invite GET 
+    api.add_resource(WorkspaceConfirmInvitation, "/workspace/<int:workspace_id>/invite")  
+
     
     return app
 

@@ -27,6 +27,7 @@ dataset_route = "/dataset"
 flatfile_route = "/dataset/flat_file"
 pii_route = "/pii"
 notification_route = "/notification"
+workspace_route = "/workspace"
 
 
 @pytest.fixture(scope="session")
@@ -105,6 +106,9 @@ def database(app):
         for info in role_user_info:
             role_user = RoleMemberModel(**info)
             db.session.add(role_user)
+
+    # with open("tests/setup/workspace_info.json") as f_workspace:
+    #     workspace_info = json.loads()
     db.session.commit()
 
     return db
