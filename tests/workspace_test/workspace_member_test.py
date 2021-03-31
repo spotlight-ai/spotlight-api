@@ -58,7 +58,7 @@ def test_delete_member_success(client, db_session):
 
     res = _delete_member(client, user_id, user_to_delete)
 
-    assert res.status_code == 200
+    assert res.status_code == 204
     _assert_member_does_not_exist(user_to_delete)
 
 def test_delete_member_does_not_exist(client, db_session):
@@ -80,7 +80,7 @@ def test_delete_member_unauthorized(client, db_session):
 
     res = _delete_member(client, unauthorized_user, user_to_delete)
 
-    assert res.status_code == 401
+    assert res.status_code == 403
     _assert_member_exists_once(user_to_delete)
 
 

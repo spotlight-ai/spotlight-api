@@ -72,7 +72,7 @@ PyJWT = "*"
 PyPDF2 = "*"
 SQLAlchemy = "==1.3.23"
 Werkzeug = "*"
-
+flake8 = "*"
 
 [requires]
 python_version = "3.8"

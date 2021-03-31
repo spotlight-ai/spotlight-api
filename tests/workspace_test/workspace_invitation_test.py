@@ -5,90 +5,116 @@ from models.auth.user import UserModel
 
 existing_owner = 1
 existing_member = 2
-new_owner = 3
-new_member = 4
+new_owner_email = "new_owner@email.com"
+new_member_email = "new_member@email.com"
 workspace_id = 1
 
+@pytest.fixture
+def mocked_send_email(mocker):
+    return mocker.patch("resources.workspaces.workspace_invitation.send_email")
 
-def test_invitation_for_owner_success(client, db_session):
 
-    res = _invite_member(
-        client, 
-        user_id=existing_owner, 
-        invite_user_id=None, 
-        email="new_owner@email.com", 
-        is_owner=True
-    )
+def test_invitation_for_owner_success(client, db_session, mocked_send_email):
+    invite_email = new_owner_email
+    user_id = existing_owner
+
+    body = {
+        "is_owner": True,
+        "email": invite_email,
+        "workspace_id": workspace_id,
+    }
+    headers = generate_auth_headers(client, user_id)
+    res = client.post(f"/workspace/{workspace_id}/invite", json=body, headers=headers)
 
     assert res.status_code == 200
+    mocked_send_email.assert_called_once()
 
 
-def test_invitation_for_member_success(client, db_session):
+def test_invitation_for_member_success(client, db_session, mocked_send_email):
+    invite_email = new_member_email
+    user_id = existing_owner
 
-    res = _invite_member(
-        client, 
-        user_id=existing_owner, 
-        invite_user_id=None, 
-        email="new_member@email.com",
-    )
+    body = {
+        "is_owner": False,
+        "email": invite_email,
+        "workspace_id": workspace_id,
+    }
+    headers = generate_auth_headers(client, user_id)
+    res = client.post(f"/workspace/{workspace_id}/invite", json=body, headers=headers)
+
     assert res.status_code == 200
+    mocked_send_email.assert_called_once()
 
 def test_non_owner_sends_invitation(client, db_session):
+    invite_email = new_member_email
+    user_id = existing_member
 
-    res = _invite_member(
-        client, 
-        user_id=existing_member, 
-        invite_user_id=new_member, 
-    )
+    body = {
+        "is_owner": False,
+        "email": invite_email,
+        "workspace_id": workspace_id,
+    }
+
+    headers = generate_auth_headers(client, user_id)
+    res = client.post(f"/workspace/{workspace_id}/invite", json=body, headers=headers)
 
     assert res.status_code == 401
 
-def test_workspace_invitation_malformed_request(client, db_session):
-    user_to_invite = new_member
-    workspace = WorkspaceModel.query.filter_by(workspace_id=1).first()
-    email = UserModel.query.filter_by(user_id=user_to_invite).first().email
-    body = {
-        "is_owner": True,
-        "workspace_name": workspace.workspace_name,
-        "email": email,
-    }
-    keys = body.keys()
-    for key in keys:
-        temp_key = key
-        temp_val = body[key]
-        del body[key]
+# def test_workspace_invitation_malformed_request_is_owner_value(client, db_session):
+#     headers = generate_auth_headers(client, existing_owner)
 
-        res = _invite_member(
-            client, 
-            user_id=existing_owner, 
-            invite_user_id=user_to_invite,
-            body=body,
-        )
+#     invite_email = new_member_email
+#     workspace_name = WorkspaceModel.query.filter_by(workspace_id=1).first().workspace_name
 
-        assert res.status_code == 400
-        body[temp_key] = temp_val
+#     body = {
+#         "is_owner": None,
+#         "workspace_name": workspace_name,
+#         "email": email,
+#     }
+#     res = client.post(f"/workspace/{workspace_id}/invite", json=body, headers=headers)
+#     assert res.status_code == 400
+
+#     body = {
+#         "is_owner": False,
+#         "email": email,
+#     }
+#     res = client.post(f"/workspace/{workspace_id}/invite", json=body, headers=headers)
+#     assert res.status_code == 400
+
+#     body = {
+#         "is_owner": False,
+#         "workspace_name": workspace_name,
+#     }
+
+#     body = {
+#         "is_owner": False,
+#         "workspace_name": None,
+#         "email": None,
+#     }
+#     res = client.post(f"/workspace/{workspace_id}/invite", json=body, headers=headers)
+#     assert res.status_code == 400
+
+#     body = {
+#         "is_owner": False,
+#         "workspace_name": workspace_name,
+#         "email": None,
+#     }
+#     res = client.post(f"/workspace/{workspace_id}/invite", json=body, headers=headers)
+#     assert res.status_code == 400
+
 
 def test_workspace_invitation_email_exists_in_workspace(client, db_session):
+    workspace_name = WorkspaceModel.query.filter_by(workspace_id=workspace_id).first().workspace_name
+    invite_email = UserModel.query.filter_by(user_id=existing_member).first().email
+    user_id = existing_owner
 
-    res = _invite_member(
-        client, 
-        user_id=existing_owner, 
-        invite_user_id=existing_member,
-    )
+    body = {
+        "is_owner": False,
+        "email": invite_email,
+        "workspace_id": workspace_id,
+    }
+
+    headers = generate_auth_headers(client, user_id)
+    res = client.post(f"/workspace/{workspace_id}/invite", json=body, headers=headers)
 
     assert res.status_code == 409
-
-def _invite_member(client, user_id, invite_user_id, email=None, body=None, is_owner=False):
-    workspace = WorkspaceModel.query.filter_by(workspace_id=1).first()
-    if user_id and not email:
-        email = UserModel.query.filter_by(user_id=invite_user_id).first().email
-
-    if not body:
-        body = {
-            "is_owner": is_owner,
-            "email": email,
-            "workspace_name": workspace.workspace_name,
-        }
-    headers = generate_auth_headers(client, user_id)
-    res = client.post(f"/workspace/{workspace.workspace_id}/invite", json=body, headers=headers)
-    return res

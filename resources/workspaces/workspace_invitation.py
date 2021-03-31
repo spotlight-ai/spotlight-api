@@ -1,49 +1,72 @@
 from flask_restful import Resource
 from core.decorators import authenticate_token
-
+from models.workspaces.workspace_member import WorkspaceMemberModel
+from flask import abort, request
+from flask_jwt_extended import create_access_token
+import json
+import datetime
+from models.workspaces.workspace import WorkspaceModel
+from string import Template
+import os
+from sendgrid.helpers.mail import Mail
+from resources.auth.util import send_email
+from models.auth.user import UserModel
 
 class WorkspaceInvitation(Resource):
-    """/workspace/<id>/invite"""
+    """/workspace/<name>/invite"""
     @authenticate_token
     def post(self, user_id, workspace_id) -> None:
-        # member: MemberModel = MemberModel.query.filter(
-        #     MemberModel.workspace_id == workspace_id,
-        #     MemberModel.user_id == user_id
-        # )
-        # if not member.is_owner:
-        #     abort(400, "User is not owner of workspace.")
+        member: WorkspaceMemberModel = WorkspaceMemberModel.query.filter(
+            WorkspaceMemberModel.workspace_id == workspace_id,
+            WorkspaceMemberModel.user_id == user_id
+        ).first()
+        if not member.is_owner:
+            abort(401, "User is not owner of workspace.")
 
-        # data: dict = request.get_json(force=True)
-        # invite_email_address = data["email_address"]
+        data: dict = request.get_json(force=True)
+        try:
+            invite_email = data["email"]
+            invite_workspace_id = data["workspace_id"]
+            invite_is_owner = data["is_owner"]
+        except KeyError:
+            abort(400, "Malformed Request")
 
-        # identity = {
-        #     "email": invite_email_address,
-        #     "workspace_id": workspace_id,
-        #     "is_owner": False,
-        #     "owner_id": owner_id,
-        # }
+        invite_user = UserModel.query.filter_by(email=invite_email).first()
+        if invite_user:
+            member = WorkspaceMemberModel.query.filter(
+                WorkspaceMemberModel.workspace_id == workspace_id,
+                WorkspaceMemberModel.user_id == invite_user.user_id,
+            ).all()
+            if member:
+                abort(409, "User already exists in workspace.")
 
-        # invite_token = create_access_token(
-        #     identity=json.dumps(identity), 
-        #     expires_delta=datetime.timedelta(hours=24)
-        # )
+        identity = {
+            "email": invite_email,
+            "workspace_id": workspace_id,
+            "is_owner": False,
+        }
 
-        # workspace_name = WorkspaceModel.query.filter_by(workspace_id=workspace_id).first().name
+        invite_token = create_access_token(
+            identity=json.dumps(identity), 
+            expires_delta=datetime.timedelta(hours=24)
+        )
 
-        # # TODO: confirm if html button clicks a POST or GET -- needs GET
-        # html_body: Template = Template(
-        #     open("./email_templates/workspace_invitation.html").read()
-        # ).safe_substitute(
-        #     workspace_name=workspace_name
-        #     url=f"{os.environ.get('BASE_WEB_URL')}/workspace/{workspace_name}/invite?token={invite_token}"
-        # )
+        workspace_name = WorkspaceModel.query.filter_by(workspace_id=workspace_id).first().workspace_name
+
+        # TODO: confirm if html button clicks a POST or GET -- needs GET
+        html_body: Template = Template(
+            open("./email_templates/workspace_invitation.html").read()
+        ).safe_substitute(
+            workspace_name=workspace_name,
+            url=f"{os.environ.get('BASE_WEB_URL')}/workspace/{workspace_name}/invite?token={invite_token}"
+        )
         
-        # message: Mail = Mail(
-        #     from_email="hellowspotlightai@gmail.com",
-        #     to_emails=invite_email_address,
-        #     subject="SpotlightAI | Invitation to Join Workspace",
-        #     html_content=html_body,
-        # )
+        message: Mail = Mail(
+            from_email="hellospotlightai@gmail.com",
+            to_emails=invite_email,
+            subject="SpotlightAI | Invitation to Join Workspace",
+            html_content=html_body,
+        )
         
-        # send_email(message)
-        raise NotImplementedError
+        send_email(message)
+        return 204
