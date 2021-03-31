@@ -1,7 +1,8 @@
-from tests.conftest import generate_auth_headers, generate_access_token
 import pytest
-from models.workspaces.workspace import WorkspaceModel
+
 from models.auth.user import UserModel
+from models.workspaces.workspace import WorkspaceModel
+from tests.conftest import generate_auth_headers
 
 existing_owner = 1
 existing_member = 2
@@ -104,7 +105,6 @@ def test_non_owner_sends_invitation(client, db_session):
 
 
 def test_workspace_invitation_email_exists_in_workspace(client, db_session):
-    workspace_name = WorkspaceModel.query.filter_by(workspace_id=workspace_id).first().workspace_name
     invite_email = UserModel.query.filter_by(user_id=existing_member).first().email
     user_id = existing_owner
 

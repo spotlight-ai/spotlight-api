@@ -1,25 +1,26 @@
-from tests.conftest import workspace_route
-from tests.conftest import decode_access_token
-from models.workspaces.workspace import WorkspaceModel
-
-import pytest
 import json
 
-new_workspace_name = "New_Workspace"
-access_code = "StartSpotlight"
-email = "test@email.com"
+import pytest
+
+from models.workspaces.workspace import WorkspaceModel
+from tests.conftest import WORKSPACE_ROUTE, decode_access_token
+
+NEW_WORKSPACE_NAME = "New_Workspace"
+ACCESS_CODE = "StartSpotlight"
+TEST_EMAIL = "test@email.com"
+
 
 # TestWorkspaceCollectionAdd
 def test_add_workspace_success(client, db_session):
-    workspace_name = new_workspace_name
-    assert WorkspaceModel.query.filter_by(workspace_name=workspace_name).first() == None
+    workspace_name = NEW_WORKSPACE_NAME
+    assert WorkspaceModel.query.filter_by(workspace_name=workspace_name).first() is None
 
     body = {
         "token": "StartSpotlight",
-        "email": email,
+        "email": TEST_EMAIL,
         "workspace_name": workspace_name,
     }
-    res = client.post("/workspace", json=body)
+    res = client.post(WORKSPACE_ROUTE, json=body)
     assert res.status_code == 201
     assert len(WorkspaceModel.query.filter_by(workspace_name=workspace_name).all()) == 1
     res_json = json.loads(res.data.decode())
@@ -29,9 +30,9 @@ def test_add_workspace_success(client, db_session):
     assert "email" in identity
     assert "workspace_id" in identity
     assert "is_owner" in identity
-    assert identity["email"] == email
+    assert identity["email"] == TEST_EMAIL
     assert identity["workspace_id"] == WorkspaceModel.query.filter_by(workspace_name=workspace_name).first().workspace_id
-    assert identity["is_owner"] == True
+    assert identity["is_owner"] is True
 
 def test_add_workspace_name_conflict(client, db_session):
     existing_workspace_name = WorkspaceModel.query.filter_by(workspace_id=1).first().workspace_name
@@ -39,11 +40,11 @@ def test_add_workspace_name_conflict(client, db_session):
     assert len(WorkspaceModel.query.filter_by(workspace_name=workspace_name).all()) == 1
 
     body = {
-        "token": access_code,
-        "email": email,
+        "token": ACCESS_CODE,
+        "email": TEST_EMAIL,
         "workspace_name": workspace_name,
     }
-    res = client.post("/workspace", json=body)
+    res = client.post(WORKSPACE_ROUTE, json=body)
     assert res.status_code == 409
     assert len(WorkspaceModel.query.filter_by(workspace_name=workspace_name).all()) == 1
     message = json.loads(res.data.decode()).get("message")
@@ -51,17 +52,17 @@ def test_add_workspace_name_conflict(client, db_session):
     assert "exists" in message
     
 def test_add_workspace_unauthorized(client, db_session):
-    workspace_name = new_workspace_name
-    assert WorkspaceModel.query.filter_by(workspace_name=workspace_name).first() == None
+    workspace_name = NEW_WORKSPACE_NAME
+    assert WorkspaceModel.query.filter_by(workspace_name=workspace_name).first() is None
 
     body = {
         "token": "Incorrect Access Code",
-        "email": email,
+        "email": TEST_EMAIL,
         "workspace_name": workspace_name,
     }
-    res = client.post("/workspace", json=body)
+    res = client.post(WORKSPACE_ROUTE, json=body)
     assert res.status_code == 401
-    assert WorkspaceModel.query.filter_by(workspace_name=workspace_name).first() == None
+    assert WorkspaceModel.query.filter_by(workspace_name=workspace_name).first() is None
     assert "incorrect" in json.loads(res.data.decode()).get("message").lower()
 
 

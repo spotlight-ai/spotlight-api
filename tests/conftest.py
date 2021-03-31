@@ -30,7 +30,7 @@ dataset_route = "/dataset"
 flatfile_route = "/dataset/flat_file"
 pii_route = "/pii"
 notification_route = "/notification"
-workspace_route = "/workspace"
+WORKSPACE_ROUTE = "/workspace"
 
 
 @pytest.fixture(scope="session")
