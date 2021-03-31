@@ -10,6 +10,7 @@ new_owner_email = "new_owner@email.com"
 new_member_email = "new_member@email.com"
 workspace_id = 1
 
+
 @pytest.fixture
 def mocked_send_email(mocker):
     return mocker.patch("resources.workspaces.workspace_invitation.send_email")
@@ -45,6 +46,7 @@ def test_invitation_for_member_success(client, db_session, mocked_send_email):
 
     assert res.status_code == 200
     mocked_send_email.assert_called_once()
+
 
 def test_non_owner_sends_invitation(client, db_session):
     invite_email = new_member_email

@@ -31,11 +31,14 @@ def test_add_workspace_success(client, db_session):
     assert "workspace_id" in identity
     assert "is_owner" in identity
     assert identity["email"] == TEST_EMAIL
-    assert identity["workspace_id"] == WorkspaceModel.query.filter_by(workspace_name=workspace_name).first().workspace_id
+    assert identity["workspace_id"] == WorkspaceModel.query.filter_by(
+        workspace_name=workspace_name).first().workspace_id
     assert identity["is_owner"] is True
 
+
 def test_add_workspace_name_conflict(client, db_session):
-    existing_workspace_name = WorkspaceModel.query.filter_by(workspace_id=1).first().workspace_name
+    existing_workspace_name = WorkspaceModel.query.filter_by(
+        workspace_id=1).first().workspace_name
     workspace_name = existing_workspace_name
     assert len(WorkspaceModel.query.filter_by(workspace_name=workspace_name).all()) == 1
 
@@ -50,7 +53,8 @@ def test_add_workspace_name_conflict(client, db_session):
     message = json.loads(res.data.decode()).get("message")
     assert workspace_name in message
     assert "exists" in message
-    
+
+
 def test_add_workspace_unauthorized(client, db_session):
     workspace_name = NEW_WORKSPACE_NAME
     assert WorkspaceModel.query.filter_by(workspace_name=workspace_name).first() is None

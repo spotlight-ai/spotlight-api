@@ -15,4 +15,4 @@ class WorkspaceModel(db.Model):
         self.created_ts = datetime.now()
 
     def __repr__(self):
-        return f"Workspace(workspace_name={workspace_name})"
+        return f"Workspace(workspace_name={self.workspace_name})"

@@ -1,16 +1,19 @@
-from flask_restful import Resource
-from core.decorators import authenticate_token
-from models.workspaces.workspace_member import WorkspaceMemberModel
+import datetime
+import json
+import os
+from string import Template
+
 from flask import abort, request
 from flask_jwt_extended import create_access_token
-import json
-import datetime
-from models.workspaces.workspace import WorkspaceModel
-from string import Template
-import os
+from flask_restful import Resource
 from sendgrid.helpers.mail import Mail
-from resources.auth.util import send_email
+
+from core.decorators import authenticate_token
 from models.auth.user import UserModel
+from models.workspaces.workspace import WorkspaceModel
+from models.workspaces.workspace_member import WorkspaceMemberModel
+from resources.auth.util import send_email
+
 
 class WorkspaceInvitation(Resource):
     """/workspace/<name>/invite"""
@@ -47,11 +50,12 @@ class WorkspaceInvitation(Resource):
         }
 
         invite_token = create_access_token(
-            identity=json.dumps(identity), 
+            identity=json.dumps(identity),
             expires_delta=datetime.timedelta(hours=24)
         )
 
-        workspace_name = WorkspaceModel.query.filter_by(workspace_id=workspace_id).first().workspace_name
+        workspace_name = WorkspaceModel.query.filter_by(
+            workspace_id=workspace_id).first().workspace_name
 
         # TODO: confirm if html button clicks a POST or GET -- needs GET
         html_body: Template = Template(
@@ -60,13 +64,13 @@ class WorkspaceInvitation(Resource):
             workspace_name=workspace_name,
             url=f"{os.environ.get('BASE_WEB_URL')}/workspace/{workspace_name}/invite?token={invite_token}"
         )
-        
+
         message: Mail = Mail(
             from_email="hellospotlightai@gmail.com",
             to_emails=invite_email,
             subject="SpotlightAI | Invitation to Join Workspace",
             html_content=html_body,
         )
-        
+
         send_email(message)
         return 204

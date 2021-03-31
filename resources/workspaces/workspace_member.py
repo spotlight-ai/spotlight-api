@@ -1,19 +1,24 @@
-from models.workspaces.workspace_member import WorkspaceMemberModel
-from models.workspaces.workspace import WorkspaceModel
-from schemas.workspaces.workspace_member import WorkspaceMemberSchema
-from flask_restful import Resource
-from core.decorators import authenticate_token
-from flask import abort, request
 import json
+
+from flask import abort, request
 from flask_jwt_extended import decode_token
+from flask_restful import Resource
 from jwt.exceptions import ExpiredSignatureError
+
+from core.decorators import authenticate_token
 from core.errors import WorkspaceErrors
-from models.auth.user import UserModel
 from db import db
+from models.auth.user import UserModel
+from models.workspaces.workspace import WorkspaceModel
+from models.workspaces.workspace_member import WorkspaceMemberModel
+from schemas.workspaces.workspace_member import WorkspaceMemberSchema
+
 workspace_member_schema = WorkspaceMemberSchema()
+
 
 class WorkspaceMember(Resource):
     """/workspace/<id>/member/<id>"""
+
     def get(self):
         raise NotImplementedError
 
@@ -52,7 +57,7 @@ class WorkspaceMemberCollection(Resource):
             identity = decode_token(data["token"]).get("sub")
         except ExpiredSignatureError:
             abort(401, WorkspaceErrors.ADD_MEMBER_TOKEN_EXPIRED)
-        
+
         # Validate Token Identity
         email = identity["email"]
         workspace_id = identity["workspace_id"]
@@ -60,14 +65,15 @@ class WorkspaceMemberCollection(Resource):
 
         if email != UserModel.query.filter_by(user_id=user_id).first().email:
             abort(400, "Signed in user does not match user in token. ")
-        
+
         member = WorkspaceMemberModel.query.filter(
             WorkspaceMemberModel.workspace_id == workspace_id,
             WorkspaceMemberModel.user_id == user_id
         ).all()
         if member:
-            abort(409, WorkspaceErrors.ADD_MEMBER_EXISTS_IN_WORKSPACE.format(identity["email"]))
-        
+            abort(409, WorkspaceErrors.ADD_MEMBER_EXISTS_IN_WORKSPACE.format(
+                identity["email"]))
+
         workspace_member_data = {
             "workspace_id": workspace_id,
             "user_id": user_id,
@@ -81,5 +87,5 @@ class WorkspaceMemberCollection(Resource):
         db.session.commit()
         return
 
-    def get(self): 
+    def get(self):
         raise NotImplementedError
