@@ -5,3 +5,4 @@ class WorkspaceMemberSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = WorkspaceMemberModel
         include_fk = True
+        load_instance = True

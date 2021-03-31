@@ -70,3 +70,10 @@ class AuthenticationErrors:
     UNAUTHORIZED_API_KEY = "Unauthorized API key."
     INCORRECT_API_KEY = "Incorrect API key."
     INCORRECT_CREDS = "Incorrect credentials."
+
+class WorkspaceErrors:
+    MISSING_INIT_TOKEN = "Workspace creation token is missing."
+    INCORRECT_INIT_TOKEN = "Workspace creation token is incorrect."
+    WORKSPACE_NAME_EXISTS = "Workspace with name {} already exists."
+    ADD_MEMBER_EXISTS_IN_WORKSPACE = "Member with email {} already exists in the workspace."
+    ADD_MEMBER_TOKEN_EXPIRED = "Invitation token has expired."

@@ -4,3 +4,4 @@ from models.workspaces.workspace import WorkspaceModel
 class WorkspaceSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = WorkspaceModel
+        load_instance = True

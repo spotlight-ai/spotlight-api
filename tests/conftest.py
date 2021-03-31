@@ -4,6 +4,7 @@ import json
 import pytest
 from dotenv import load_dotenv
 from pytest_factoryboy import register
+from flask_jwt_extended import create_access_token, decode_token
 
 from app import create_app
 from app import db as app_db
@@ -15,6 +16,8 @@ from models.pii.pii import PIIModel
 from models.datasets.file import FileModel
 from models.notifications.notification import NotificationModel
 from models.pii.file import FilePIIModel
+from models.workspaces.workspace import WorkspaceModel
+from models.workspaces.workspace_member import WorkspaceMemberModel
 from dotenv import find_dotenv, load_dotenv
 import sqlalchemy as sa
 from sqlalchemy import create_engine, event
@@ -107,8 +110,18 @@ def database(app):
             role_user = RoleMemberModel(**info)
             db.session.add(role_user)
 
-    # with open("tests/setup/workspace_info.json") as f_workspace:
-    #     workspace_info = json.loads()
+    with open("tests/setup/workspace_info.json") as f_workspace:
+        workspace_info = json.loads(f_workspace.read())
+        for info in workspace_info:
+            workspace = WorkspaceModel(**info)
+            db.session.add(workspace)
+
+    with open("tests/setup/workspace_member_info.json") as f_workspace_member:
+        member_info = json.loads(f_workspace_member.read())
+        for info in member_info:
+            member = WorkspaceMemberModel(**info)
+            db.session.add(member)
+
     db.session.commit()
 
     return db
@@ -127,3 +140,11 @@ def generate_auth_headers(client, user_id=1):
         login_res = client.post("/login", json=creds)
         token = json.loads(login_res.data.decode()).get("token")
         return {"Authorization": f"Bearer {token}"}
+
+
+def generate_access_token(body, expires_delta):
+    token = create_access_token(identity=body, expires_delta=expires_delta)
+    return token
+
+def decode_access_token(token: str):
+    return json.loads(decode_token(token).get("sub"))
