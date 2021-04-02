@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - develop
+    - master
 
 env:
   AWS_DEFAULT_REGION: us-east-1
@@ -11,7 +12,7 @@ env:
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  CONTAINER_IMAGE: spotlight-api:${{ github.sha }}
+  CONTAINER_IMAGE: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/spotlight-api
 
 jobs:
   # build
@@ -22,52 +23,62 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+    - name: Set environment for branch
+      run: |
+        if [[ $GITHUB_REF == 'refs/heads/master' ]]; then
+            echo "DEPLOY_ENV=prod" >> "$GITHUB_ENV"
+        else
+            echo "DEPLOY_ENV=dev" >> "$GITHUB_ENV"
+        fi
+
     - name: Checkout
       uses: actions/checkout@master
 
-    - name: Setup ECR
-      run: |
-        $( aws ecr get-login --no-include-email )
-
-    - name: Build and tag the image
-      run: |
-        docker build \
-          -t $CONTAINER_IMAGE \
-          -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$CONTAINER_IMAGE .
-
-    # Test and Lint Python
-    - name: Set up Python
-      uses: actions/setup-python@master
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
       with:
-        python-version: 3.7
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install flake8 pytest
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest and coverage
-      run: |
-        coverage run pytest
-    - name: Ensure test coverage exceeds 80%
-      run: |
-        coverage report --fail-under 80
+        aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }} 
+        aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
 
-    - name: Push
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build and tag the Prerelease image
       if: github.ref == 'refs/heads/develop'
       run: |
-        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$CONTAINER_IMAGE
+        docker build \
+          -t ${{ env.CONTAINER_IMAGE }} \
+          -t ${{ env.CONTAINER_IMAGE }}:${{ github.sha }} \
+          .
 
-    - name: Update kubeconfig with dev cluster
+    - name: Push Prerelease to ECR
+      if: github.ref == 'refs/heads/develop'
       run: |
-        aws eks --region us-east-1 update-kubeconfig --name spotlight-dev-cluster
+        docker push ${{ env.CONTAINER_IMAGE }} && \
+        docker push ${{ env.CONTAINER_IMAGE }}:${{ github.sha }}
+
+    - name: Pull Latest Image Manifest to Deploy to Prod
+      if: github.ref == 'refs/heads/master'
+      run: |
+        MANIFEST=$(aws ecr batch-get-image \
+          --repository-name spotlight-api \
+          --image-ids imageTag=latest \
+          --query 'images[].imageManifest' \
+          --output text) && \
+
+          aws ecr put-image \
+          --repository-name spotlight-api \
+          --image-tag production \
+          --image-manifest "$MANIFEST"
+
+
+    - name: Update kubeconfig with cluster
+      run: |
+        aws eks --region ${{ env.AWS_DEFAULT_REGION }} update-kubeconfig --name spotlight-${{ env.DEPLOY_ENV }}-cluster
 
     - name: Update images
       run: |
         kubectl set image deployments/api-deployment \
-        spotlight-api=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$CONTAINER_IMAGE
+        spotlight-api=${{ env.CONTAINER_IMAGE }}:latest
