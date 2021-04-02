@@ -32,6 +32,9 @@ from resources.roles.role_member import RoleMemberCollection
 from resources.roles.role_permission import RolePermissionCollection
 from resources.slack.slack_token import SlackToken, SlackTokenCollection
 from resources.user import User, UserCollection
+from resources.workspaces.workspace import Workspace, WorkspaceCollection
+from resources.workspaces.workspace_member import WorkspaceMember, WorkspaceMemberCollection
+from resources.workspaces.workspace_invitation import WorkspaceInvitation
 
 
 def create_app(config):
@@ -77,6 +80,14 @@ def create_app(config):
     api.add_resource(SlackToken, "/slack_token/<string:team_id>")
     api.add_resource(UserCollection, "/user")
     api.add_resource(User, "/user/<int:user_query_id>")
+
+    api.add_resource(WorkspaceCollection, "/workspace")
+    api.add_resource(Workspace, "/workspace/<int:workspace_id>")
+    api.add_resource(WorkspaceInvitation, "/workspace/<int:workspace_id>/invite")  
+    api.add_resource(WorkspaceMemberCollection, "/workspace/<int:workspace_id>/member")
+    api.add_resource(WorkspaceMember, "/workspace/<int:workspace_id>/member/<int:member_user_id>")
+
+
     
     return app
 

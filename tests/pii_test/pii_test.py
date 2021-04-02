@@ -1,25 +1,25 @@
 import json
 
-from tests.test_main import BaseTest
+from tests.conftest import generate_auth_headers
+from tests.conftest import pii_route
 
 
-class PIITest(BaseTest):
-    def test_retrieve_pii(self):
-        """Verifies that all PII markers can be retrieved."""
-        headers = self.generate_auth_headers(user_id=1)
+def test_retrieve_pii(client, db_session):
+    """Verifies that all PII markers can be retrieved."""
+    headers = generate_auth_headers(client, user_id=1)
 
-        res = self.client().get(self.pii_route, headers=headers)
+    res = client.get(pii_route, headers=headers)
 
-        pii = json.loads(res.data.decode())
+    pii = json.loads(res.data.decode())
 
-        self.assertEqual(200, res.status_code)
-        self.assertEqual(3, len(pii))
-        self.assertIn("description", pii[0])
-        self.assertIn("long_description", pii[0])
-        self.assertIn("category", pii[0])
+    assert 200 == res.status_code
+    assert 3 == len(pii)
+    assert "description" in pii[0]
+    assert "long_description" in pii[0]
+    assert "category" in pii[0]
 
-    def test_unauthenticated_retrieve_pii(self):
-        """Verifies that unauthenticated users cannot retrieve the PII list."""
-        res = self.client().get(self.pii_route)
+def test_unauthenticated_retrieve_pii(client, db_session):
+    """Verifies that unauthenticated users cannot retrieve the PII list."""
+    res = client.get(pii_route)
 
-        self.assertEqual(400, res.status_code)
+    assert 400 == res.status_code

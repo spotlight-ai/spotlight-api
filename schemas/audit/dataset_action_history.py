@@ -4,7 +4,7 @@ from schemas.user import UserSchema
 from schemas.datasets.base import DatasetSchema
 
 
-class DatasetActionHistorySchema(ma.ModelSchema):
+class DatasetActionHistorySchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = DatasetActionHistoryModel
         dump_only = ("timestamp",)

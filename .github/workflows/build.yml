@@ -15,6 +15,9 @@ env:
   CONTAINER_IMAGE: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/spotlight-api
 
 jobs:
+  # build
+  # test
+  # push image
   build-and-push:
     name: Building and pushing image to AWS ECR
     runs-on: ubuntu-latest
@@ -79,5 +82,3 @@ jobs:
       run: |
         kubectl set image deployments/api-deployment \
         spotlight-api=${{ env.CONTAINER_IMAGE }}:latest
-
-

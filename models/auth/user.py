@@ -10,9 +10,10 @@ from itsdangerous import (
 
 from db import db
 from models.associations import DatasetOwner
-from models.auth.api_key import APIKeyModel
+# from models.auth.api_key import APIKeyModel
 from models.auth.util import check_validity
-from models.datasets.base import DatasetModel
+# from models.datasets.base import DatasetModel
+from models.workspaces.workspace import WorkspaceModel
 
 class UserModel(db.Model):
     __tablename__ = "user"
@@ -29,9 +30,9 @@ class UserModel(db.Model):
     )
 
     owned_datasets = db.relationship(
-        DatasetModel, secondary=DatasetOwner, back_populates="owners"
+        "DatasetModel", secondary=DatasetOwner, back_populates="owners"
     )
-    api_keys = db.relationship(APIKeyModel, backref="user", lazy=True)
+    api_keys = db.relationship("APIKeyModel", backref="user", lazy=True)
 
     def __init__(self, email, password, first_name, last_name, admin=False):
         self.first_name = first_name

@@ -1,9 +1,12 @@
+import re
+
 from flask import abort, request
 from flask_restful import Resource
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import UnmappedInstanceError
 
+from core.constants import UserConstants
 from core.decorators import authenticate_token
 from db import db
 from models.associations import DatasetOwner
@@ -26,26 +29,26 @@ class JobCollection(Resource):
         datasets_owned = [
             dataset.dataset_id
             for dataset in DatasetModel.query.join(DatasetOwner)
-            .join(UserModel)
-            .filter((UserModel.user_id == user_id))
-            .all()
+                .join(UserModel)
+                .filter((UserModel.user_id == user_id))
+                .all()
         ]
         user = UserModel.query.filter_by(user_id=user_id).first()
-
+        
         job_status = request.args.get("status")
         if job_status:
             if user.admin:
                 jobs = (
                     JobModel.query.filter((JobModel.job_status.upper() == job_status))
-                    .order_by(JobModel.job_created_ts)
-                    .all()
+                        .order_by(JobModel.job_created_ts)
+                        .all()
                 )
             else:
                 jobs = (
-                    JobModel.query.filter(JobModel.job_status.upper() == job_status)
-                    & (JobModel.dataset_id.in_(datasets_owned))
-                    .order_by(JobModel.job_created_ts)
-                    .all()
+                        JobModel.query.filter(JobModel.job_status.upper() == job_status)
+                        & (JobModel.dataset_id.in_(datasets_owned))
+                        .order_by(JobModel.job_created_ts)
+                        .all()
                 )
         else:
             if user.admin:
@@ -53,11 +56,11 @@ class JobCollection(Resource):
             else:
                 jobs = (
                     JobModel.query.filter((JobModel.dataset_id.in_(datasets_owned)))
-                    .order_by(JobModel.job_created_ts)
-                    .all()
+                        .order_by(JobModel.job_created_ts)
+                        .all()
                 )
         return job_schema.dump(jobs, many=True)
-
+    
     @authenticate_token
     def post(self, user_id):
         """
@@ -66,30 +69,33 @@ class JobCollection(Resource):
         """
         try:
             data = request.get_json(force=True)
-
+            
             datasets_owned = [
                 dataset.dataset_id
                 for dataset in DatasetModel.query.join(DatasetOwner)
-                .join(UserModel)
-                .filter((UserModel.user_id == user_id))
-                .all()
+                    .join(UserModel)
+                    .filter((UserModel.user_id == user_id))
+                    .all()
             ]
-
+            
             job = job_schema.load(data)
-
+            
             dataset = DatasetModel.query.filter_by(dataset_id=job.dataset_id).first()
-
+            
             if not dataset:
                 abort(404, "Dataset does not exist.")
-
+            
             if job.dataset_id not in datasets_owned:
                 abort(401, "Not authorized to create a job for this dataset.")
-
+            
             db.session.add(job)
             db.session.commit()
             return None, 201
         except ValidationError as err:
             abort(422, err.messages)
+        except TypeError as err:
+            arg = re.match(".*positional argument.*'(.+)'", str(err)).group(1)
+            abort(422, f"Missing data for required field: {arg}")
         except IntegrityError as err:
             db.session.rollback()
             abort(400, err)
@@ -97,7 +103,7 @@ class JobCollection(Resource):
 
 class Job(Resource):
     loadable_fields = ["job_status", "job_completed_ts"]
-
+    
     @authenticate_token
     def get(self, user_id, job_id):
         """
@@ -107,26 +113,26 @@ class Job(Resource):
         :return: Job object.
         """
         job = JobModel.query.filter_by(job_id=job_id).first()
-
-        if user_id != "MODEL":
+        
+        if not job:
+            abort(404, "Job not found.")
+        
+        if user_id != UserConstants.MODEL:
             datasets_owned = [
                 dataset.dataset_id
                 for dataset in DatasetModel.query.join(DatasetOwner)
-                .join(UserModel)
-                .filter((UserModel.user_id == user_id))
-                .all()
+                    .join(UserModel)
+                    .filter((UserModel.user_id == user_id))
+                    .all()
             ]
-
+            
             user = UserModel.query.filter_by(user_id=user_id).first()
-
+            
             if not user.admin and job.dataset_id not in datasets_owned:
                 abort(401, "Not authorized to view this job.")
-
-        if not job:
-            abort(404, "Job not found.")
-
+        
         return job_schema.dump(job)
-
+    
     @authenticate_token
     def patch(self, user_id, job_id):
         """
@@ -136,31 +142,31 @@ class Job(Resource):
         :return: None
         """
         job = JobModel.query.filter_by(job_id=job_id).first()
-
+        
         if not job:
             abort(404, "Job not found.")
-
-        if user_id != "MODEL":
+        
+        if user_id != UserConstants.MODEL:
             datasets_owned = [
                 dataset.dataset_id
                 for dataset in DatasetModel.query.join(DatasetOwner)
-                .join(UserModel)
-                .filter((UserModel.user_id == user_id))
-                .all()
+                    .join(UserModel)
+                    .filter((UserModel.user_id == user_id))
+                    .all()
             ]
-
+            
             user = UserModel.query.filter_by(user_id=user_id).first()
-
+            
             if not user.admin and job.dataset_id not in datasets_owned:
                 abort(401, "Not authorized to edit this job.")
-
+        
         data = request.get_json(force=True)
         for k, v in data.items():
             if k in self.loadable_fields:
                 job.__setattr__(k, v)
         db.session.commit()
         return
-
+    
     @authenticate_token
     def delete(self, user_id, job_id):
         """
@@ -171,22 +177,22 @@ class Job(Resource):
         """
         try:
             job = job_schema.load(request.get_json(force=True))
-
+            
             datasets_owned = [
                 dataset.dataset_id
                 for dataset in DatasetModel.query.join(DatasetOwner)
-                .join(UserModel)
-                .filter((UserModel.user_id == user_id))
-                .all()
+                    .join(UserModel)
+                    .filter((UserModel.user_id == user_id))
+                    .all()
             ]
             user = UserModel.query.filter_by(user_id=user_id).first()
-
+            
             if not job:
                 abort(404, "Job not found")
-
+            
             if not user.admin and job.dataset_id not in datasets_owned:
                 abort(401, "Not authorized to delete this job.")
-
+            
             db.session.delete(job)
             db.session.commit()
             return

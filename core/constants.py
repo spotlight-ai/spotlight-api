@@ -20,6 +20,7 @@ class AnonymizationType(Enum):
 
 class UserConstants:
     PUBLIC_DOMAINS = ["gmail.com", "yahoo.com", "msn.com", "hotmail.com"]
+    MODEL = "MODEL"
 
 
 class Masks:
