@@ -2,8 +2,6 @@ import datetime
 
 from db import db
 from models.associations import RoleDataset, RolePermission
-# from models.pii.pii import PIIModel
-# from models.roles.role_member import RoleMemberModel
 
 
 class RoleModel(db.Model):

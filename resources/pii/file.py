@@ -1,17 +1,26 @@
+import os
+from loguru import logger
+
 from flask import abort, request
 from flask_restful import Resource
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
+from urllib.parse import urlparse
 
+from core.constants import SupportedFiles
 from core.decorators import authenticate_token
 from core.errors import DatasetErrors
 from db import db
 from models.datasets.base import DatasetModel
-from models.pii.file import FilePIIModel
+from models.pii.marker_character import PIIMarkerCharacterModel
+from models.pii.marker_image import PIIMarkerImageModel
 from models.datasets.file import FileModel
-from schemas.pii.file import FilePIISchema
+from schemas.pii.marker_character import PIIMarkerCharacterSchema
+from schemas.pii.marker_image import PIIMarkerImageSchema
 
-file_pii_schema = FilePIISchema()
+pii_marker_character_schema = PIIMarkerCharacterSchema()
+pii_marker_image_schema = PIIMarkerImageSchema()
+
 
 
 class FilePIICollection(Resource):
@@ -24,14 +33,27 @@ class FilePIICollection(Resource):
         :file_id: File identifier.
         :return: None
         """
+        file = FileModel.query.filter_by(file_id=file_id).first()
+        if not file:
+            abort(404, "File not found.")
+
+        markers: list = request.get_json(force=True)
+
+        for marker in markers:
+            marker["file_id"] = file_id
+
+        filepath = urlparse(file.location).path[1:]
+        _, ext = os.path.splitext(filepath)
+
+        if ext in SupportedFiles.CHARACTER_BASED:
+            logger.info(f"The markers we're trying to load: {markers}")
+            file_pii = pii_marker_character_schema.load(markers, many=True)
+        elif ext in SupportedFiles.IMAGE_BASED:
+            file_pii = pii_marker_image_schema.load(markers, many=True)
+        else:
+            abort(400, "File extension not supported.")
+
         try:
-            markers: list = request.get_json(force=True)
-
-            for marker in markers:
-                marker["file_id"] = file_id
-
-            file_pii = file_pii_schema.load(markers, many=True)
-
             for pii in file_pii:            
                 db.session.add(pii)
 
@@ -57,8 +79,21 @@ class FilePIICollection(Resource):
         if not file:
             abort(404, "File not found.")
 
-        pii = FilePIIModel.query.filter_by(file_id=file_id).all()
-        return file_pii_schema.dump(pii, many=True)
+        filepath = urlparse(file.location).path[1:]
+        _, ext = os.path.splitext(filepath)
+
+        def get_pii(model, schema):
+            markers = model.query.filter_by(file_id=file_id).all()
+            return schema.dump(markers, many=True)
+
+        if ext in SupportedFiles.CHARACTER_BASED:
+            pii = get_pii(model=PIIMarkerCharacterModel, schema=pii_marker_character_schema)
+        elif ext in SupportedFiles.IMAGE_BASED:
+            pii = get_pii(model=PIIMarkerImageModel, schema=pii_marker_image_schema)
+        else:
+            abort(400, "File extension not supported.")
+
+        return pii
 
 class FilePII(Resource):
     @authenticate_token
@@ -79,7 +114,11 @@ class FilePII(Resource):
             if user_id not in owners:
                 abort(400, DatasetErrors.USER_DOES_NOT_OWN)
             else:
-                FilePIIModel.query.filter_by(pii_id=marker_id).delete()
+                _, ext = os.path.splitext(urlparse(file_object.location).path[1:])
+                if ext in SupportedFiles.CHARACTER_BASED:
+                    PIIMarkerCharacterModel.query.filter_by(pii_id=marker_id).delete()
+                elif ext in SupportedFiles.IMAGE_BASED:
+                    PIIMarkerImageModel.query.filter_by(pii_id=marker_id).delete()
                 db.session.commit()
                 return None, 200
         except ValidationError as err:
@@ -93,7 +132,12 @@ class FilePII(Resource):
     def put(self, user_id, file_id, marker_id):
         try:
             data = request.get_json(force=True)
-            pii = FilePIIModel.query.filter_by(pii_id=marker_id).first()
+            file_object = FileModel.query.filter_by(file_id=file_id).first()
+            _, ext = os.path.splitext(urlparse(file_object.location).path[1:])
+            if ext in SupportedFiles.CHARACTER_BASED:
+                pii = PIIMarkerCharacterModel.query.filter_by(pii_id=marker_id).first()
+            elif ext in SupportedFiles.IMAGE_BASED:
+                pii = PIIMarkerImageModel.query.filter_by(pii_id=marker_id).first()
             
             file_object = FileModel.query.filter_by(file_id=file_id).first()
             dataset = DatasetModel.query.filter_by(

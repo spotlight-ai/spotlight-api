@@ -14,7 +14,9 @@ from models.associations import RoleDataset
 from models.audit.dataset_action_history import DatasetActionHistoryModel
 from models.auth.user import UserModel
 from models.datasets.base import DatasetModel
+from models.datasets.file import FileModel
 from models.job import JobModel
+from models.pii.pii import PIIModel
 from models.roles.role import RoleModel
 from models.roles.role_member import RoleMemberModel
 from resources.datasets import util as dataset_util

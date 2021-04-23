@@ -8,7 +8,7 @@ RolePermission = db.Table(
     db.Column(
         "pii_id",
         db.Integer,
-        db.ForeignKey("pii_marker_base.pii_id", ondelete="cascade"),
+        db.ForeignKey("pii_base.pii_id", ondelete="cascade"),
     ),
 )
 

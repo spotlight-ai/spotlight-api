@@ -1,5 +1,6 @@
 import typing
 from urllib.parse import urlparse
+import os
 
 from flask import abort, request
 from flask_restful import Resource
@@ -16,15 +17,17 @@ from models.audit.dataset_action_history import DatasetActionHistoryModel
 from models.auth.user import UserModel
 from models.datasets.base import DatasetModel
 from models.datasets.file import FileModel
-from models.pii.file import FilePIIModel
 from resources.datasets import util as dataset_util
+from models.pii.marker_character import PIIMarkerCharacterModel
+from models.pii.marker_image import PIIMarkerImageModel
 from schemas.datasets.base import DatasetSchema
 from schemas.datasets.file import FileSchema
-from schemas.pii.file import FilePIISchema
+from schemas.pii.marker_image import PIIMarkerImageSchema
+from schemas.pii.marker_character import PIIMarkerCharacterSchema
+from core.constants import SupportedFiles
 
 file_schema = FileSchema()
 dataset_schema = DatasetSchema()
-file_pii_schema = FilePIISchema()
 
 
 class FlatFileCollection(Resource):
@@ -83,7 +86,7 @@ class FlatFileCollection(Resource):
                 db.session.add(flat_file_dataset)
                 
                 response = generate_presigned_link(
-                    bucket_name="uploaded-datasets", object_name=object_name)
+                    bucket_name="temp-test-datasets", object_name=object_name)
                 response["dataset_id"] = dataset.dataset_id
                 
                 response_urls.append(response)
@@ -131,6 +134,7 @@ class File(Resource):
 
         markers: list = file.markers
         filepath: str = urlparse(file.location).path[1:]
+        _, ext = os.path.splitext(filepath)
         
         if is_owner:
             permissions: list = [marker.pii_type for marker in markers]
@@ -145,6 +149,13 @@ class File(Resource):
                 perm_list.extend(role.permissions)
 
             permissions: list = [{x.description for x in perm_list}]
+
+        if ext in SupportedFiles.CHARACTER_BASED:
+            markers = PIIMarkerCharacterModel.query.filter_by(file_id=file_id).all()
+        elif ext in SupportedFiles.IMAGE_BASED:
+            markers = PIIMarkerImageModel.query.filter_by(file_id=file_id).all()
+        else:
+            abort(400, "File extension not supported.")
 
         logger.debug(markers)
         logger.debug(permissions)
