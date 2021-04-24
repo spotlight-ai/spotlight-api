@@ -96,27 +96,29 @@ class User(Resource):
             "last_name",
         ]  # Only these fields in the User model can be edited
 
+        data = request.get_json(force=True)
+
         try:
             user = UserModel.query.filter_by(user_id=user_query_id).first()
             if not user:
                 abort(404, UserErrors.USER_NOT_FOUND)
 
-            data = request.get_json(force=True)
-
             user = user_schema.load(
                 data, instance=user, partial=True
             )  # Validate fields
 
-            for k, v in data.items():
-                if k in loadable_fields:
-                    user.__setattr__(k, v)
-                else:
-                    abort(400, f"{k}: {UserErrors.EDITING_INVALID_FIELD}")
-
-            db.session.commit()
-            return user_schema.dump(user)
         except ValidationError as err:
             abort(422, err.messages)
+
+        not_loadable = [key for key in data.keys() if key not in loadable_fields]
+        if not_loadable:
+            db.session.rollback()
+            abort(400, f"{not_loadable}: {UserErrors.EDITING_INVALID_FIELD}")
+
+        map(lambda k,v: user.__setattr__(k, v), data.items())
+        db.session.commit()
+
+        return user_schema.dump(user)
 
     @authenticate_token
     def delete(self, user_id, user_query_id):

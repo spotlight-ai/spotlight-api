@@ -79,7 +79,8 @@ class RolePermissionCollection(Resource):
         ).all()
         db.session.commit()
 
-        return role_schema.dump(role)
+        response = role_schema.dump(role)
+        return response
 
     @authenticate_token
     def delete(self, user_id, role_id):

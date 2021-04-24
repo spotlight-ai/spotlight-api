@@ -1,5 +1,8 @@
 from enum import Enum, auto
 
+class SupportedFiles:
+    CHARACTER_BASED = {".txt", ".md", ".csv", ".tsv", ".log"}
+    IMAGE_BASED = {".pdf", ".jpg", ".jpeg", ".png"}
 
 class AuditConstants:
     DATASET_CREATED = "DATASET_CREATED"
@@ -20,6 +23,7 @@ class AnonymizationType(Enum):
 
 class UserConstants:
     PUBLIC_DOMAINS = ["gmail.com", "yahoo.com", "msn.com", "hotmail.com"]
+    MODEL = "MODEL"
 
 
 class Masks:

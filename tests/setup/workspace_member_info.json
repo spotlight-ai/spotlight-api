@@ -1,0 +1,12 @@
+[
+    {
+        "workspace_id": 1,
+        "user_id": 1,
+        "is_owner": true
+    },
+    {
+        "workspace_id": 1,
+        "user_id": 2,
+        "is_owner": false
+    }
+]

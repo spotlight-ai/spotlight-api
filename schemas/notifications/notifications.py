@@ -1,8 +1,7 @@
-from db import ma
 from models.notifications.notification import NotificationModel
+import marshmallow_sqlalchemy as ma
 
-
-class NotificationSchema(ma.ModelSchema):
+class NotificationSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = NotificationModel
         ordered = True

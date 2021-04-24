@@ -27,7 +27,7 @@ def generate_presigned_download_link(filepath: str, markers: list, permissions: 
                                      aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"))
     
     # Configurable S3 paths for raw files and ephemeral copies
-    raw_file_bucket: str = "uploaded-datasets"
+    raw_file_bucket: str = "temp-test-datasets"
     anonymized_copy_bucket: str = "spotlight-anonymized-copies"
     anonymized_filepath = generate_anonymized_filepath(filepath, anon_method, permissions)
     

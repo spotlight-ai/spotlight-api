@@ -1,123 +1,128 @@
 import json
+from tests.conftest import generate_auth_headers
+from tests.conftest import notification_route
 
-from tests.test_main import BaseTest
+
+def test_retrieve_notifications(client, db_session):
+    headers = generate_auth_headers(client, user_id=1)
+    res = client.get("/notification", headers=headers)
+    notifications = json.loads(res.data.decode())
+    assert res.status_code == 200
+    assert len(notifications) == 3
+    notification = notifications[0].keys()
+    assert "created_ts" in notification
+    assert "viewed" in notification
+    assert "last_updated_ts" in notification
+    assert "notification_id" in notification
+    assert "title" in notification
+    assert "detail" in notification
+
+    assert notifications[0].get("viewed") == False
+    assert notifications[1].get("viewed") == False
+    assert notifications[2].get("viewed") == True
 
 
-class NotificationTest(BaseTest):
-    def test_retrieve_notifications(self):
-        """"Verifies that notifications can be retrieved for a given user."""
-        headers = self.generate_auth_headers(user_id=1)
+def test_retrieve_notifications_user_with_none(client, db_session):
+    headers = generate_auth_headers(client, user_id=3)
+    res = client.get(notification_route, headers=headers)
+    notifications = json.loads(res.data.decode())
+    assert res.status_code == 200
+    assert len(notifications) == 0
 
-        res = self.client().get(self.notification_route, headers=headers)
 
-        notifications = json.loads(res.data.decode())
+def test_retrieved_notifications_all_viewed(client, db_session):
+    headers = generate_auth_headers(client, user_id=2)
 
-        self.assertEqual(200, res.status_code)
-        self.assertEqual(2, len(notifications))
-        self.assertIn("created_ts", notifications[0])
-        self.assertIn("viewed", notifications[0])
-        self.assertIn("last_updated_ts", notifications[0])
-        self.assertIn("notification_id", notifications[0])
-        self.assertIn("title", notifications[0])
-        self.assertIn("detail", notifications[0])
+    res = client.get(notification_route, headers=headers)
 
-        for notification in notifications:
-            self.assertFalse(notification.get("viewed"))
+    notifications = json.loads(res.data.decode())
 
-    def test_retrieve_notifications_user_with_none(self):
-        """Verifies that a user with no notifications returns an empty list."""
-        headers = self.generate_auth_headers(user_id=3)
+    assert res.status_code == 200
+    assert len(notifications) == 1
+    for notification in notifications:
+        assert notification.get("viewed") == True
 
-        res = self.client().get(self.notification_route, headers=headers)
 
-        notifications = json.loads(res.data.decode())
+def test_update_notifications(client, db_session):
 
-        self.assertEqual(200, res.status_code)
-        self.assertEqual(0, len(notifications))
+    headers = generate_auth_headers(client, user_id=2)
 
-    def test_retrieve_notifications_all_viewed(self):
-        """Verifies that an error is thrown when notifications are fetched for a user that doesn't exist."""
-        headers = self.generate_auth_headers(user_id=2)
+    res = client.patch(
+        f"{notification_route}/4", headers=headers, json={"viewed": False}
+    )
 
-        res = self.client().get(self.notification_route, headers=headers)
+    notification = json.loads(res.data.decode())
+    assert res.status_code == 200
+    assert notification.get("last_updated_ts") != notification.get("created_ts")
+    assert notification.get("viewed") == False
+    
 
-        notifications = json.loads(res.data.decode())
 
-        self.assertEqual(200, res.status_code)
-        self.assertEqual(0, len(notifications))
 
-    def test_update_notifications(self):
-        """Verifies that a notification can be updated."""
-        headers = self.generate_auth_headers(user_id=2)
+def test_update_notification_bad_keys(client, db_session):
+    headers = generate_auth_headers(client, user_id=2)
+    res = client.patch(
+        f"{notification_route}/4",
+        headers=headers,
+        json={"viewed": False, "otherTitle": "New Title"},
+    )
 
-        res = self.client().patch(
-            f"{self.notification_route}/4", headers=headers, json={"viewed": False}
-        )
 
-        notification = json.loads(res.data.decode())
+def test_update_notification_bad_keys(client, db_session):
+    """Verifies that an error is thrown if a user tries to update invalid keys."""
+    headers = generate_auth_headers(client, user_id=2)
 
-        self.assertEqual(200, res.status_code)
-        self.assertFalse(notification.get("viewed"))
-        self.assertNotEqual(
-            notification.get("last_updated_ts"), notification.get("created_ts")
-        )
+    res = client.patch(
+        f"{notification_route}/4",
+        headers=headers,
+        json={"viewed": False, "otherTitle": "New Title"},
+    )
 
-    def test_update_notification_bad_keys(self):
-        """Verifies that an error is thrown if a user tries to update invalid keys."""
-        headers = self.generate_auth_headers(user_id=2)
+    assert res.status_code == 422
 
-        res = self.client().patch(
-            f"{self.notification_route}/4",
-            headers=headers,
-            json={"viewed": False, "otherTitle": "New Title"},
-        )
+def test_update_notification_no_keys(client, db_session):
+    """Verifies that an error is thrown if a user tries to update invalid keys."""
+    headers = generate_auth_headers(client, user_id=2)
 
-        self.assertEqual(422, res.status_code)
+    res = client.patch(
+        f"{notification_route}/4", headers=headers, json={},
+    )
 
-    def test_update_notification_no_keys(self):
-        """Verifies that an error is thrown if a user tries to update invalid keys."""
-        headers = self.generate_auth_headers(user_id=2)
+    notification = json.loads(res.data.decode())
+    assert res.status_code == 200
+    assert notification.get("title") == "Third Notification"
+    assert notification.get("detail") == "More Detail"
+    assert notification.get("viewed") == True
 
-        res = self.client().patch(
-            f"{self.notification_route}/4", headers=headers, json={},
-        )
 
-        notification = json.loads(res.data.decode())
+def test_update_notification_viewed_not_bool(client, db_session):
+    """Verifies that an error is thrown if a user tries to update viewed with a non-boolean."""
+    headers = generate_auth_headers(client, user_id=2)
 
-        self.assertEqual(200, res.status_code)
-        self.assertEqual(notification.get("title"), "Third Notification")
-        self.assertEqual(notification.get("detail"), "More Detail")
-        self.assertEqual(notification.get("viewed"), True)
+    res = client.patch(
+        f"{notification_route}/4", headers=headers, json={"viewed": "cat"},
+    )
 
-    def test_update_notification_viewed_not_bool(self):
-        """Verifies that an error is thrown if a user tries to update viewed with a non-boolean."""
-        headers = self.generate_auth_headers(user_id=2)
+    assert res.status_code == 422
 
-        res = self.client().patch(
-            f"{self.notification_route}/4", headers=headers, json={"viewed": "cat"},
-        )
 
-        self.assertEqual(422, res.status_code)
+def test_update_notification_doesnt_exist(client, db_session):
+    """Verifies that an error is thrown if a user tries to update viewed with a non-boolean."""
+    headers = generate_auth_headers(client, user_id=2)
 
-    def test_update_notification_doesnt_exist(self):
-        """Verifies that an error is thrown if a user tries to update viewed with a non-boolean."""
-        headers = self.generate_auth_headers(user_id=2)
+    res = client.patch(
+        f"{notification_route}/59", headers=headers, json={"viewed": False},
+    )
 
-        res = self.client().patch(
-            f"{self.notification_route}/59", headers=headers, json={"viewed": False},
-        )
+    assert 404 == res.status_code
+    assert "Notification not found." in res.data.decode()
 
-        self.assertEqual(404, res.status_code)
-        self.assertIn(
-            "Notification not found.", res.data.decode(),
-        )
+def test_update_notification_doesnt_own(client, db_session):
+    """Verifies that an error is thrown if a user tries to update a notification that isn't theirs."""
+    headers = generate_auth_headers(client, user_id=2)
 
-    def test_update_notification_doesnt_own(self):
-        """Verifies that an error is thrown if a user tries to update a notification that isn't theirs."""
-        headers = self.generate_auth_headers(user_id=2)
+    res = client.patch(
+        f"{notification_route}/1", headers=headers, json={"viewed": False},
+    )
 
-        res = self.client().patch(
-            f"{self.notification_route}/1", headers=headers, json={"viewed": False},
-        )
-
-        self.assertEqual(401, res.status_code)
+    assert 401 == res.status_code

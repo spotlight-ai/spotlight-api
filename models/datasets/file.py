@@ -1,5 +1,5 @@
 from db import db
-from models.pii.file import FilePIIModel
+from models.pii.marker_base import PIIMarkerBaseModel
 
 
 class FileModel(db.Model):
@@ -13,7 +13,7 @@ class FileModel(db.Model):
     location = db.Column(db.String, unique=True)
     
     markers = db.relationship(
-        FilePIIModel,
+        PIIMarkerBaseModel,
         backref="file",
         lazy=True,
         cascade="save-update, merge, delete",
@@ -21,7 +21,7 @@ class FileModel(db.Model):
     
     def __init__(self, dataset_id, location):
         self.dataset_id = dataset_id
-        self.location = f"s3://uploaded-datasets.s3.amazonaws.com/{location}"
+        self.location = f"s3://temp-test-datasets.s3.amazonaws.com/{location}"
     
     def __repr__(self):
         return f"<File(id={self.dataset_id},location={self.location}>"

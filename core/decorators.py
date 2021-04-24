@@ -2,6 +2,7 @@ import os
 
 from flask import abort, request
 
+from core.constants import UserConstants
 from core.errors import AuthenticationErrors
 from models.auth.api_key import APIKeyModel
 from models.auth.user import UserModel
@@ -55,7 +56,7 @@ def authenticate_token(func):
             is_authenticated, message = UserModel.verify_auth_token(bearer_token)
 
         if bearer_token == os.getenv("MODEL_KEY"):
-            return func(user_id="MODEL", *args, **kwargs)
+            return func(user_id=UserConstants.MODEL, *args, **kwargs)
 
         elif is_authenticated:
             return func(user_id=message, *args, **kwargs)
