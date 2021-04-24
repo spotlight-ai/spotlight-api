@@ -81,4 +81,4 @@ jobs:
     - name: Update images
       run: |
         kubectl set image deployments/api-deployment \
-        spotlight-api=${{ env.CONTAINER_IMAGE }}:latest
+        spotlight-api=${{ env.CONTAINER_IMAGE }}:${{ github.sha }}
