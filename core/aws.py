@@ -10,7 +10,14 @@ from core.anon import anonymize_file
 from core.constants import AnonymizationType
 
 
-def generate_anonymized_filepath(filepath: str, anon_method: AnonymizationType, permissions: list) -> str:
+def generate_upload_filepath(dataset_id: int, object_name: str):
+    # Upload Format: s3://{bucket}/{user_id}_{dataset}/{object_name}
+    object_path = f"upload/{dataset_id}/{object_name}"
+
+    return object_path
+
+
+def generate_anonymized_filepath(dataset_id, filepath: str, anon_method: AnonymizationType, permissions: list) -> str:
     """
     Utility method to generate a hashed filepath for anonymized files to reduce duplication.
     :param filepath: Original filepath of the raw file.
@@ -18,46 +25,47 @@ def generate_anonymized_filepath(filepath: str, anon_method: AnonymizationType, 
     :param permissions: List of permissions requested in the file.
     :return: Hashed filepath
     """
-    return hashlib.sha1((filepath + str(permissions) + anon_method.name).encode()).hexdigest()
+    object_name = hashlib.sha1((filepath + str(permissions) + anon_method.name).encode()).hexdigest()
+    object_path = f"anon/{dataset_id}/{object_name}"
+    return object_path
 
 
-def generate_presigned_download_link(filepath: str, markers: list, permissions: list, expiration: int = 3600,
+def generate_presigned_download_link(dataset_id, filepath: str, markers: list, permissions: list, expiration: int = 3600,
                                      anon_method: AnonymizationType = AnonymizationType.REDACT):
     s3_client: client = boto3.client("s3", aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
                                      aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"))
     
     # Configurable S3 paths for raw files and ephemeral copies
-    raw_file_bucket: str = "temp-test-datasets"
-    anonymized_copy_bucket: str = "spotlight-anonymized-copies"
-    anonymized_filepath = generate_anonymized_filepath(filepath, anon_method, permissions)
+    bucket: str = os.getenv("AWS_BUCKET")
+    uploaded_filepath = generate_upload_filepath(dataset_id, filepath)
+    anonymized_filepath = generate_anonymized_filepath(dataset_id, filepath, anon_method, permissions)
     
     try:  # Check to see if this anonymized file has already been created
-        s3_client.head_object(Bucket=anonymized_copy_bucket, Key=anonymized_filepath)
+        s3_client.head_object(Bucket=bucket, Key=anonymized_filepath)
 
-        response = s3_client.generate_presigned_url("get_object", Params={"Bucket": anonymized_copy_bucket, "Key": anonymized_filepath}, ExpiresIn=expiration)
+        response = s3_client.generate_presigned_url("get_object", Params={"Bucket": bucket, "Key": anonymized_filepath}, ExpiresIn=expiration)
     except ClientError as e:  # Generate the anonymized file
         if e.response["ResponseMetadata"]["HTTPStatusCode"] == 404:
             output_location: str = filepath.replace("/", "_")
 
-            s3_client.download_file(raw_file_bucket, filepath, output_location)
+            s3_client.download_file(bucket, uploaded_filepath, output_location)
 
             # Anonymizes the file and updates the marker positions
             markers: list = anonymize_file(output_location, markers, permissions, anon_method=anon_method)
 
-            s3_client.upload_file(output_location, anonymized_copy_bucket, anonymized_filepath)
+            s3_client.upload_file(output_location, bucket, anonymized_filepath)
             os.remove(output_location)
 
         response = s3_client.generate_presigned_url(
             "get_object",
-            Params={"Bucket": anonymized_copy_bucket, "Key": anonymized_filepath},
+            Params={"Bucket": bucket, "Key": anonymized_filepath},
             ExpiresIn=expiration,
         )
 
     return response, markers
 
 
-def generate_presigned_link(
-        bucket_name, object_name, fields=None, conditions=None, expiration=3600
+def generate_presigned_link(dataset_id, object_name, fields=None, conditions=None, expiration=3600
 ):
     """
     Generates an AWS pre-signed link to access files in S3 location.
@@ -76,15 +84,19 @@ def generate_presigned_link(
         aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
         aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
     )
+    bucket = os.getenv("AWS_BUCKET")
+
+    filepath = generate_upload_filepath(dataset_id, object_name)
+
     try:
         response = s3_client.generate_presigned_post(
-            bucket_name,
-            object_name,
+            bucket,
+            filepath,
             Fields=fields,
             Conditions=conditions,
             ExpiresIn=expiration,
         )
-    except ClientError as e:
+    except ClientError as exc:
         return None
     
     return response

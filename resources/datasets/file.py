@@ -8,7 +8,7 @@ from loguru import logger
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from core.aws import generate_presigned_download_link, generate_presigned_link
+from core.aws import generate_presigned_download_link, generate_presigned_link, generate_upload_filepath
 from core.constants import AuditConstants
 from core.decorators import authenticate_token
 from core.errors import FileErrors
@@ -44,7 +44,6 @@ class FlatFileCollection(Resource):
         try:
             request_body: dict = request.get_json(force=True)
             
-            # Upload Format: s3://{bucket}/{user_id}_{dataset}/{object_name}
             dataset_name: str = request_body.get("dataset_name")
             location_body = request_body.get("locations")
             
@@ -71,24 +70,22 @@ class FlatFileCollection(Resource):
             
             # Generate a series of presigned links for each location
             response_urls: list = []
-            
+            dataset_id = dataset.dataset_id
+
             for location in locations:
-                object_name: str = f"{user_id}_{dataset_name}/{location.get('name')}"
+                object_name = location.get('name')
                 
                 flat_file_body: dict = {
-                    "dataset_id": dataset.dataset_id,
-                    "location": object_name
+                    "dataset_id": dataset_id,
+                    "location": generate_upload_filepath(dataset_id, object_name)
                 }
-                
                 flat_file_dataset = file_schema.load(
                     flat_file_body, session=db.session)
                 
                 db.session.add(flat_file_dataset)
                 
-                response = generate_presigned_link(
-                    bucket_name="temp-test-datasets", object_name=object_name)
-                response["dataset_id"] = dataset.dataset_id
-                
+                response = generate_presigned_link(dataset_id, object_name=object_name)
+                response["dataset_id"] = dataset_id
                 response_urls.append(response)
                 
                 db.session.add(DatasetActionHistoryModel(
