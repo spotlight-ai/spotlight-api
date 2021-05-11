@@ -22,6 +22,27 @@ user_schema = UserSchema()
 
 
 class Login(Resource):
+
+    @staticmethod
+    def login_user(login_data):
+        data = login_schema.load(login_data)
+        user: UserModel = UserModel.query.filter_by(email=data.get("email")).first()
+        if not user:
+            abort(404, UserErrors.USER_NOT_FOUND)
+
+        # Verify that password hashes match and update last login time to current
+        if user.check_password(data.get("password")):
+            user.last_login = datetime.datetime.now()
+            token: str = user.generate_auth_token().decode("utf-8")
+            db.session.commit()
+
+            return {"token": token, "user": user_schema.dump(user)}
+        else:
+            logger.error(
+                f'User {data.get("email")} supplied incorrect login credentials'
+            )
+            abort(400, AuthenticationErrors.INCORRECT_CREDS)
+
     @staticmethod
     def post() -> dict:
         """
@@ -30,23 +51,8 @@ class Login(Resource):
         """
         try:
             # Look up user in DB using the supplied e-mail address
-            data: dict = login_schema.load(request.get_json(force=True))
-            user: UserModel = UserModel.query.filter_by(email=data.get("email")).first()
-            if not user:
-                abort(404, UserErrors.USER_NOT_FOUND)
-
-            # Verify that password hashes match and update last login time to current
-            if user.check_password(data.get("password")):
-                user.last_login = datetime.datetime.now()
-                token: str = user.generate_auth_token().decode("utf-8")
-                db.session.commit()
-
-                return {"token": token, "user": user_schema.dump(user)}
-            else:
-                logger.error(
-                    f'User {data.get("email")} supplied incorrect login credentials'
-                )
-                abort(400, AuthenticationErrors.INCORRECT_CREDS)
+            data: dict = request.get_json(force=True)
+            return Login.login_user(data)
         except ValidationError as err:
             abort(422, err.messages)
 

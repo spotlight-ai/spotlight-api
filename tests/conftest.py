@@ -16,6 +16,8 @@ from models.pii.pii import PIIModel
 from models.datasets.file import FileModel
 from models.notifications.notification import NotificationModel
 from models.pii.marker_base import PIIMarkerBaseModel
+from models.pii.marker_character import PIIMarkerCharacterModel
+from models.pii.marker_image import PIIMarkerImageModel
 from models.workspaces.workspace import WorkspaceModel
 from models.workspaces.workspace_member import WorkspaceMemberModel
 from dotenv import find_dotenv, load_dotenv
@@ -71,7 +73,12 @@ def database(app):
                 _file = FileModel(**file_info)
                 db.session.add(_file)
             for info in item.get("markers") or []:
-                marker = PIIMarkerBaseModel(**info)
+                if "start_location" in info.keys():
+                    marker = PIIMarkerCharacterModel(**info)
+                elif "x1" in info.keys():
+                    marker = PIIMarkerImageModel(**info)
+                else:
+                    marker = PIIMarkerBaseModel(**info)
                 db.session.add(marker)
             db.session.add(dataset)
             dataset_list.append(dataset)

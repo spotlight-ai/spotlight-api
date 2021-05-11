@@ -73,6 +73,11 @@ class WorkspaceCollection(Resource):
 class Workspace(Resource):
     """/workspace/<id>"""
 
+    @staticmethod
+    def get_workspace(workspace_name):
+        workspace = WorkspaceModel.query.filter_by(workspace_name=workspace_name).first()
+        return workspace
+
     def get(self):
         return NotImplemented
 
