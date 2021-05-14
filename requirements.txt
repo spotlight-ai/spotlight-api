@@ -25,6 +25,7 @@ Flask-RESTful==0.3.8
 Flask-SQLAlchemy==2.4.1
 Flask-Testing==0.8.0
 idna==2.9
+img2pdf==0.4.0
 immutables==0.14
 isort==4.3.21
 itsdangerous==1.1.0
@@ -39,6 +40,8 @@ marshmallow-sqlalchemy==0.22.3
 mccabe==0.6.1
 nose==1.3.7
 pathspec==0.8.0
+pdf2image==1.14.0
+Pillow==8.2.0
 psycopg2-binary==2.8.4
 pycparser==2.20
 PyJWT==1.7.1
