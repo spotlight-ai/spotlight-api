@@ -19,6 +19,8 @@ from models.pii.marker_image import PIIMarkerImageModel
 from models.datasets.file import FileModel
 from models.notifications.notification import NotificationModel
 from models.pii.marker_base import PIIMarkerBaseModel
+from models.pii.marker_character import PIIMarkerCharacterModel
+from models.pii.marker_image import PIIMarkerImageModel
 from models.workspaces.workspace import WorkspaceModel
 from models.workspaces.workspace_member import WorkspaceMemberModel
 from dotenv import find_dotenv, load_dotenv

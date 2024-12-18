@@ -14,6 +14,15 @@ user_schema = UserSchema()
 
 
 class UserCollection(Resource):
+
+    @staticmethod
+    def get_user_by_email(email):
+        return UserModel.query.filter_by(email=email).first()
+
+    @staticmethod
+    def get_user_by_id(user_id):
+        return UserModel.query.filter_by(user_id=user_id).first()
+
     @authenticate_token
     def get(self, user_id):
         """
@@ -49,21 +58,28 @@ class UserCollection(Resource):
             user_filter_query.order_by(UserModel.last_name).limit(10).all(), many=True
         )
 
+    @staticmethod
+    def create_new_user(data):
+
+        new_user = user_schema.load(data)
+        # Check if user already exists
+        if UserCollection.get_user_by_email(new_user.email):
+            abort(400, UserErrors.USER_ALREADY_EXISTS)
+
+        db.session.add(new_user)
+        db.session.commit()
+        return new_user
+
     def post(self):
         """
         Register a new user.
         :return: None.
         """
         try:
-            user = user_schema.load(request.get_json(force=True))
-
-            # Check if user already exists
-            if UserModel.query.filter_by(email=user.email).first():
-                abort(400, UserErrors.USER_ALREADY_EXISTS)
-
-            db.session.add(user)
-            db.session.commit()
+            data = request.get_json(force=True)
+            UserCollection.create_new_user(data)
             return None, 201
+
         except ValidationError as err:
             abort(422, err.messages)
 
